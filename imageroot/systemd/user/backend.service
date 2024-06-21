@@ -10,6 +10,7 @@ After=erp-next.service redis-queue.service db.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/backend.pid %t/backend.ctr-id
@@ -18,7 +19,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/backend.pid \
      --pod-id-file %t/erp-next.pod-id --replace -d --name backend \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-    docker.io/frappe/erpnext:latest
+    ${ERPNEXT_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/backend.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP backend
 SyslogIdentifier=%u

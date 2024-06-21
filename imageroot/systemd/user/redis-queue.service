@@ -7,6 +7,7 @@ After=erp-next.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/redis-queue.pid %t/redis-queue.ctr-id
