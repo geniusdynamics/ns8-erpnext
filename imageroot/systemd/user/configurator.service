@@ -23,7 +23,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     -e REDIS_CACHE=redis-cache:6379 \
     -e REDIS_QUEUE=redis-queue:6379 \
     -e SOCKETIO_PORT=9000 \
-     ${ERPNEXT_IMAGE} ../scripts/configurator.sh
+     docker.io/frappe/erpnext:latest ../scripts/configurator.sh
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/configurator.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP configurator
 SyslogIdentifier=%u
