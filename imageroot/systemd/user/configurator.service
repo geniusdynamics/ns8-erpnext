@@ -24,7 +24,17 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     -e REDIS_CACHE=redis-cache:6379 \
     -e REDIS_QUEUE=redis-queue:6379 \
     -e SOCKETIO_PORT=9000 \
-     ${ERPNEXT_IMAGE} /bin/bash -c './scripts/configurator.sh'
+     ${ERPNEXT_IMAGE} /bin/bash -c 'cat <<EOF > /tmp/configurator_script.sh
+     ls -1 apps > sites/apps.txt \
+     bench set-config -g db_host "$DB_HOST" \
+     bench set-config -gp db_port "$DB_PORT"
+     bench set-config -g redis_cache "redis://$REDIS_CACHE"
+     bench set-config -g redis_queue "redis://$REDIS_QUEUE"
+     bench set-config -g redis_socketio "redis://$REDIS_QUEUE"
+     bench set-config -gp socketio_port "$SOCKETIO_PORT"
+     EOF
+     chmod +x /tmp/configurator_script.sh
+     /tmp/configurator_script.sh'
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/configurator.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP configurator
 SyslogIdentifier=%u
