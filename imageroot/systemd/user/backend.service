@@ -5,7 +5,7 @@
 
 [Unit]
 Description=Podman backend.service
-Requires=erp-next.service
+BindsTo=erp-next.service
 After=erp-next.service redis-queue.service db.service
 
 [Service]

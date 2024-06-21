@@ -2,7 +2,7 @@
 
 [Unit]
 Description=Podman redis-queue.service
-Requires=erp-next.service
+BindsTo=erp-next.service
 After=erp-next.service
 
 [Service]
