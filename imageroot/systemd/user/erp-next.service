@@ -10,7 +10,7 @@
 
 [Unit]
 Description=Podman erp-next.service
-Requires=redis-queue.service db.service backend.service configurator.service create-site.service frontend.service queue-long.service queue-short.service scheduler.service websocket.service
+Requires=redis-queue.service db.service backend.service configurator.service
 Before=redis-queue.service db.service backend.service configurator.service create-site.service frontend.service queue-long.service queue-short.service scheduler.service websocket.service
 
 [Service]
