@@ -6,7 +6,7 @@
 [Unit]
 Description=Podman configurator.service
 Requires=erp-next.service
-After=erp-next.service redis-queue.service db.service backend.service
+After=erp-next.service redis-queue.service db.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
