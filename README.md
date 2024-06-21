@@ -5,8 +5,10 @@
 
 Instantiate the module with:
 
-    add-module ghcr.io/geniusdynamics/erpnext:latest 1
-
+```shell
+add-module ghcr.io/geniusdynamics/erpnext:latest 1
+```
+    
 The output of the command will return the instance name.
 Output example:
 
@@ -49,7 +51,7 @@ api-cli run get-configuration --agent module/erpnext1
 You can retrieve the configuration with
 
 ```
-api-cli run update-module --data '{"module_url":"ghcr.io/kemboi22/erpnext:latest","instances":["erpnext1"],"force":true}'
+api-cli run update-module --data '{"module_url":"ghcr.io/geniusdynamics/erpnext:latest","instances":["erpnext1"],"force":true}'
 ```
 
 ## Uninstall
