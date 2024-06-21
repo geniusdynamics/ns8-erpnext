@@ -12,7 +12,7 @@ TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/scheduler.pid %t/scheduler.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/scheduler.pid \
     --cidfile %t/scheduler.ctr-id --cgroups=no-conmon \
-    --pod erp-next --replace -d --name scheduler \
+     --pod-id-file %t/erp-next.pod-id --replace -d --name scheduler \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
     ${ERPNEXT_IMAGE} bench schedule

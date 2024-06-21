@@ -12,7 +12,7 @@ TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/redis-queue.pid %t/redis-queue.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-queue.pid \
     --cidfile %t/redis-queue.ctr-id --cgroups=no-conmon \
-    --pod erp-next --replace -d --name redis-queue \
+     --pod-id-file %t/erp-next.pod-id --replace -d --name redis-queue \
     --volume redis-queue-data:/data \
     ${REDIS_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-queue.ctr-id -t 10

@@ -15,7 +15,7 @@ TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/configurator.pid %t/configurator.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     --cidfile %t/configurator.ctr-id --cgroups=no-conmon \
-    --pod erp-next --replace -d --name configurator \
+     --pod-id-file %t/erp-next.pod-id --replace -d --name configurator \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
     -e DB_HOST=127.0.0.1 \

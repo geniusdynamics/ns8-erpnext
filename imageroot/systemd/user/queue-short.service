@@ -12,7 +12,7 @@ TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/queue-short.pid %t/queue-short.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/queue-short.pid \
     --cidfile %t/queue-short.ctr-id --cgroups=no-conmon \
-    --pod erp-next --replace -d --name queue-short \
+     --pod-id-file %t/erp-next.pod-id --replace -d --name queue-short \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
     ${ERPNEXT_IMAGE} bench worker --queue short,default
