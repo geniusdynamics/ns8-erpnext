@@ -3,7 +3,7 @@
 [Unit]
 Description=Podman queue-long.service
 Requires=erp-next.service
-After=erp-next.service redis-queue.service db.service backend.service configurator.service create-site.service frontend.service
+After=erp-next.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
