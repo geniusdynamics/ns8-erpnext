@@ -20,7 +20,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/mariadb-app.pid \
     --pod-id-file %t/erp-next.pod-id --replace -d --name mariadb-app \
     --env-file=%S/state/environment \
     --volume mysql-data:/var/lib/mysql/:Z \
-    --env MARIADB_ROOT_PASSWORD=Nethesis,1234 \
+    --env MARIADB_ROOT_PASSWORD=Nethesis1234 \
     --env MARIADB_DATABASE=erpnext \
     --env MARIADB_USER=erpnext \
     --env MARIADB_PASSWORD=erpnext \

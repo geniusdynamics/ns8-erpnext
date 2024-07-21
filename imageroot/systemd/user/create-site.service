@@ -30,7 +30,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/create-site.pid \
                  fi; \
                done; \
                echo "sites/common_site_config.json found"; \
-               bench new-site --no-mariadb-socket --admin-password=erpnext --db-root-password=erpnext --install-app erpnext --set-default frontend;'
+               bench new-site --no-mariadb-socket --admin-password=Nethesis1234 --db-root-password=Nethesis1234 --install-app erpnext --set-default frontend;'
 
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/create-site.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP create-site
