@@ -1,7 +1,7 @@
 [Unit]
 Description=Podman create-site.service
 BindsTo=erp-next.service
-After=erp-next.service redis-queue.service db.service
+After=erp-next.service redis-queue.service  redis-cache.service db.service configurator.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
