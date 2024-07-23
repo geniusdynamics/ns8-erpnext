@@ -3,7 +3,7 @@
 [Unit]
 Description=Podman queue-short.service
 BindsTo=erp-next.service
-After=erp-next.service  redis-cache.service
+After=erp-next.service  redis-cache.service db.service backend.service create-site.service frontend.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
