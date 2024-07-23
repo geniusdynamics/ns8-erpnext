@@ -6,7 +6,7 @@
 [Unit]
 Description=Podman configurator.service
 BindsTo=erp-next.service
-After=erp-next.service redis-queue.service  redis-cache.service db.service
+After=erp-next.service redis-cache.service db.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -22,7 +22,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     -e DB_HOST=db \
     -e DB_PORT=3306 \
     -e REDIS_CACHE=redis-cache:6379 \
-    -e REDIS_QUEUE=redis-queue:6379 \
+    -e REDIS_QUEUE=redis-cache:6379 \
     -e SOCKETIO_PORT=9000 \
  ${ERPNEXT_IMAGE} /bin/bash -c ' \
           ls -1 apps > sites/apps.txt; \

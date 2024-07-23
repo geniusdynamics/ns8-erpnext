@@ -3,7 +3,7 @@
 [Unit]
 Description=Podman websocket.service
 BindsTo=erp-next.service
-After=erp-next.service redis-queue.service redis-cache.service
+After=erp-next.service redis-cache.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
