@@ -20,14 +20,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/backend.pid \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
     ${ERPNEXT_IMAGE}
-ExecStartPost=/usr/bin/podman exec backend /bin/bash -c ' \
-                                                         bench set-config -g db_host "db"; \
-                                                         bench set-config -gp db_port "3306"; \
-                                                         bench set-config -g redis_cache "redis://redis-cache:6379"; \
-                                                         bench set-config -g redis_queue "redis://redis-cache:6379"; \
-                                                         bench set-config -g redis_socketio "redis://redis-cache:6379"; \
-                                                         bench set-config -gp socketio_port "9000"; \
-                                                  '
+
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/backend.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP backend
 SyslogIdentifier=%u

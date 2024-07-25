@@ -17,6 +17,8 @@ ExecStartPre=/bin/rm -f %t/configurator.pid %t/configurator.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     --cidfile %t/configurator.ctr-id --cgroups=no-conmon \
      --pod-id-file %t/erp-next.pod-id --replace -d --name configurator \
+     --entrypoint '["bash", "-c"]' \
+     --command 'ls -1 apps > sites/apps.txt; bench set-config -g db_host db; bench set-config -gp db_port 3306; bench set-config -g redis_cache "redis://redis-cache:6379"; bench set-config -g redis_queue "redis://redis-cache:6379"; bench set-config -g redis_socketio "redis://redis-cache:6379"; bench set-config -gp socketio_port 9000;' \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
     -e DB_HOST=db \
@@ -24,7 +26,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     -e REDIS_CACHE=redis-cache:6379 \
     -e REDIS_QUEUE=redis-cache:6379 \
     -e SOCKETIO_PORT=9000 \
- ${ERPNEXT_IMAGE} /bin/bash -c "bench set-config -g db_host 'db' && bench set-config -gp db_port '3306' && bench set-config -g redis_cache 'redis://redis-cache:6379' && bench set-config -g redis_queue 'redis://redis-cache:6379' && bench set-config -g redis_socketio 'redis://redis-cache:6379' && bench set-config -gp socketio_port '9000'"
+    ${ERPNEXT_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/configurator.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP configurator
 SyslogIdentifier=%u
