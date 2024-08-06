@@ -20,4 +20,4 @@
            fi
          done;
          echo "sites/common_site_config.json found";
-         bench new-site --no-mariadb-socket --admin-password=admin --db-root-password=Nethesis1234 --install-app erpnext --set-default frontend;
+         bench new-site --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --install-app erpnext --set-default frontend;
