@@ -19,7 +19,7 @@ envfile = "smarthost.env"
 # Using .tmp suffix: do not overwrite the target file until the new one is
 # saved to disk:
 with open(envfile + ".tmp", "w") as efp:
-    # HINT for kickstart: adjust variable names as needed
+    # HINT for erpnext: adjust variable names as needed
     print(f"SMTP_ENABLED={'1' if smtp_settings['enabled'] else ''}", file=efp)
     print(f"SMTP_HOST={smtp_settings['host']}", file=efp)
     print(f"SMTP_PORT={smtp_settings['port']}", file=efp)

@@ -1,7 +1,7 @@
 {
-  "name": "kickstart",
+  "name": "erpnext",
   "description": {
-    "en": "My kickstart module"
+    "en": "My erpnext module"
   },
   "categories": [],
   "authors": [
@@ -11,9 +11,9 @@
     }
   ],
   "docs": {
-    "documentation_url": "https://docs.kickstart.com/",
+    "documentation_url": "https://docs.erpnext.com/",
     "bug_url": "https://github.com/NethServer/dev",
-    "code_url": "https://github.com/author/ns8-kickstart"
+    "code_url": "https://github.com/author/ns8-erpnext"
   },
-  "source": "ghcr.io/nethserver/kickstart"
+  "source": "ghcr.io/nethserver/erpnext"
 }

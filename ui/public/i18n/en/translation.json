@@ -24,7 +24,7 @@
     "title": "Settings",
     "configure_instance": "Configure {instance}",
     "save": "Save",
-    "kickstart_fqdn": "ErpNext hostname (FQDN)",
+    "erpnext_fqdn": "ErpNext hostname (FQDN)",
     "lets_encrypt": "Request LE Certificate",
     "http_to_https": "Force HTTPS",
     "enabled": "Enabled",

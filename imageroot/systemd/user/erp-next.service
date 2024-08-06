@@ -4,7 +4,7 @@
 #
 
 #
-# This systemd unit starts a kickstart instance using Podman.
+# This systemd unit starts a erpnext instance using Podman.
 # Most parts of this file come from podman-generate-systemd.
 #
 
