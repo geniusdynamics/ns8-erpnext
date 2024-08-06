@@ -1,6 +1,5 @@
 [Unit]
 Description=Podman create-site.service
-BindsTo=erp-next.service
 After=erp-next.service redis-cache.service db.service websocket.service  configurator.service
 
 [Service]
@@ -11,13 +10,12 @@ TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/create-site.pid %t/create-site.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/create-site.pid \
     --cidfile %t/create-site.ctr-id --cgroups=no-conmon \
-     --pod-id-file %t/erp-next.pod-id --replace -d --name create-site \
-       --entrypoint '["bash", "-c"]' \
-         --command 'wait-for-it -t 120 db:3306; wait-for-it -t 120 redis-cache:6379; wait-for-it -t 120 redis-cache:6379; export start=`date +%s`; until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] && [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] && [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]]; do echo "Waiting for sites/common_site_config.json to be created"; sleep 5; if (( `date +%s`-start > 120 )); then echo "could not find sites/common_site_config.json with required keys"; exit 1; fi; done; echo "sites/common_site_config.json found"; bench new-site --no-mariadb-socket --admin-password=Nethesis1234 --db-root-password=Nethesis1234 --install-app erpnext --set-default frontend;' \
+    --pod-id-file %t/erp-next.pod-id --replace -d --name create-site \
+    --entrypoint '["bash", "-c"]' \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-       ${ERPNEXT_IMAGE} bench new-site --no-mariadb-socket --admin-password=Nethesis1234 --db-root-password=Nethesis1234 --install-app erpnext --set-default frontend
-
+    -v %S/bin/create-site:/create-site \
+       ${ERPNEXT_IMAGE} create-site
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/create-site.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP create-site
 SyslogIdentifier=%u
