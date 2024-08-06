@@ -11,7 +11,6 @@ After=erp-next.service redis-cache.service db.service
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 EnvironmentFile=%S/state/environment
-Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/configurator.pid %t/configurator.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \

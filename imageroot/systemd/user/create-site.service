@@ -6,7 +6,6 @@ After=erp-next.service redis-cache.service db.service websocket.service  configu
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 EnvironmentFile=%S/state/environment
-Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/create-site.pid %t/create-site.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/create-site.pid \
