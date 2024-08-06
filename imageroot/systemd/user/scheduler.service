@@ -2,7 +2,6 @@
 
 [Unit]
 Description=Podman scheduler.service
-BindsTo=erp-next.service
 After=erp-next.service redis-cache.service
 
 [Service]
