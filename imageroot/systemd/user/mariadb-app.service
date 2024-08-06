@@ -4,7 +4,7 @@
 #
 
 [Unit]
-Description=Podman db.service
+Description=Podman mariadb-app.service
 BindsTo=erp-next.service
 After=erp-next.service redis-cache.service
 

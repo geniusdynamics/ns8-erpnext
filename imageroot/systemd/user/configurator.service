@@ -6,7 +6,7 @@
 [Unit]
 Description=Podman configurator.service
 Wants=erp-next.service
-After=erp-next.service redis-cache.service db.service
+After=erp-next.service redis-cache.service mariadb-app.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -19,7 +19,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
     -v %S/bin/configurator:/configurator:Z \
-    -e DB_HOST=db \
+    -e DB_HOST=mariadb-app \
     -e DB_PORT=3306 \
     -e REDIS_CACHE=redis-cache:6379 \
     -e REDIS_QUEUE=redis-cache:6379 \
