@@ -2,7 +2,7 @@
 
 [Unit]
 Description=Podman queue-long.service
-BindsTo=erp-next.service
+Wants=erp-next.service
 After=erp-next.service  redis-cache.service db.service  configurator.service create-site.service frontend.service
 
 [Service]
