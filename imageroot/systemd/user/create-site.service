@@ -1,5 +1,6 @@
 [Unit]
 Description=Podman create-site.service
+Wants=erp-next.service
 After=erp-next.service redis-cache.service db.service websocket.service  configurator.service
 
 [Service]
