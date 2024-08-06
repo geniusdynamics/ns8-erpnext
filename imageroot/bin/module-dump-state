@@ -12,10 +12,10 @@ if ! systemctl --user -q is-active erpnext.service; then
 fi
 
 podman exec mariadb-app mysqldump \
-        --databases erpnext \
+        --all-databases \
         --default-character-set=utf8mb4 \
         --skip-dump-date \
         --ignore-table=mysql.event \
         --single-transaction \
         --quick \
-        --add-drop-table  > erpnext.sql
+        --add-drop-table > erpnext.sql
