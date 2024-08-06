@@ -24,8 +24,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/frontend.pid \
     -e UPSTREAM_REAL_IP_RECURSIVE=off \
     -e PROXY_READ_TIMEOUT=120 \
     -e CLIENT_MAX_BODY_SIZE=50m \
-    ${ERPNEXT_IMAGE}
-#     /bin/bash -c './scripts/nginx-entrypoint.sh'
+    ${ERPNEXT_IMAGE} nginx-entrypoint.sh
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/frontend.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP frontend
 SyslogIdentifier=%u
