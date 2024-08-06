@@ -14,7 +14,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/create-site.pid \
     --pod-id-file %t/erp-next.pod-id --replace -d --name create-site \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-    -v %S/bin/create-site:/create-site \
+    -v %S/bin/create-site:/create-site:Z \
        ${ERPNEXT_IMAGE} /bin/bash -c "/create-site"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/create-site.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP create-site
