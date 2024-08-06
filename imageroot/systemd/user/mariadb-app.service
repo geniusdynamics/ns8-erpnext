@@ -11,6 +11,7 @@ After=erp-next.service redis-cache.service
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 EnvironmentFile=%S/state/environment
+EnvironmentFile=%S/state/database.env
 # EnvironmentFile=%S/state/secrets/passwords.secret
 Restart=always
 TimeoutStopSec=70
@@ -18,16 +19,11 @@ ExecStartPre=/bin/rm -f %t/mariadb-app.pid %t/mariadb-app.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/mariadb-app.pid \
     --cidfile %t/mariadb-app.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/erp-next.pod-id --replace -d --name mariadb-app \
-    --env-file=%S/state/environment \
+    --env-file=%S/state/database.env \
     --volume mysql-data:/var/lib/mysql/:Z \
-    --env MARIADB_ROOT_PASSWORD=Nethesis1234 \
-    --env MARIADB_DATABASE=erpnext \
-    --env MARIADB_USER=erpnext \
-    --env MARIADB_PASSWORD=erpnext \
-    --env MARIADB_AUTO_UPGRADE=1 \
     ${MARIADB_IMAGE} \
     --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --skip-character-set-client-handshake
-ExecStartPost=/usr/bin/podman exec  mariadb-app /bin/bash -c 'printf "[client] \npassword=Nethesis1234" > /root/.my.cnf'
+ExecStartPost=/usr/bin/podman exec  mariadb-app /bin/bash -c 'printf "[client] \npassword=${MARIADB_ROOT_PASSWORD}" > /root/.my.cnf'
 ExecStartPost=/usr/bin/podman exec mariadb-app /bin/bash -c "while ! mysqladmin ping -h localhost -P 3306 -u root; do sleep 1; done"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/mariadb-app.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/mariadb-app.ctr-id

@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import sys
+import agent
+import secrets
+
+# Try to parse the stdin as JSON.
+# If parsing fails, output everything to stderr
+data = json.load(sys.stdin)
+
+#This is specific to you module, so you need to change it accordingly.
+def generate_random_password():
+    return secrets.token_urlsafe(16)
+
+
+MARIADB_ROOT_PASSWORD = generate_random_password()
+MARIADB_DATABASE = data.get("MARIADB_DATABASE", "erpnext")
+MARIADB_USER = data.get("MARIADB_USER", "erpnext")
+MARIADB_PASSWORD = generate_random_password()
+MARIADB_AUTO_UPGRADE = data.get("MARIADB_AUTO_UPGRADE", 1)
+
+mariadb = {
+    "MARIADB_ROOT_PASSWORD": MARIADB_ROOT_PASSWORD,
+    "MARIADB_DATABASE": MARIADB_DATABASE,
+    "MARIADB_USER": MARIADB_USER,
+    "MARIADB_PASSWORD": MARIADB_PASSWORD,
+    "MARIADB_AUTO_UPGRADE": MARIADB_AUTO_UPGRADE
+}
+agent.write_envfile("database.env", mariadb)
+
+#agent.dump_env()
