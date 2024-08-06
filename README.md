@@ -57,6 +57,10 @@ api-cli run update-module --data '{"module_url":"ghcr.io/geniusdynamics/erpnext:
 ## Running ERPNEXT COMMANDS
 ErpNext provides a huge set of internal commands for managing and runnign erpnext found here
 https://frappeframework.com/docs/user/en/bench/reference
+and commands cheatsheet
+
+https://frappeframework.com/docs/user/en/bench/resources/bench-commands-cheatsheet
+
 
 To Run any of these Commands in NEthserver 8, you will need to 
     ssh erpnext12@localhost
@@ -64,7 +68,6 @@ WHile inside there, to run Erpnext Bench Commands
 ```
 podman exec backend bench list-apps
 ```
-
 ## Uninstall
 
 To uninstall the instance:
