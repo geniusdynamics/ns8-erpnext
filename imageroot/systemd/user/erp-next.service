@@ -23,7 +23,7 @@ ExecStartPre=/bin/rm -f %t/erp-next.pid %t/erp-next.pod-id
 ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/erp-next.pid \
     --pod-id-file %t/erp-next.pod-id \
     --name erp-next \
-    --publish 127.0.0.1:${TCP_PORT}:80 \
+    --publish 127.0.0.1:${TCP_PORT}:8080 \
     --replace
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/erp-next.pod-id
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/erp-next.pod-id -t 10
