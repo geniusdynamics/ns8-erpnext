@@ -1,0 +1,27 @@
+# redis-socketio.service
+
+[Unit]
+Description=Podman redis-socketio.service
+BindsTo=erp-next.service
+After=erp-next.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/rm -f %t/redis-socketio.pid %t/redis-socketio.ctr-id
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-socketio.pid \
+    --cidfile %t/redis-socketio.ctr-id --cgroups=no-conmon \
+     --pod-id-file %t/erp-next.pod-id --replace -d --name redis-socketio \
+    --volume redis-socketio-data:/data \
+    ${REDIS_IMAGE}
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-socketio.ctr-id -t 10
+ExecReload=/usr/bin/podman kill -s HUP redis-socketio
+SyslogIdentifier=%u
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/redis-socketio.ctr-id
+PIDFile=%t/redis-socketio.pid
+Type=forking
+
+[Install]
+WantedBy=default.target
