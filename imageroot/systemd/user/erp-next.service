@@ -10,9 +10,9 @@
 
 [Unit]
 Description=Podman erp-next.service
-Wants=configurator.service  create-site.service  queue-long.service queue-short.service
+Wants=configurator.service  create-site.service  queue-long.service queue-short.service scheduler.service
 Requires=redis-cache.service db.service backend.service websocket.service frontend.service
-Before=redis-cache.service db.service scheduler.service backend.service configurator.service create-site.service frontend.service queue-long.service queue-short.service  websocket.service
+Before=redis-cache.service db.service scheduler.service backend.service configurator.service create-site.service frontend.service queue-long.service queue-short.service  websocket.service scheduler.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
