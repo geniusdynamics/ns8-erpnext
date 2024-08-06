@@ -19,7 +19,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/configurator.pid \
      --entrypoint '["bash", "-c"]' \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-    -v %S/bin/configurator:/configurator \
+    -v %S/bin/configurator:/configurator:Z \
     -e DB_HOST=db \
     -e DB_PORT=3306 \
     -e REDIS_CACHE=redis-cache:6379 \
