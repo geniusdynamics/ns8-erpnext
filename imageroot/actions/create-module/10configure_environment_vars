@@ -33,5 +33,18 @@ mariadb = {
     "MARIADB_AUTO_UPGRADE": MARIADB_AUTO_UPGRADE
 }
 agent.write_envfile("database.env", mariadb)
+#     -e DB_HOST=mariadb-app \
+#     -e DB_PORT=3306 \
+#     -e REDIS_CACHE=redis-cache:6379 \
+#     -e REDIS_QUEUE=redis-cache:6379 \
+#     -e SOCKETIO_PORT=9000 \
+erpnext_config = {
+    "DB_HOST": "mariadb-app",
+    "DB_PORT": "3306",
+    "REDIS_CACHE": "redis-cache:6379",
+    "REDIS_QUEUE": "redis-cache:6379",
+    "SOCKETIO_PORT": "9000"
+}
+agent.write_envfile("configurator.env", erpnext_config)
 
 #agent.dump_env()
