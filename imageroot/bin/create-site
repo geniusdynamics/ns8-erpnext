@@ -22,4 +22,8 @@
          echo "sites/common_site_config.json found";
          bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --install-app erpnext --set-default;
          bench get-app hrms --branch version-15;
+         bench get-app payments --branch version-15;
+         bench get-app waba_integration;
+         bench --site frontend install-app payments;
          bench --site frontend install-app hrms;
+         bench --site frontend install-app waba_integration;
