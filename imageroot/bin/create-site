@@ -25,5 +25,4 @@
          bench get-app payments --branch version-15;
          bench get-app waba_integration;
          bench --site frontend install-app payments;
-         bench --site frontend install-app hrms;
          bench --site frontend install-app waba_integration;
