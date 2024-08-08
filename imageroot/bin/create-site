@@ -29,4 +29,3 @@
          bench --site frontend clear-cache
          bench --site frontend install-app payments;
          bench --site frontend install-app waba_integration;
-         bench --site frontend set-config developer_mode 0
