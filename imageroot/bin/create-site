@@ -20,4 +20,7 @@
            fi
          done;
          echo "sites/common_site_config.json found";
+         bench get-app --branch=version-15 --resolve-deps erpnext https://github.com/frappe/erpnext
+         bench get-app --branch=version-15 --resolve-deps hrms https://github.com/frappe/hrms
+         bench get-app --branch=version-15 --resolve-deps payments https://github.com/frappe/payments
          bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --install-app erpnext --install-app hrms --install-app payments --set-default;
