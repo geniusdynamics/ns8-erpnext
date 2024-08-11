@@ -62,13 +62,16 @@
               }}</template>
             </cv-toggle>
             <div>Selected Modules: {{erpNextModules}} </div>
-            <cv-multi-select
-                :label="'ERP Next Modules to be installed'"
-                :options="erpNextModules"
-                :title="'ERP Next Modules to be installed'"
+            <div v-for="module in erpNextModules" :key="module.value">
+              <cv-toggle
+                :name="module.value"
+                :value="module.value"
                 v-model="erpSelectedModules"
-            >
-            </cv-multi-select>
+                :disabled="loading.getConfiguration || loading.configureModule"
+                class="mg-bottom">
+
+              </cv-toggle>
+            </div>
               <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
