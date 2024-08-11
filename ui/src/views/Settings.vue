@@ -61,7 +61,7 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
-            <div>Selected Modules: {{erpNextModules}} </div>
+            <div>Selected Modules: {{erpSelectedModules}} </div>
             <cv-multi-select
                 :label="'ERP Next Modules to be installed'"
                 :options="erpNextModules"
@@ -77,7 +77,7 @@
 
                   <div v-for="module in erpNextModules" :key="module.value">
                     <cv-toggle
-                        :name="module.value"
+                        :label="module.value"
                         :value="module.value"
                         v-model="erpSelectedModules"
                         :disabled="loading.getConfiguration || loading.configureModule"
