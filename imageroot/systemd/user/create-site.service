@@ -15,6 +15,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/create-site.pid \
     -v logs:/home/frappe/frappe-bench/logs \
     -v %S/bin/create-site:/create-site:Z \
     --env-file=%S/state/database.env \
+    --env-file=%S/state/erpnext-modules.env \
      ${CUSTOM_ERPNEXT_IMAGE} /bin/bash -c "/create-site"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/create-site.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP create-site
