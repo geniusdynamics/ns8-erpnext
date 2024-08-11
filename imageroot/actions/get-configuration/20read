@@ -14,6 +14,7 @@ import sys
 import json
 import agent
 
+
 # Prepare return variable
 config = {}
 
@@ -21,6 +22,23 @@ config = {}
 config["host"] = os.getenv("TRAEFIK_HOST","")
 config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS") == "True"
 config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
+
+# Load erpnext-modules.env file
+
+erp_next_modules = "erpnext-modules.env"
+
+if os.path.exists(erp_next_modules):
+    with open(erp_next_modules, "r") as f:
+        for line in f:
+            key, value = line.strip().split("=")
+            if key in config:
+                if key == "erpSelectedModules":
+                    try:
+                        config[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        print(f"Error decoding JSON for key {key}. Using default value.")
+                else:
+                    config[key] = value
 
 # Dump the configuration to stdout
 json.dump(config, fp=sys.stdout)
