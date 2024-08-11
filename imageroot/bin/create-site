@@ -22,7 +22,7 @@
          echo "sites/common_site_config.json found";
          bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --install-app erpnext --set-default;
         # Convert the JSON-like string to a bash array
-        ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES" | tr -d '[]' | tr -d '"' | tr -d ' ')
+        ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES"  | tr -d "[]'" | tr -d ' ')
         IFS=',' read -r -a ERP_NEXT_MODULES_ARRAY <<< "$ERPNEXT_MODULES"
        # Iterate over the array
        for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
