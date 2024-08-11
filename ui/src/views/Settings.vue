@@ -62,21 +62,29 @@
               }}</template>
             </cv-toggle>
             <div>Selected Modules: {{erpNextModules}} </div>
-            <div v-for="module in erpNextModules" :key="module.value">
-              <cv-toggle
-                :name="module.value"
-                :value="module.value"
+            <cv-multi-select
+                :label="'ERP Next Modules to be installed'"
+                :options="erpNextModules"
+                :title="'ERP Next Modules to be installed'"
                 v-model="erpSelectedModules"
-                :disabled="loading.getConfiguration || loading.configureModule"
-                class="mg-bottom">
-
-              </cv-toggle>
-            </div>
+            >
+            </cv-multi-select>
               <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
+
+                  <div v-for="module in erpNextModules" :key="module.value">
+                    <cv-toggle
+                        :name="module.value"
+                        :value="module.value"
+                        v-model="erpSelectedModules"
+                        :disabled="loading.getConfiguration || loading.configureModule"
+                        class="mg-bottom">
+
+                    </cv-toggle>
+                  </div>
                 </template>
               </cv-accordion-item>
             </cv-accordion>
