@@ -20,5 +20,6 @@ ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
 agent.write_envfile("erpnext-modules.env", {
     "ERP_NEXT_MODULES": ERP_NEXT_MODULES
 })
+agent.set_env("ERP_NEXT_MODULES", ERP_NEXT_MODULES)
 
-#agent.dump_env()
+agent.dump_env()
