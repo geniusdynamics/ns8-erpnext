@@ -61,6 +61,14 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
+            <div>Selected Modules: {{erpNextModules}} </div>
+            <cv-multi-select
+                :label="'ERP Next Modules to be installed'"
+                :options="erpNextModules"
+                :title="'ERP Next Modules to be installed'"
+                v-model="erpSelectedModules"
+            >
+            </cv-multi-select>
               <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
@@ -125,6 +133,24 @@ export default {
       host: "",
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
+      erpNextModules:[
+        { "label": "payments", "value": "payments", "name": "payments", "disabled": false },
+        { "label": "navari_csf_ke", "value": "navari_csf_ke", "name": "navari_csf_ke", "disabled": false },
+        { "label": "hrms", "value": "hrms", "name": "hrms", "disabled": false },
+        { "label": "kenya-compliance", "value": "kenya-compliance", "name": "kenya-compliance", "disabled": false },
+        { "label": "frappe-mpesa-payments", "value": "frappe-mpesa-payments", "name": "frappe-mpesa-payments", "disabled": false },
+        { "label": "navari-mpesa-b2c", "value": "navari-mpesa-b2c", "name": "navari-mpesa-b2c", "disabled": false },
+        { "label": "nl-attendance-timesheet", "value": "nl-attendance-timesheet", "name": "nl-attendance-timesheet", "disabled": false },
+        { "label": "nl-piece-rate-pay", "value": "nl-piece-rate-pay", "name": "nl-piece-rate-pay", "disabled": false },
+        { "label": "frappe_whatsapp", "value": "frappe_whatsapp", "name": "frappe_whatsapp", "disabled": false },
+        { "label": "education", "value": "education", "name": "education", "disabled": false },
+        { "label": "frappe_paystack", "value": "frappe_paystack", "name": "frappe_paystack", "disabled": false },
+        { "label": "print_designer", "value": "print_designer", "name": "print_designer", "disabled": false },
+        { "label": "webshop", "value": "webshop", "name": "webshop", "disabled": false },
+        { "label": "whitelabel", "value": "whitelabel", "name": "whitelabel", "disabled": false }
+      ]
+      ,
+      erpSelectedModules: [],
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -271,6 +297,7 @@ export default {
             host: this.host,
             lets_encrypt: this.isLetsEncryptEnabled,
             http2https: this.isHttpToHttpsEnabled,
+            erpSelectedModules: this.erpSelectedModules,
           },
           extra: {
             title: this.$t("settings.instance_configuration", {
