@@ -14,20 +14,11 @@ import agent
 data = json.load(sys.stdin)
 
 #This is specific to you module, so you need to change it accordingly.
-# we read a json stdin {"vars1":true, "var2":"foo", "vars3": 3} and we writ it to .config/state/environment
-# Upper case to set environment variable and minor case to read from stdin
 
-# this values must exists in the json stdin
-# agent.set_env("MAIL_SERVER", data["mail_server"])
-# agent.set_env("LDAP_DOMAIN", data["ldap_domain"])
+ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
 
-# you can add default values for the following variables
-# agent.set_env("MAIL_DOMAIN",data.get("mail_domain",""))
-# agent.set_env("WOWORKERSCOUNT",data.get("workers_count",3))
-# agent.set_env("AUXILIARYACCOUNT",data.get("auxiliary_account",True))
-# agent.set_env("ACTIVESYNC",data.get("activesync",False))
+agent.write_envfile("erpnext-modules.env", {
+    "ERP_NEXT_MODULES": ERP_NEXT_MODULES
+})
 
-
-# Make sure everything is saved inside the environment file
-# just before starting systemd unit
 #agent.dump_env()
