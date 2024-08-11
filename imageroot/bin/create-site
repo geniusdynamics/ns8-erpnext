@@ -21,3 +21,10 @@
          done;
          echo "sites/common_site_config.json found";
          bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --install-app erpnext --set-default;
+
+        # Loop through the modules and install ERP_NEXT_MODULES
+        for module in $ERP_NEXT_MODULES; do
+          echo "Installing $module";
+          bench --site frontend install-app "$module";
+        done;
+
