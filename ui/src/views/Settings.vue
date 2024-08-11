@@ -146,6 +146,7 @@ export default {
       isHttpToHttpsEnabled: true,
       erpNextModules:[
         { "label": "payments", "value": "payments", "name": "payments", "disabled": false },
+        { "label": "Health Care", "value": "healthcare", "name": "healthcare", "disabled": false },
         { "label": "Navari Csf Ke", "value": "navari_csf_ke", "name": "navari_csf_ke", "disabled": false },
         { "label": "Hrms", "value": "hrms", "name": "hrms", "disabled": false },
         { "label": "Kenya Compliance", "value": "kenya_compliance", "name": "kenya-compliance", "disabled": false },
