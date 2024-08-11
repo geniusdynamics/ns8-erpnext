@@ -228,6 +228,7 @@ export default {
       this.host = config.host;
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
+      this.erpSelectedModules = config.erpSelectedModules;
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
