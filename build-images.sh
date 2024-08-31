@@ -14,7 +14,7 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="erpnext"
-app_version="v15.31.5"
+app_version="v15.32.1-ns.1"
 # Create a new empty container image
 container=$(buildah from scratch)
 
@@ -45,7 +45,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/mariadb:10.11.5 docker.io/frappe/erpnext:${app_version} docker.io/redis:6.2-alpine" \
+    --label="org.nethserver.images=docker.io/mariadb:10.11.5 docker.io/geniusdynamics/custom-erpnext:${app_version} docker.io/redis:6.2-alpine" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"

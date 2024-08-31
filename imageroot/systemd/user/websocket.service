@@ -16,7 +16,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/websocket.pid \
      --pod-id-file %t/erp-next.pod-id --replace -d --name websocket \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-    ${ERPNEXT_IMAGE} node /home/frappe/frappe-bench/apps/frappe/socketio.js
+    ${CUSTOM_ERPNEXT_IMAGE} node /home/frappe/frappe-bench/apps/frappe/socketio.js
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/websocket.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP websocket
 SyslogIdentifier=%u

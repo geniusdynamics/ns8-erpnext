@@ -14,6 +14,7 @@ import sys
 import json
 import agent
 
+
 # Prepare return variable
 config = {}
 
@@ -21,6 +22,11 @@ config = {}
 config["host"] = os.getenv("TRAEFIK_HOST","")
 config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS") == "True"
 config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
+config["erpSelectedModules"] = os.getenv("ERP_NEXT_MODULES", [])
+# Load erpnext-modules.env file
+
+erp_next_modules = "erpnext-modules.env"
+
 
 # Dump the configuration to stdout
 json.dump(config, fp=sys.stdout)
