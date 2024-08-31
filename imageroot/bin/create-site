@@ -24,10 +24,16 @@
         # Convert the JSON-like string to a bash array
         ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES"  | tr -d "[]'" | tr -d ' ')
         IFS=',' read -r -a ERP_NEXT_MODULES_ARRAY <<< "$ERPNEXT_MODULES"
-       # Iterate over the array
-       for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
-           echo "Processing $module"
-           # Add your logic here, e.g., installing apps
-           bench --site frontend install-app "$module"
-       done
+      # Check if the array is empty
+            if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ]; then
+                echo "No modules specified, installing erpnext by default."
+                bench --site frontend install-app erpnext
+            else
+                # Iterate over the array
+                for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
+                    echo "Processing $module"
+                    # Add your logic here, e.g., installing apps
+                    bench --site frontend install-app "$module"
+                done
+            fi
 
