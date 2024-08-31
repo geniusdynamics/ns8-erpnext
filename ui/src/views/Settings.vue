@@ -145,7 +145,7 @@ export default {
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
       erpNextModules:[
-        { "label": "ERPNext", "value": "erpnext", "name": "erpnext", "disabled": false }
+        { "label": "ERPNext", "value": "erpnext", "name": "erpnext", "disabled": false },
         { "label": "Insights", "value": "insights", "name": "insights", "disabled": false },
         { "label": "Hrms", "value": "hrms", "name": "hrms", "disabled": false },
         { "label": "Nl Attendance Timesheet", "value": "nl_attendance_timesheet", "name": "nl-attendance-timesheet", "disabled": false },
