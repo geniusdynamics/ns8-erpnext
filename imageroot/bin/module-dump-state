@@ -23,9 +23,9 @@ backup_and_save_paths()
   # Run the exec to back up the db
   output=$(bench exec backend bench --site "$site" backup)
 
-  # Extract the paths from the output
-  local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+')
-  local db_path=$(echo "$output" | grep -oP '(?<=Database:\s).+')
+  # Extract the paths from the output && remove the ./ from the paths
+  local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+' | sed 's/^\./||')
+  local db_path=$(echo "$output" | grep -oP '(?<=Database:\s).+' | sed 's/^\./||')
 
   # Save the paths to a file
   echo "CONFIG_PATH=$config_path" > "$BACKUP_FILE"
