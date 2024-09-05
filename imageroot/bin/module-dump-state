@@ -11,11 +11,27 @@ if ! systemctl --user -q is-active erpnext.service; then
     exit 0
 fi
 
-podman exec mariadb-app mysqldump \
-        --all-databases \
-        --default-character-set=utf8mb4 \
-        --skip-dump-date \
-        --ignore-table=mysql.event \
-        --single-transaction \
-        --quick \
-        --add-drop-table > erpnext.sql
+#Creating A manual back up from internal app
+SITE="frontend"
+BACKUP_FILE="backup_paths.txt"
+
+backup_and_save_paths()
+{
+  local site=$1
+  local output
+
+  # Run the exec to back up the db
+  output=$(bench exec backend bench --site "$site" backup)
+
+  # Extract the paths from the output
+  local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+')
+  local db_path=$(echo "$output" | grep -oP '(?<=Database:\s).+')
+
+  # Save the paths to a file
+  echo "CONFIG_PATH=$config_path" > "$BACKUP_FILE"
+  echo "DB_PATH=$db_path" >> "$BACKUP_FILE"
+
+  echo "Backup paths saved to $BACKUP_FILE"
+}
+
+backup_and_save_paths "$SITE"
