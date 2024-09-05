@@ -21,15 +21,21 @@ backup_and_save_paths()
   local output
 
   # Run the exec to back up the db
-  output=$(bench exec backend bench --site "$site" backup)
+  output=$(bench exec backend bench --site "$site" backup --with-files)
 
   # Extract the paths from the output && remove the ./ from the paths
   local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+' | sed 's/^\./||')
   local db_path=$(echo "$output" | grep -oP '(?<=Database:\s).+' | sed 's/^\./||')
+  local public_archive=$(echo "$output" | grep -oP '(?<=Public\s+:\s).+' | sed 's/^\./||')
+  local private_archive=$(echo "$output" | grep -oP '(?<=Private\s+:\s).+' | sed 's/^\./||')
 
   # Save the paths to a file
-  echo "CONFIG_PATH=$config_path" > "$BACKUP_FILE"
-  echo "DB_PATH=$db_path" >> "$BACKUP_FILE"
+  {
+    echo "CONFIG_PATH=$config_path"
+    echo "DB_PATH=$db_path"
+    echo "PUBLIC_ARCHIVE=$public_archive"
+    echo "PRIVATE_ARCHIVE=$private_archive"
+  } > "$BACKUP_FILE"
 
   echo "Backup paths saved to $BACKUP_FILE"
 }
