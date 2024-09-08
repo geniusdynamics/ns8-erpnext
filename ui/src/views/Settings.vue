@@ -150,7 +150,7 @@ export default {
         { "label": "Nl Attendance Timesheet", "value": "nl_attendance_timesheet", "name": "nl-attendance-timesheet", "disabled": false },
         { "label": "Nl Piece Rate Pay", "value": "nl_piece_rate_pay", "name": "nl-piece-rate-pay", "disabled": false },
         { "label": "Employee Self Service", "value": "employee_self_service", "name": "employee_self_service", "disabled": false },
-        { "label": "Expenses", "value": "erpnext_expenses ", "name": "erpnext_expenses ", "disabled": false },
+        { "label": "Expenses", "value": "erpnext_expenses", "name": "erpnext_expenses", "disabled": false },
         { "label": "payments", "value": "payments", "name": "payments", "disabled": false },
         { "label": "Paystack", "value": "frappe_paystack", "name": "frappe_paystack", "disabled": false },
         { "label": "Mpesa Payments", "value": "frappe_mpesa_payments", "name": "frappe-mpesa-payments", "disabled": false },
