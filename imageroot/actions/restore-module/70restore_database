@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+set -e
+source database.env
+
+# Check if the service is running
+is_service_running() {
+  local service_name=$1
+    systemctl --user -q is-active "$service_name"
+}
+
+# Check if erpnext.service is running and also backend.service
+if ! is_service_active "erpnext.service" && ! is_service_active "backend.service"; then
+    echo "Both erpnext.service and backend.service are inactive. Waiting for backend.service to become active..."
+
+    # Wait for backend.service to become active
+    while ! is_service_active "backend.service"; do
+        sleep 5  # Check every 5 seconds
+    done
+    echo "backend.service is now active."
+fi
+
+# After both service are active, restore backup
+echo "Restoring backup..."
+
+SITE="frontend"
+BACKUP_FILE="backup_paths.txt"
+restore_back_up()
+{
+  local site=$1
+
+  # Load the backup paths fom file
+  source "$BACKUP_FILE"
+
+  # Run the restore command from bench
+  podman exec backend bench --site "$site" restore "$DB_PATH" \
+    --db-root-password="$MARIADB_ROOT_PASSWORD" \
+    --db-root-username="$MARIADB_USER" \
+    --with-public-files="$PUBLIC_ARCHIVE" \
+    --with-private-files="$PRIVATE_ARCHIVE" 
+}
