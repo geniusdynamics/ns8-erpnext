@@ -173,6 +173,8 @@ export default {
         { "label": "Inventory tools", "value": "inventory_tools", "name": "inventory_tools", "disabled": false },
         { "label": "Lending", "value": "lending", "name": "lending", "disabled": false },
         { "label": "HealthCare", "value": "healthcare", "name": "healthcare", "disabled": false },
+        { "label": "GetPOS", "value": "nbpos", "name": "nbpos", "disabled": false },
+        { "label": "Offline POS", "value": "ERPNEXT_pos", "name": "ERPNEXT_pos", "disabled": false },
         { "label": "Webshop", "value": "webshop", "name": "webshop", "disabled": false },
         { "label": "Education", "value": "education", "name": "education", "disabled": false },
         { "label": "LMS (SA)", "value": "lms", "name": "lms", "disabled": false },
