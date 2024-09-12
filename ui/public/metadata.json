@@ -1,19 +1,19 @@
 {
-  "name": "erpnext",
+  "name": "ERPNEXT",
   "description": {
-    "en": "My erpnext module"
+    "en": "The most agile ERP on the planet: ERPNext is the world's best free and open source ERP"
   },
-  "categories": [],
+  "categories": ["office"],
   "authors": [
     {
-      "name": "Name Surname",
-      "email": "author@yourmail.org"
+      "name": "Genius Dynamics",
+      "email": "support@genius.ke"
     }
   ],
   "docs": {
     "documentation_url": "https://docs.erpnext.com/",
-    "bug_url": "https://github.com/NethServer/dev",
-    "code_url": "https://github.com/author/ns8-erpnext"
+    "bug_url": "https://github.com/geniusdynamic/dev",
+    "code_url": "https://github.com/geniusdynamics/ns8-erpnext"
   },
-  "source": "ghcr.io/nethserver/erpnext"
+  "source": "ghcr.io/geniusdynamics/erpnext"
 }
