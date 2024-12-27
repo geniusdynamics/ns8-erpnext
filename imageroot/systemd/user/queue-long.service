@@ -16,7 +16,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/queue-long.pid \
      --pod-id-file %t/erp-next.pod-id --replace -d --name queue-long \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-    ${CUSTOM_ERPNEXT_IMAGE} bench worker --queue long,default,short
+    ${ERPNEXT_IMAGE} bench worker --queue long,default,short
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/queue-long.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP queue-long
 SyslogIdentifier=%u

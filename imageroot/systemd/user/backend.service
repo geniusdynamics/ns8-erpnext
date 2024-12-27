@@ -19,7 +19,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/backend.pid \
      --pod-id-file %t/erp-next.pod-id --replace -d --name backend \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
-    ${CUSTOM_ERPNEXT_IMAGE}
+    ${ERPNEXT_IMAGE}
 
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/backend.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP backend
