@@ -16,7 +16,7 @@ repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 reponame="erpnext"
 
 
-app_version="v15.48.1"
+app_version="v15.48.2"
 
 
 # Create a new empty container image
