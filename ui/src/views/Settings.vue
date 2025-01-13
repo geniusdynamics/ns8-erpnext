@@ -183,6 +183,7 @@ export default {
         { "label": "Insights (SA)", "value": "insights", "name": "insights", "disabled": false },
         { "label": "Builder (SA)", "value": "builder", "name": "builder", "disabled": false },
         { "label": "CRM (SA)", "value": "crm", "name": "crm", "disabled": false },
+        { "label": "Raven (SA)", "value": "raven", "name": "raven", "disabled": false },
         { "label": "Gameplan (SA)", "value": "gameplan", "name": "gameplan", "disabled": false },
         { "label": "Drive (SA)", "value": "drive", "name": "drive", "disabled": false }, 
       ]
