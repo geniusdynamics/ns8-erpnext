@@ -45,4 +45,7 @@ backup_and_save_paths() {
 	echo "Backup paths saved to $BACKUP_FILE"
 }
 
+echo "Starting Backup;"
 backup_and_save_paths "$SITE"
+
+echo "Backup finished"
