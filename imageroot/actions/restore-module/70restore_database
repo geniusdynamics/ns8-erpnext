@@ -39,7 +39,6 @@ restore_back_up() {
 	# Run the restore command from bench
 	podman exec backend bench --site "$site" restore "$DB_PATH" \
 		--db-root-password="$MARIADB_ROOT_PASSWORD" \
-		--db-root-username="$MARIADB_USER" \
 		--with-public-files="$PUBLIC_ARCHIVE" \
 		--with-private-files="$PRIVATE_ARCHIVE"
 }

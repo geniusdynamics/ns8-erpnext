@@ -24,17 +24,29 @@ backup_and_save_paths() {
 	podman exec backend bench list-apps
 	podman exec frontend bench list-apps
 	echo "Running this command"
-	# Run the exec to back up the db
-	output=$(podman exec backend bench --site "$site" backup --with-files)
-	echo "This is the output of podamn exec: $output"
+	echo "Running backup for site: $site"
+	output=$(podman exec backend bench --site "$site" backup --with-files 2>&1)
 
-	# Extract the paths from the output && remove the ./ from the paths
-	local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+' | sed 's|^\./||')
-	local db_path=$(echo "$output" | grep -oP '(?<=Database:\s*)\S+' | sed 's|^\./||')
-	local public_archive=$(echo "$output" | grep -oP '(?<=Public\s+:\s).+' | sed 's|^\./||')
-	local private_archive=$(echo "$output" | grep -oP '(?<=Private\s+:\s).+' | sed 's|^\./||')
+	if [[ $? -ne 0 ]]; then
+		echo "Error during backup: $output"
+		exit 1
+	fi
 
-	# Save the paths to a file
+	echo "Backup output received."
+
+	# Extract the paths from the output and remove leading ./ and sizes
+	local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s)\S+' | sed 's|^\./||' | awk '{print $1}')
+	local db_path=$(echo "$output" | grep -oP '(?<=Database:\s)\S+' | sed 's|^\./||' | awk '{print $1}')
+	local public_archive=$(echo "$output" | grep -oP '(?<=Public\s+:\s)\S+' | sed 's|^\./||' | awk '{print $1}')
+	local private_archive=$(echo "$output" | grep -oP '(?<=Private\s+:\s)\S+' | sed 's|^\./||' | awk '{print $1}')
+
+	# Validate that paths were extracted correctly
+	if [[ -z "$config_path" || -z "$db_path" || -z "$public_archive" || -z "$private_archive" ]]; then
+		echo "Error extracting backup paths."
+		exit 1
+	fi
+
+	# Save the paths to the backup file
 	{
 		echo "CONFIG_PATH=${BASE_DIR}${config_path}"
 		echo "DB_PATH=${BASE_DIR}${db_path}"
@@ -45,7 +57,6 @@ backup_and_save_paths() {
 	echo "Backup paths saved to $BACKUP_FILE"
 }
 
-echo "Starting Backup;"
+echo "Starting Backup..."
 backup_and_save_paths "$SITE"
-
-echo "Backup finished"
+echo "Backup finished."
