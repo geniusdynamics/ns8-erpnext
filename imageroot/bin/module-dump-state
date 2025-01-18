@@ -20,6 +20,10 @@ backup_and_save_paths() {
 	local site=$1
 	local output
 
+	echo "Listing apps"
+	podman exec backend bench list-apps
+	podman exec frontend bench list-apps
+	echo "Running this command"
 	# Run the exec to back up the db
 	output=$(podman exec backend bench --site "$site" backup --with-files)
 	echo "This is the output of podamn exec: $output"
