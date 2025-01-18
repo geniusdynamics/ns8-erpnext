@@ -30,7 +30,7 @@ backup_and_save_paths() {
 
 	# Extract the paths from the output && remove the ./ from the paths
 	local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+' | sed 's|^\./||')
-	local db_path=$(echo "$output" | grep -oP '(?<=Database:\s).+' | sed 's|^\./||')
+	local db_path=$(echo "$output" | grep -oP '(?<=Database:\s*)\S+' | sed 's|^\./||')
 	local public_archive=$(echo "$output" | grep -oP '(?<=Public\s+:\s).+' | sed 's|^\./||')
 	local private_archive=$(echo "$output" | grep -oP '(?<=Private\s+:\s).+' | sed 's|^\./||')
 
