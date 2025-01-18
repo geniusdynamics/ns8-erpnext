@@ -21,7 +21,7 @@ backup_and_save_paths() {
 	local output
 
 	# Run the exec to back up the db
-	output=$(bench exec backend bench --site "$site" backup --with-files)
+	output=$(podman exec backend bench --site "$site" backup --with-files)
 
 	# Extract the paths from the output && remove the ./ from the paths
 	local config_path=$(echo "$output" | grep -oP '(?<=Config\s+:\s).+' | sed 's/^\./||')
