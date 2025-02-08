@@ -35,6 +35,7 @@ backup_and_save_paths() {
 
     echo "Backup output received."
 
+    # Extract the paths from the output and remove leading ./ and sizes
     # Use grep without lookbehind assertions
     local config_path=$(echo "$output" | grep -o "Config\s*:\s*.*" | awk '{print $2}')
     local db_path=$(echo "$output" | grep -o "Database:\s*.*" | awk '{print $2}')
