@@ -33,10 +33,18 @@ BACKUP_FILE="backup_paths.txt"
 restore_back_up() {
 	local site=$1
 
-	# Load the backup paths fom file
+# Print the current working directory
+    echo "Current working directory: $(pwd)"
+
+# Check if the backup_paths.txt file exists
+    if [[ ! -f "$BACKUP_FILE" ]]; then
+        echo "Error: $BACKUP_FILE not found in $(pwd)"
+        exit 1
+    fi
+# Load the backup paths fom file
 	source "$BACKUP_FILE"
 
-	# Run the restore command from bench
+# Run the restore command from bench
 	podman exec backend bench --site "$site" restore "$DB_PATH" \
 		--db-root-password="$MARIADB_ROOT_PASSWORD" \
 		--with-public-files="$PUBLIC_ARCHIVE" \
