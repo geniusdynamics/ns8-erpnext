@@ -36,6 +36,7 @@ restore_back_up() {
 
 # Print the current working directory
     echo "Current working directory: $(pwd)"
+    ls -la
 
 # Check if the backup_paths.txt file exists
     if [[ ! -f "$BACKUP_FILE" ]]; then
