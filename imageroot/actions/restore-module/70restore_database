@@ -29,7 +29,8 @@ fi
 echo "Restoring backup..."
 
 SITE="frontend"
-BACKUP_FILE="backup_paths.txt"
+BASE_DIR="/home/frappe/frappe-bench/sites/"
+BACKUP_FILE="${BASE_DIR}backup_paths.txt"
 restore_back_up() {
 	local site=$1
 
