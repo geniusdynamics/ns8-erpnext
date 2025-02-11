@@ -7,7 +7,7 @@
 
 set -e
 source database.env
-
+source backup_paths.env
 # Check if the service is running
 is_service_active() {
 	local service_name=$1
@@ -29,24 +29,23 @@ fi
 echo "Restoring backup..."
 
 SITE="frontend"
-BASE_DIR="/home/frappe/frappe-bench/sites/"
-BACKUP_FILE="${BASE_DIR}backup_paths.txt"
+BACKUP_FILE="backup_paths.env"
 restore_back_up() {
 	local site=$1
 
-# Print the current working directory
-    echo "Current working directory: $(pwd)"
-    ls -la
+	# Print the current working directory
+	echo "Current working directory: $(pwd)"
+	ls -la
 
-# Check if the backup_paths.txt file exists
-    if [[ ! -f "$BACKUP_FILE" ]]; then
-        echo "Error: $BACKUP_FILE not found in $(pwd)"
-        exit 1
-    fi
-# Load the backup paths fom file
+	# Check if the backup_paths.txt file exists
+	if [[ ! -f "$BACKUP_FILE" ]]; then
+		echo "Error: $BACKUP_FILE not found in $(pwd)"
+		exit 1
+	fi
+	# Load the backup paths fom file
 	source "$BACKUP_FILE"
 
-# Run the restore command from bench
+	# Run the restore command from bench
 	podman exec backend bench --site "$site" restore "$DB_PATH" \
 		--db-root-password="$MARIADB_ROOT_PASSWORD" \
 		--with-public-files="$PUBLIC_ARCHIVE" \
