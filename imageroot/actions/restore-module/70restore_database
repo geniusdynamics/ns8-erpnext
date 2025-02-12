@@ -38,8 +38,8 @@ restore_back_up() {
 	ls -la
 
 	# Check if the backup_paths.txt file exists
-	if [[ ! -f "$BACKUP_FILE" ]]; then
-		echo "Error: $BACKUP_FILE not found in $(pwd)"
+	if [[ ! -f "${BASE_DIR}${BACKUP_FILE}" ]]; then
+		echo "Error: ${BASE_DIR}${BACKUP_FILE} not found"
 		exit 1
 	fi
 	# Load the backup paths fom file
