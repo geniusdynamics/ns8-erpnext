@@ -106,13 +106,13 @@
               :disabled="loading.getConfiguration || loading.configureModule"
               >{{ $t("settings.save") }}</NsButton
             >
-            <NSButton
-              @click.prevent="restoreBackup"
-              kind="secondary"
-              :icon="Save20"
-            >
-              Restore From Backup
-            </NSButton>
+            <cv-row>
+              <cv-column>
+                <NSButton @click.prevent="restoreBackup" :icon="Save20">
+                  Restore From Backup
+                </NSButton>
+              </cv-column>
+            </cv-row>
           </cv-form>
         </cv-tile>
       </cv-column>
