@@ -108,7 +108,11 @@
             >
             <cv-row>
               <cv-column>
-                <NSButton @click.prevent="restoreBackup" :icon="Save20">
+                <NSButton
+                  v-if="hasBackup"
+                  @click.prevent="restoreBackup"
+                  :icon="Save20"
+                >
                   Restore From Backup
                 </NSButton>
               </cv-column>
@@ -152,6 +156,7 @@ export default {
       host: "",
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
+      hasBackup: false,
       erpNextModules: [
         {
           label: "ERPNext",
@@ -440,6 +445,7 @@ export default {
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
       this.erpSelectedModules = config.erpSelectedModules;
+      this.hasBackup = config.hasBackup;
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
