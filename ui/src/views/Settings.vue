@@ -108,13 +108,13 @@
             >
             <cv-row>
               <cv-column>
-                <NSButton
+                <NsButton
                   v-if="hasBackup"
                   @click.prevent="restoreBackup"
                   :icon="Save20"
                 >
                   Restore From Backup
-                </NSButton>
+                </NsButton>
               </cv-column>
             </cv-row>
           </cv-form>
@@ -446,6 +446,7 @@ export default {
       this.isHttpToHttpsEnabled = config.http2https;
       this.erpSelectedModules = config.erpSelectedModules;
       this.hasBackup = config.hasBackup;
+      console.log("Has Backup: " + this.hasBackup);
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
