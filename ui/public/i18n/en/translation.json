@@ -37,6 +37,9 @@
   "about": {
     "title": "About"
   },
+  "backup": {
+    "title": "Backup & Restore"
+  },
   "task": {
     "cannot_create_task": "Cannot create task {action}"
   },
