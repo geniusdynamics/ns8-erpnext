@@ -43,6 +43,41 @@
       <cv-column :md="4" :max="4">
         <NsInfoCard
           light
+          :title="$t('status.webapp')"
+          :description="this.host ? this.host : $t('status.not_configured')"
+          :icon="Wikis32"
+          :loading="loading.getConfiguration"
+          :isErrorShown="error.getConfiguration"
+          :errorTitle="$t('error.cannot_retrieve_configuration')"
+          :errorDescription="error.getConfiguration"
+          class="min-height-card"
+        >
+          <template slot="content">
+            <NsButton
+              v-if="this.host"
+              kind="ghost"
+              :icon="Launch20"
+              :disabled="loading.getConfiguration"
+              @click="goToWebapp"
+            >
+              {{ $t("status.open_webapp") }}
+            </NsButton>
+            <NsButton
+              v-else
+              kind="ghost"
+              :disabled="loading.getConfiguration"
+              :icon="ArrowRight20"
+              @click="goToAppPage(instanceName, 'settings')"
+            >
+              {{ $t("status.configure") }}
+            </NsButton>
+          </template>
+        </NsInfoCard>
+      </cv-column>
+
+      <cv-column :md="4" :max="4">
+        <NsInfoCard
+          light
           :title="status.instance || '-'"
           :description="$t('status.app_instance')"
           :icon="Application32"
@@ -336,7 +371,7 @@ export default {
   mounted() {
     this.redirectTimeout = setTimeout(
       () => (this.isRedirectChecked = true),
-      200
+      200,
     );
   },
   beforeUnmount() {
@@ -347,6 +382,9 @@ export default {
     this.listBackupRepositories();
   },
   methods: {
+    goToWebapp() {
+      window.open(`https://${this.host}`, "_blank");
+    },
     async getStatus() {
       this.loading.getStatus = true;
       this.error.getStatus = "";
@@ -356,13 +394,13 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.getStatusAborted
+        this.getStatusAborted,
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.getStatusCompleted
+        this.getStatusCompleted,
       );
 
       const res = await to(
@@ -373,7 +411,7 @@ export default {
             isNotificationHidden: true,
             eventId,
           },
-        })
+        }),
       );
       const err = res[0];
 
@@ -402,13 +440,13 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.listBackupRepositoriesAborted
+        this.listBackupRepositoriesAborted,
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.listBackupRepositoriesCompleted
+        this.listBackupRepositoriesCompleted,
       );
 
       const res = await to(
@@ -419,7 +457,7 @@ export default {
             isNotificationHidden: true,
             eventId,
           },
-        })
+        }),
       );
       const err = res[0];
 
@@ -437,7 +475,7 @@ export default {
     },
     listBackupRepositoriesCompleted(taskContext, taskResult) {
       let backupRepositories = taskResult.output.repositories.sort(
-        this.sortByProperty("name")
+        this.sortByProperty("name"),
       );
       this.backupRepositories = backupRepositories;
       this.loading.listBackupRepositories = false;
@@ -452,13 +490,13 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.listBackupsAborted
+        this.listBackupsAborted,
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.listBackupsCompleted
+        this.listBackupsCompleted,
       );
 
       const res = await to(
@@ -469,7 +507,7 @@ export default {
             isNotificationHidden: true,
             eventId,
           },
-        })
+        }),
       );
       const err = res[0];
 
@@ -492,7 +530,7 @@ export default {
       // get repository name
       for (const backup of backups) {
         const repo = this.backupRepositories.find(
-          (r) => r.id == backup.repository
+          (r) => r.id == backup.repository,
         );
 
         if (repo) {
