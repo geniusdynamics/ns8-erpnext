@@ -106,31 +106,6 @@
               :disabled="loading.getConfiguration || loading.configureModule"
               >{{ $t("settings.save") }}</NsButton
             >
-            <cv-row>
-              <cv-column>
-                <p>
-                  Note: If you want to backup the application internally click
-                  the back up module to run the internal backup module.<br />
-                  To restore a previously restored application click the restore
-                  from back up to restore the application internally.<br />
-                  NB: You can only restore am application that was backedup
-                </p>
-              </cv-column>
-              <cv-column>
-                <NsButton
-                  v-if="hasBackup"
-                  @click.prevent="restoreBackup"
-                  :icon="Save20"
-                >
-                  Restore From Backup
-                </NsButton>
-              </cv-column>
-              <cv-column>
-                <NsButton @click.prevent="backupApplication" :icon="Save20">
-                  BackUp Application
-                </NsButton>
-              </cv-column>
-            </cv-row>
           </cv-form>
         </cv-tile>
       </cv-column>
