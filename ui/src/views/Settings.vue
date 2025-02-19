@@ -147,7 +147,6 @@ export default {
       isHttpToHttpsEnabled: true,
       hasBackup: false,
       erpNextModules:[
-        { "label": "Press", "value": "press", "name": "press", "disabled": false },
         { "label": "ERPNext", "value": "erpnext", "name": "erpnext", "disabled": false },
         { "label": "HRMS", "value": "hrms", "name": "hrms", "disabled": false },
         { "label": "Nl Attendance Timesheet", "value": "nl_attendance_timesheet", "name": "nl-attendance-timesheet", "disabled": false },
