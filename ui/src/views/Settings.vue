@@ -175,6 +175,7 @@ export default {
         { "label": "Check Run", "value": "check_run", "name": "check_run", "disabled": false },
         { "label": "Inventory tools", "value": "inventory_tools", "name": "inventory_tools", "disabled": false },
         { "label": "Lending", "value": "lending", "name": "lending", "disabled": false },
+        { "label": "PropMS", "value": "propms", "name": "propms", "disabled": false },
         { "label": "HealthCare", "value": "healthcare", "name": "healthcare", "disabled": false },
         { "label": "GetPOS", "value": "nbpos", "name": "nbpos", "disabled": false },
         { "label": "POS Awesome", "value": "posawesome", "name": "posawesome", "disabled": false },
