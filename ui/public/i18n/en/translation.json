@@ -18,7 +18,10 @@
     "mount": "Mount",
     "no_services": "No services",
     "no_images": "No images",
-    "no_volumes": "No volumes"
+    "no_volumes": "No volumes",
+    "webapp": "ERPNEXT Webapp",
+    "open_webapp": "Open ERPNEXT",
+    "configure": "Configure"
   },
   "settings": {
     "title": "Settings",
@@ -36,6 +39,9 @@
   },
   "about": {
     "title": "About"
+  },
+  "backup": {
+    "title": "Backup & Restore"
   },
   "task": {
     "cannot_create_task": "Cannot create task {action}"

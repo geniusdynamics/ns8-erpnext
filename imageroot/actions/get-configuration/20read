@@ -19,7 +19,7 @@ import agent
 config = {}
 
 # Read current configuration from the environment file
-config["host"] = os.getenv("TRAEFIK_HOST","")
+config["host"] = os.getenv("TRAEFIK_HOST", "")
 config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS") == "True"
 config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
 # Load erpnext-modules.env file
@@ -29,6 +29,9 @@ if os.path.exists("erpnext-modules.env"):
 else:
     config["erpSelectedModules"] = []
 
+if os.path.exists("backup_paths.env"):
+    data = agent.read_envfile("backup_paths.env")
+    config["hasBackup"] = True
 
 
 # Dump the configuration to stdout
