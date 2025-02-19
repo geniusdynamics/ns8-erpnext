@@ -4,11 +4,14 @@
 -->
 <template>
   <cv-grid fullWidth>
+    <!-- Page Title -->
     <cv-row>
       <cv-column class="page-title">
-        <h2>{{ $t("settings.title") }}</h2>
+        <h2>{{ $t("backup.title") }}</h2>
       </cv-column>
     </cv-row>
+
+    <!-- Error Notification -->
     <cv-row v-if="error.getConfiguration">
       <cv-column>
         <NsInlineNotification
@@ -19,100 +22,59 @@
         />
       </cv-column>
     </cv-row>
+
+    <!-- Backup & Restore Section -->
     <cv-row>
       <cv-column>
-        <cv-tile light>
-          <cv-form @submit.prevent="configureModule">
-            <cv-text-input
-              :label="$t('settings.erpnext_fqdn')"
-              placeholder="erpnext.example.org"
-              v-model.trim="host"
-              class="mg-bottom"
-              :invalid-message="$t(error.host)"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              ref="host"
-            >
-            </cv-text-input>
-            <cv-toggle
-              value="letsEncrypt"
-              :label="$t('settings.lets_encrypt')"
-              v-model="isLetsEncryptEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
-            <cv-toggle
-              value="httpToHttps"
-              :label="$t('settings.http_to_https')"
-              v-model="isHttpToHttpsEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
-            <div>Selected Modules: {{ erpSelectedModules }}</div>
-            <cv-multi-select
-              :label="'ERP Next Modules to be installed'"
-              :options="erpNextModules"
-              :title="'ERP Next Modules to be installed'"
-              v-model="erpSelectedModules"
-            >
-            </cv-multi-select>
-            <!-- advanced options -->
-            <cv-accordion ref="accordion" class="maxwidth mg-bottom">
-              <cv-accordion-item :open="toggleAccordion[0]">
-                <template slot="title">{{ $t("settings.advanced") }}</template>
-                <template slot="content">
-                  <div v-for="module in erpNextModules" :key="module.value">
-                    <cv-toggle
-                      :label="module.value"
-                      :value="module.value"
-                      v-model="erpSelectedModules"
-                      :disabled="
-                        loading.getConfiguration || loading.configureModule
-                      "
-                      class="mg-bottom"
-                    >
-                    </cv-toggle>
-                  </div>
-                </template>
-              </cv-accordion-item>
-            </cv-accordion>
-            <cv-row v-if="error.configureModule">
-              <cv-column>
-                <NsInlineNotification
-                  kind="error"
-                  :title="$t('action.configure-module')"
-                  :description="error.configureModule"
-                  :showCloseButton="false"
-                />
-              </cv-column>
-            </cv-row>
-            <NsButton
-              kind="primary"
-              :icon="Save20"
-              :loading="loading.configureModule"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              >{{ $t("settings.save") }}</NsButton
-            >
-          </cv-form>
+        <cv-tile light class="backup-tile">
+          <!-- Information Section -->
+          <cv-row>
+            <cv-column>
+              <div class="info-section">
+                <p>
+                  <strong>Backup Instructions:</strong>
+                  If you want to back up the application internally, click the
+                  **Back Up Application** button.
+                  <br />
+                  To restore a previously saved backup, click **Restore From
+                  Backup**.
+                  <br />
+                  <span class="note"
+                    >*Note: You can only restore an application that was
+                    previously backed up.</span
+                  >
+                </p>
+              </div>
+            </cv-column>
+          </cv-row>
+
+          <!-- Action Buttons -->
+          <cv-row class="button-group">
+            <cv-column>
+              <NsButton
+                v-if="hasBackup"
+                @click.prevent="restoreBackup"
+                :icon="Save20"
+                kind="secondary"
+              >
+                Restore From Backup
+              </NsButton>
+            </cv-column>
+            <cv-column>
+              <NsButton
+                @click.prevent="backupApplication"
+                :icon="Save20"
+                kind="tertiary"
+              >
+                Back Up Application
+              </NsButton>
+            </cv-column>
+          </cv-row>
         </cv-tile>
       </cv-column>
     </cv-row>
   </cv-grid>
 </template>
-
 <script>
 import to from "await-to-js";
 import { mapState } from "vuex";
@@ -146,52 +108,6 @@ export default {
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
       hasBackup: false,
-      erpNextModules:[
-        { "label": "ERPNext", "value": "erpnext", "name": "erpnext", "disabled": false },
-        { "label": "HRMS", "value": "hrms", "name": "hrms", "disabled": false },
-        { "label": "Nl Attendance Timesheet", "value": "nl_attendance_timesheet", "name": "nl-attendance-timesheet", "disabled": false },
-        { "label": "Nl Piece Rate Pay", "value": "nl_piece_rate_pay", "name": "nl-piece-rate-pay", "disabled": false },
-        { "label": "Employee Self Service", "value": "employee_self_service", "name": "employee_self_service", "disabled": false },
-        { "label": "Expenses", "value": "erpnext_expenses", "name": "erpnext_expenses", "disabled": false },
-        { "label": "payments", "value": "payments", "name": "payments", "disabled": false },
-        { "label": "Paystack", "value": "frappe_paystack", "name": "frappe_paystack", "disabled": false },
-        { "label": "Mpesa Payments", "value": "frappe_mpsa_payments", "name": "frappe-mpesa-payments", "disabled": false },
-        { "label": "Mpesa B2C", "value": "navari_mpesa_b2c", "name": "navari-mpesa-b2c", "disabled": false },
-        { "label": "KE Etims Compliance", "value": "kenya_compliance", "name": "kenya-compliance", "disabled": false },
-        { "label": "KE etims Compliance", "value": "kenya_etims_compliance", "name": "kenya_etims_compliance", "disabled": false },
-        { "label": "Csf Ke", "value": "csf_ke", "name": "csf_ke", "disabled": false },
-        { "label": "Whatsapp", "value": "frappe_whatsapp", "name": "frappe_whatsapp", "disabled": false },
-        { "label": "PibiDav", "value": "pibidav", "name": "pibidav", "disabled": false },
-        { "label": "PibiCard", "value": "pibicard", "name": "pibicard", "disabled": false },
-        { "label": "Pibicut", "value": "pibicut", "name": "pibicut", "disabled": false },
-        { "label": "PibiCal", "value": "pibical", "name": "pibical", "disabled": false },
-        { "label": "Jobcard Planning", "value": "jobcard_planning", "name": "jobcard_planning", "disabled": false },
-        { "label": "Print Designer", "value": "print_designer", "name": "print_designer", "disabled": false },
-        { "label": "Beam Barcode", "value": "beam", "name": "beam", "disabled": false },
-        { "label": "QR CODE", "value": "frappe_qrcode", "name": "frappe_qrcode", "disabled": false },
-        { "label": "PDF on submit", "value": "pdf_on_submit", "name": "pdf_on_submit", "disabled": false },
-        { "label": "Whitelabel", "value": "whitelabel", "name": "whitelabel", "disabled": false },
-        { "label": "Cloud Storage", "value": "cloud_storage", "name": "cloud_storage", "disabled": false },
-        { "label": "Check Run", "value": "check_run", "name": "check_run", "disabled": false },
-        { "label": "Inventory tools", "value": "inventory_tools", "name": "inventory_tools", "disabled": false },
-        { "label": "Lending", "value": "lending", "name": "lending", "disabled": false },
-        { "label": "PropMS", "value": "propms", "name": "propms", "disabled": false },
-        { "label": "HealthCare", "value": "healthcare", "name": "healthcare", "disabled": false },
-        { "label": "GetPOS", "value": "nbpos", "name": "nbpos", "disabled": false },
-        { "label": "POS Awesome", "value": "posawesome", "name": "posawesome", "disabled": false },
-        { "label": "Webshop", "value": "webshop", "name": "webshop", "disabled": false },
-        { "label": "Education", "value": "education", "name": "education", "disabled": false },
-        { "label": "LMS (SA)", "value": "lms", "name": "lms", "disabled": false },
-        { "label": "Wiki (SA)", "value": "wiki", "name": "wiki", "disabled": false },
-        { "label": "Helpdesk (SA)", "value": "helpdesk", "name": "helpdesk", "disabled": false },
-        { "label": "Insights (SA)", "value": "insights", "name": "insights", "disabled": false },
-        { "label": "Builder (SA)", "value": "builder", "name": "builder", "disabled": false },
-        { "label": "CRM (SA)", "value": "crm", "name": "crm", "disabled": false },
-        { "label": "Raven (SA)", "value": "raven", "name": "raven", "disabled": false },
-        { "label": "Gameplan (SA)", "value": "gameplan", "name": "gameplan", "disabled": false },
-        { "label": "Drive (SA)", "value": "drive", "name": "drive", "disabled": false }, 
-      ],
-      erpSelectedModules: [],
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -479,5 +395,41 @@ export default {
 
 .maxwidth {
   max-width: 38rem;
+}
+.page-title {
+  text-align: left;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #161616;
+  margin-bottom: 1rem;
+}
+
+.backup-tile {
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.tile-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.info-section {
+  font-size: 1rem;
+  color: #525252;
+  line-height: 1.5;
+}
+
+.note {
+  color: #8d8d8d;
+  font-style: italic;
+}
+
+.button-group {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
 }
 </style>

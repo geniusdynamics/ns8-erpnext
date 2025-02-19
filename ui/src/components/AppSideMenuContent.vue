@@ -35,6 +35,13 @@
         <template v-slot:nav-icon><Information20 /></template>
         <span>{{ $t("about.title") }}</span>
       </cv-side-nav-link>
+      <cv-side-nav-link
+        @click="goToAppPage(instanceName, 'backup-restore')"
+        :class="{ 'current-page': isLinkActive('backup-restore') }"
+      >
+        <template v-slot:nav-icon><Information20 /></template>
+        <span>{{ $t("backup.title") }}</span>
+      </cv-side-nav-link>
     </cv-side-nav-items>
   </div>
 </template>

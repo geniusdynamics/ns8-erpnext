@@ -4,7 +4,7 @@
 # Copyright (C) 2022 Nethesis S.r.l.
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-
+rm -vf backup_paths.env
 SITE="frontend"
 BACKUP_FILE="backup_paths.env"
 BASE_DIR="/home/frappe/frappe-bench/sites/"
@@ -13,9 +13,6 @@ backup_and_save_paths() {
 	local site=$1
 	local output
 
-	echo "Listing apps"
-	podman exec backend bench list-apps
-	podman exec frontend bench list-apps
 	echo "Running backup for site: $site"
 
 	output=$(podman exec backend bench --site "$site" backup --with-files 2>&1)
