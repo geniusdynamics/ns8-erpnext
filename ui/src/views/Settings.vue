@@ -155,6 +155,12 @@ export default {
         },
         { label: "HRMS", value: "hrms", name: "hrms", disabled: false },
         {
+          label: "Education",
+          value: "education",
+          name: "education",
+          disabled: false,
+        },
+        {
           label: "Employee Self Service",
           value: "employee_self_service",
           name: "employee_self_service",
