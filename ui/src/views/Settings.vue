@@ -154,6 +154,7 @@ export default {
           disabled: false,
         },
         { label: "HRMS", value: "hrms", name: "hrms", disabled: false },
+        { label: "Press", value: "press", name: "press", disabled: false },
         {
           label: "Education",
           value: "education",
