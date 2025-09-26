@@ -5,35 +5,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-  wait-for-it -t 120 redis-cache:6379;
-         wait-for-it -t 120 redis-cache:6379;
-         export start=`date +%s`;
-         until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] && \
-           [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] && \
-           [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
-         do
-           echo "Waiting for sites/common_site_config.json to be created";
-           sleep 5;
-           if (( `date +%s`-start > 120 )); then
-             echo "could not find sites/common_site_config.json with required keys";
-             exit 1
-           fi
-         done;
-         echo "sites/common_site_config.json found";
-         bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --set-default;
-        # Convert the JSON-like string to a bash array
-        ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES"  | tr -d "[]'" | tr -d ' ')
-        IFS=',' read -r -a ERP_NEXT_MODULES_ARRAY <<< "$ERPNEXT_MODULES"
-      # Check if the array is empty
-            if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ]; then
-                echo "No modules specified, installing erpnext by default."
-                bench --site frontend install-app erpnext
-            else
-                # Iterate over the array
-                for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
-                    echo "Processing $module"
-                    # Add your logic here, e.g., installing apps
-                    bench --site frontend install-app "$module"
-                done
-            fi
-
+wait-for-it -t 120 redis-cache:6379
+wait-for-it -t 120 redis-cache:6379
+export start=$(date +%s)
+until [[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty") ]] &&
+	[[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty") ]] &&
+	[[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty") ]]; do
+	echo "Waiting for sites/common_site_config.json to be created"
+	sleep 5
+	if (($(date +%s) - start > 120)); then
+		echo "could not find sites/common_site_config.json with required keys"
+		exit 1
+	fi
+done
+echo "sites/common_site_config.json found"
+bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --set-default
+# Convert the JSON-like string to a bash array
+ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES" | tr -d "[]'" | tr -d ' ')
+IFS=',' read -r -a ERP_NEXT_MODULES_ARRAY <<<"$ERPNEXT_MODULES"
+# Check if the array is empty
+if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ]; then
+	echo "No modules specified, installing erpnext by default."
+	bench --site frontend install-app erpnext
+else
+	# Iterate over the array
+	for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
+		echo "Processing $module"
+		# Add your logic here, e.g., installing apps
+		bench --site frontend install-app "$module"
+	done
+fi
+bench --site frontend migrate
