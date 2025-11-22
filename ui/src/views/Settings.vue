@@ -362,6 +362,12 @@ export default {
           disabled: false,
         },
         { label: "URY", value: "ury", name: "ury", disabled: false },
+        {
+          label: "Nex Bridge",
+          value: "nex_bridge",
+          name: "nex_bridge",
+          disabled: false,
+        },
       ],
       erpSelectedModules: [],
       loading: {
