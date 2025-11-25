@@ -169,8 +169,8 @@ export default {
         { label: "HRMS", value: "hrms", name: "hrms", disabled: false },
         {
           label: "Mpesa Payments",
-          value: "frappe-mpsa-payments",
-          name: "frappe-mpsa-payments",
+          value: "frappe_mpsa_payments",
+          name: "frappe_mpsa_payments",
           disabled: false,
         },
         {
@@ -313,8 +313,8 @@ export default {
         { label: "Drive", value: "drive", name: "drive", disabled: false },
         {
           label: "POS Awesome",
-          value: "POS-Awesome",
-          name: "POS-Awesome",
+          value: "posawesome",
+          name: "posawesome",
           disabled: false,
         },
         { label: "PropMS", value: "PropMS", name: "PropMS", disabled: false },
