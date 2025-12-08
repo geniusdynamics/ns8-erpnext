@@ -98,7 +98,7 @@ EOF
 ### Configuration Parameters
 
 | Parameter | Type | Description | Default |
-|-----------|------|-------------|---------||
+|-----------|------|-------------|---------|
 | `host` | string | Fully qualified domain name | Required |
 | `http2https` | boolean | Enable HTTP to HTTPS redirection | `false` |
 | `lets_encrypt` | boolean | Enable Let's Encrypt certificate | `false` |
