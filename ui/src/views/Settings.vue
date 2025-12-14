@@ -368,6 +368,12 @@ export default {
           name: "nex_bridge",
           disabled: false,
         },
+        {
+          label: "POS Next",
+          value: "pos_next",
+          name: "pos_next",
+          disabled: false,
+        },
       ],
       erpSelectedModules: [],
       loading: {
