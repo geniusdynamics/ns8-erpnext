@@ -162,8 +162,8 @@ export default {
         },
         {
           label: "Navari CSF KE",
-          value: "navari_csf_ke",
-          name: "navari_csf_ke",
+          value: "csf_ke",
+          name: "csf_ke",
           disabled: false,
         },
         { label: "HRMS", value: "hrms", name: "hrms", disabled: false },
@@ -255,8 +255,8 @@ export default {
         },
         {
           label: "PDF on Submit",
-          value: "erpnext_pdf-on-submit",
-          name: "erpnext_pdf-on-submit",
+          value: "pdf_on_submit",
+          name: "pdf_on_submit",
           disabled: false,
         },
         {
@@ -339,8 +339,8 @@ export default {
         },
         {
           label: "KE Compliance",
-          value: "kenya-compliance-via-slade",
-          name: "kenya-compliance-via-slade",
+          value: "kenya_compliance_via_slade",
+          name: "kenya_compliance_via_slade",
           disabled: false,
         },
         {
