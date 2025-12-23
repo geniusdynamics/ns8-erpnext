@@ -9,30 +9,32 @@ ARG FRAPPE_BRANCH=version-15
 
 USER root
 
-# Install apps if APPS_JSON_BASE64 is provided
+RUN apt-get update && \
+  apt-get install -y jq && \
+  rm -rf /var/lib/apt/lists/*
+
+# Decode apps.json if provided
 RUN if [ -n "${APPS_JSON_BASE64}" ]; then \
   echo "${APPS_JSON_BASE64}" | base64 -d > /tmp/apps.json && \
-  cat /tmp/apps.json; \
+  echo "Decoded apps.json:" && \
+  cat /tmp/apps.json ; \
   fi
 
 USER frappe
-
 WORKDIR /home/frappe/frappe-bench
 
-# Install additional apps from apps.json
+# Install additional apps
 RUN if [ -n "${APPS_JSON_BASE64}" ]; then \
   echo "Installing additional apps..." && \
-  cat /tmp/apps.json | jq -c '.[]' | while read app; do \
-  APP_NAME=$(echo $app | jq -r '.name'); \
-  APP_URL=$(echo $app | jq -r '.url'); \
-  APP_BRANCH=$(echo $app | jq -r '.branch'); \
-  echo "Getting app: $APP_NAME from $APP_URL (branch: $APP_BRANCH)"; \
-  bench get-app --branch=$APP_BRANCH $APP_URL || exit 1; \
+  jq -c '.[]' /tmp/apps.json | while read -r app; do \
+  APP_URL=$(echo "$app" | jq -r '.url'); \
+  APP_BRANCH=$(echo "$app" | jq -r '.branch'); \
+  echo "Getting app from $APP_URL (branch: $APP_BRANCH)"; \
+  bench get-app --branch "$APP_BRANCH" "$APP_URL" || exit 1; \
   done && \
-  find apps -mindepth 1 -path "*/.git" | xargs rm -fr; \
+  find apps -mindepth 1 -path "*/.git" -exec rm -rf {} + ; \
   fi
 
-# Final stage
 FROM ${BASE_IMAGE}
 
 USER frappe
