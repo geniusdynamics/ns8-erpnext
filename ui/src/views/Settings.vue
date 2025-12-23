@@ -69,6 +69,7 @@
               v-model="erpSelectedModules"
             >
             </cv-multi-select>
+            <cv-text-area label="App Json" v-model="app_json"></cv-text-area>
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
@@ -376,6 +377,7 @@ export default {
         },
       ],
       erpSelectedModules: [],
+      app_json: "",
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -621,6 +623,7 @@ export default {
             lets_encrypt: this.isLetsEncryptEnabled,
             http2https: this.isHttpToHttpsEnabled,
             erpSelectedModules: this.erpSelectedModules,
+            appJson: btoa(this.app_json),
           },
           extra: {
             title: this.$t("settings.instance_configuration", {

@@ -13,12 +13,13 @@ import agent
 # If parsing fails, output everything to stderr
 data = json.load(sys.stdin)
 
-#This is specific to you module, so you need to change it accordingly.
+# This is specific to you module, so you need to change it accordingly.
 
 ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
+APP_JSON = data.get("appJson")
 
-agent.write_envfile("erpnext-modules.env", {
-    "ERP_NEXT_MODULES": ERP_NEXT_MODULES
-})
+agent.write_envfile(
+    "erpnext-modules.env", {"ERP_NEXT_MODULES": ERP_NEXT_MODULES, "APPS_JSON": APP_JSON}
+)
 
 agent.dump_env()
