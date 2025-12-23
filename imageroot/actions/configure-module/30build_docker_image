@@ -70,7 +70,7 @@ podman build \
 	--build-arg APPS_JSON_BASE64="$APPS_JSON" \
 	--build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
 	-t "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
-	-f Dockerfile \
+	-f ../actions/configure-module/Dockerfile \
 	.
 
 if [ $? -eq 0 ]; then
@@ -78,8 +78,7 @@ if [ $? -eq 0 ]; then
 	print_info "Image tagged as: $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 
 	# Also tag as latest
-	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$CUSTOM_IMAGE_NAME:latest"
-	print_info "Also tagged as: $CUSTOM_IMAGE_NAME:latest"
+	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 
 	# Tag with the same name as base image (for drop-in replacement)
 	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$BASE_IMAGE"
