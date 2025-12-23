@@ -24,13 +24,19 @@ USER frappe
 WORKDIR /home/frappe/frappe-bench
 
 # Install additional apps
+# Install apps safely
 RUN if [ -n "${APPS_JSON_BASE64}" ]; then \
   echo "Installing additional apps..." && \
   jq -c '.[]' /tmp/apps.json | while read -r app; do \
   APP_URL=$(echo "$app" | jq -r '.url'); \
   APP_BRANCH=$(echo "$app" | jq -r '.branch'); \
-  echo "Getting app from $APP_URL (branch: $APP_BRANCH)"; \
+  APP_NAME=$(basename "$APP_URL" .git); \
+  if [ -d "apps/$APP_NAME" ]; then \
+  echo "Skipping $APP_NAME (already installed)"; \
+  else \
+  echo "Installing $APP_NAME from $APP_URL (branch: $APP_BRANCH)"; \
   bench get-app --branch "$APP_BRANCH" "$APP_URL" || exit 1; \
+  fi; \
   done && \
   find apps -mindepth 1 -path "*/.git" -exec rm -rf {} + ; \
   fi
