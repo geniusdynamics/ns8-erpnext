@@ -65,7 +65,7 @@ print_info "Using Frappe branch: $FRAPPE_BRANCH"
 print_info "Building custom ERPNext image with Podman..."
 
 # Build the image with Podman
-podman build \
+podman build --network=host \
 	--build-arg BASE_IMAGE="$BASE_IMAGE" \
 	--build-arg APPS_JSON_BASE64="$APPS_JSON" \
 	--build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
