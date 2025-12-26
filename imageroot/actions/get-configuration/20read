@@ -29,10 +29,13 @@ if os.path.exists("erpnext-modules.env"):
     config["appJson"] = data.get("APPS_JSON")
 else:
     config["erpSelectedModules"] = []
+    config["appJson"] = ""
 
 if os.path.exists("backup_paths.env"):
     data = agent.read_envfile("backup_paths.env")
     config["hasBackup"] = True
+else:
+    config["hasBackup"] = False
 
 
 # Dump the configuration to stdout

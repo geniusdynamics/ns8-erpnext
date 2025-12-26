@@ -459,6 +459,7 @@ export default {
       this.hasBackup = config.hasBackup;
       this.app_json = atob(config.appJson);
       console.log("Has Backup: " + this.hasBackup);
+      console.log("appJson", this.app_json);
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
