@@ -66,7 +66,6 @@ print_info "Building custom ERPNext image with Podman..."
 
 # Build the image with Podman
 podman build --network=host \
-	--build-arg BASE_IMAGE="$BASE_IMAGE" \
 	--build-arg APPS_JSON_BASE64="$APPS_JSON" \
 	--build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
 	-t "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
