@@ -457,6 +457,7 @@ export default {
       this.isHttpToHttpsEnabled = config.http2https;
       this.erpSelectedModules = config.erpSelectedModules;
       this.hasBackup = config.hasBackup;
+      this.app_json = atob(config.appJson);
       console.log("Has Backup: " + this.hasBackup);
 
       this.loading.getConfiguration = false;
