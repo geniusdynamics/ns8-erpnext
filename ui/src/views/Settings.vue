@@ -22,6 +22,18 @@
     <cv-row>
       <cv-column>
         <cv-tile light>
+          <NsButton
+            @click.prevent="buildDockerImage"
+            kind="primary"
+            :icon="Save20"
+            :loading="loading.configureModule"
+            :disabled="loading.getConfiguration || loading.configureModule"
+            >{{ $t("settings.save") }}</NsButton
+          >
+        </cv-tile>
+      </cv-column>
+      <cv-column>
+        <cv-tile light>
           <cv-form @submit.prevent="configureModule">
             <cv-text-input
               :label="$t('settings.erpnext_fqdn')"
@@ -381,6 +393,7 @@ export default {
       loading: {
         getConfiguration: false,
         configureModule: false,
+        buildDockerImage: false,
       },
       error: {
         getConfiguration: "",
@@ -654,6 +667,48 @@ export default {
       this.loading.configureModule = false;
 
       // reload configuration
+      this.getConfiguration();
+    },
+    async buildDockerImage() {
+      const taskAction = "build-docker-image";
+      const eventId = this.getUuid();
+      this.loading.buildDockerImage = true;
+
+      // register to task error
+      this.core.$root.$once(
+        `${taskAction}-aborted-${eventId}`,
+        this.buildDockerImageAborted,
+      );
+
+      // register to task completion
+      this.core.$root.$once(
+        `${taskAction}-completed-${eventId}`,
+        this.buildDockerImageCompleted,
+      );
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: taskAction,
+          extra: {
+            title: this.$t("settings.instance_configuration", {
+              instance: this.instanceName,
+            }),
+            description: this.$t("settings.configuring"),
+            eventId,
+          },
+        }),
+      );
+      const err = res[0];
+      if (err) {
+        console.error(`error creating task ${taskAction}`, err);
+        return;
+      }
+    },
+    buildDockerImageAborted(taskResult, taskContext) {
+      this.loading.buildDockerImage = false;
+      console.log(`${taskContext.icon} aborted`, taskResult);
+    },
+    buildDockerImageCompleted() {
+      this.loading.buildDockerImage = false;
       this.getConfiguration();
     },
   },
