@@ -54,8 +54,6 @@ CUSTOM_IMAGE_TAG="$IMAGE_TAG"
 print_info "Base Image: $BASE_IMAGE"
 print_info "Custom Image will be: $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 
-print_info "Modules from environment: $ERP_NEXT_MODULES"
-
 print_info "Apps to be installed:"
 echo "$APPS_JSON"
 
@@ -78,7 +76,7 @@ if [ $? -eq 0 ]; then
 	print_info "Image tagged as: $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 
 	# Also tag as latest
-	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
+	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$CUSTOM_IMAGE_NAME:latest"
 
 	# Tag with the same name as base image (for drop-in replacement)
 	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$BASE_IMAGE"
@@ -93,9 +91,25 @@ if [ $? -eq 0 ]; then
 	echo ""
 	print_info "Image size:"
 	podman images "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+	ENV_FILE="environment"
 
-	echo ""
-	print_info "To use this image, it's already tagged as: $BASE_IMAGE"
+	# Ensure env file exists
+	[ -f "$ENV_FILE" ] || {
+		print_error "Env file not found"
+		exit 1
+	}
+
+	CUSTOM_IMAGE_FULL="$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
+
+	# Update or add ERPNEXT_IMAGE
+	if grep -q '^ERPNEXT_IMAGE=' "$ENV_FILE"; then
+		sed -i "s|^ERPNEXT_IMAGE=.*|ERPNEXT_IMAGE=$CUSTOM_IMAGE_FULL|" "$ENV_FILE"
+	else
+		echo "ERPNEXT_IMAGE=$CUSTOM_IMAGE_FULL" >>"$ENV_FILE"
+	fi
+
+	print_info "Updated ERPNEXT_IMAGE in $ENV_FILE to:"
+	print_info "$CUSTOM_IMAGE_FULL" print_info "To use this image, it's already tagged as: $BASE_IMAGE"
 	print_info "Your existing docker-compose or deployment will automatically use the custom image!"
 else
 	print_error "Build failed!"
