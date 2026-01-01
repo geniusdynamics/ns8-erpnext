@@ -14,6 +14,8 @@ RUN if [ -n "${APPS_JSON_BASE64}" ]; then \
 
 USER frappe
 
+RUN yarn config set registry https://registry.npmjs.org/ && \
+  yarn config set network-timeout 600000
 RUN export APP_INSTALL_ARGS="" && \
   if [ -n "${APPS_JSON_BASE64}" ]; then \
   export APP_INSTALL_ARGS="--apps_path=/opt/frappe/apps.json"; \
