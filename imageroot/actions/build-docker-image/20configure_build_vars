@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import sys
+import agent
+
+# Try to parse the stdin as JSON.
+# If parsing fails, output everything to stderr
+data = json.load(sys.stdin)
+
+# This is specific to you module, so you need to change it accordingly.
+
+ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
+APP_JSON = data.get("appJson")
+
+agent.write_envfile(
+    "erpnext-modules.env", {"ERP_NEXT_MODULES": ERP_NEXT_MODULES, "APPS_JSON": APP_JSON}
+)
+
+agent.dump_env()

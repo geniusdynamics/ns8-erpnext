@@ -21,7 +21,7 @@
     "no_volumes": "No volumes",
     "webapp": "ERPNEXT Webapp",
     "open_webapp": "Open ERPNEXT",
-    "not_configured":"ERPNEXT is not configured",
+    "not_configured": "ERPNEXT is not configured",
     "configure": "Configure"
   },
   "settings": {
@@ -46,6 +46,9 @@
   },
   "task": {
     "cannot_create_task": "Cannot create task {action}"
+  },
+  "build": {
+    "title": "Build Docker Image"
   },
   "action": {
     "get-status": "Get status",

@@ -19,95 +19,21 @@
         />
       </cv-column>
     </cv-row>
+
     <cv-row>
       <cv-column>
+        <cv-text-area label="App Json" v-model="app_json"></cv-text-area>
+      </cv-column>
+      <cv-column>
         <cv-tile light>
-          <cv-form @submit.prevent="configureModule">
-            <cv-text-input
-              :label="$t('settings.erpnext_fqdn')"
-              placeholder="erpnext.example.org"
-              v-model.trim="host"
-              class="mg-bottom"
-              :invalid-message="$t(error.host)"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              ref="host"
-            >
-            </cv-text-input>
-            <cv-toggle
-              value="letsEncrypt"
-              :label="$t('settings.lets_encrypt')"
-              v-model="isLetsEncryptEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
-            <cv-toggle
-              value="httpToHttps"
-              :label="$t('settings.http_to_https')"
-              v-model="isHttpToHttpsEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              class="mg-bottom"
-            >
-              <template slot="text-left">{{
-                $t("settings.disabled")
-              }}</template>
-              <template slot="text-right">{{
-                $t("settings.enabled")
-              }}</template>
-            </cv-toggle>
-            <div>Selected Modules: {{ erpSelectedModules }}</div>
-            <cv-multi-select
-              :label="'ERP Next Modules to be installed'"
-              :options="erpNextModules"
-              :title="'ERP Next Modules to be installed'"
-              v-model="erpSelectedModules"
-            >
-            </cv-multi-select>
-            <cv-text-area label="App Json" v-model="app_json"></cv-text-area>
-            <!-- advanced options -->
-            <cv-accordion ref="accordion" class="maxwidth mg-bottom">
-              <cv-accordion-item :open="toggleAccordion[0]">
-                <template slot="title">{{ $t("settings.advanced") }}</template>
-                <template slot="content">
-                  <div v-for="module in erpNextModules" :key="module.value">
-                    <cv-toggle
-                      :label="module.value"
-                      :value="module.value"
-                      v-model="erpSelectedModules"
-                      :disabled="
-                        loading.getConfiguration || loading.configureModule
-                      "
-                      class="mg-bottom"
-                    >
-                    </cv-toggle>
-                  </div>
-                </template>
-              </cv-accordion-item>
-            </cv-accordion>
-            <cv-row v-if="error.configureModule">
-              <cv-column>
-                <NsInlineNotification
-                  kind="error"
-                  :title="$t('action.configure-module')"
-                  :description="error.configureModule"
-                  :showCloseButton="false"
-                />
-              </cv-column>
-            </cv-row>
-            <NsButton
-              kind="primary"
-              :icon="Save20"
-              :loading="loading.configureModule"
-              :disabled="loading.getConfiguration || loading.configureModule"
-              >{{ $t("settings.save") }}</NsButton
-            >
-          </cv-form>
+          <NsButton
+            @click.prevent="buildDockerImage"
+            kind="primary"
+            :icon="Save20"
+            :loading="loading.configureModule"
+            :disabled="loading.getConfiguration || loading.configureModule"
+            >{{ $t("settings.save") }}</NsButton
+          >
         </cv-tile>
       </cv-column>
     </cv-row>

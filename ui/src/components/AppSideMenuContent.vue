@@ -42,6 +42,13 @@
         <template v-slot:nav-icon><Information20 /></template>
         <span>{{ $t("backup.title") }}</span>
       </cv-side-nav-link>
+      <cv-side-nav-link
+        @click="goToAppPage(instanceName, 'build-docker')"
+        :class="{ 'current-page': isLinkActive('build-docker') }"
+      >
+        <template v-slot:nav-icon><Information20 /></template>
+        <span>{{ $t("build.title") }}</span>
+      </cv-side-nav-link>
     </cv-side-nav-items>
   </div>
 </template>
