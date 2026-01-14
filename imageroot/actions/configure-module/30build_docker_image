@@ -32,7 +32,13 @@ if ! command -v jq &>/dev/null; then
 	print_error "jq is required but not installed. Please install jq first."
 	exit 1
 fi
+DEFAULT_ERPNEXT_IMAGE="frappe/erpnext:version-15"
 
+# Ensure ERPNEXT_IMAGE is set
+if [ -z "${ERPNEXT_IMAGE:-}" ]; then
+	print_warning "ERPNEXT_IMAGE is not set. Using default: $DEFAULT_ERPNEXT_IMAGE"
+	ERPNEXT_IMAGE="$DEFAULT_ERPNEXT_IMAGE"
+fi
 # Extract image name and tag from ERPNEXT_IMAGE
 BASE_IMAGE="$ERPNEXT_IMAGE"
 # Extract repository and tag
