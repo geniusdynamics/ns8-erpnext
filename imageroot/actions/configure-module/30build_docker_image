@@ -33,14 +33,6 @@ if ! command -v jq &>/dev/null; then
 	exit 1
 fi
 
-# Check if ERPNEXT_IMAGE is set
-if [ -z "$ERPNEXT_IMAGE" ]; then
-	print_error "ERPNEXT_IMAGE environment variable is not set"
-	print_info "Please set it in .env file or export it:"
-	echo "  export ERPNEXT_IMAGE=docker.io/geniusdynamics/erpnext:15.92.1"
-	exit 1
-fi
-
 # Extract image name and tag from ERPNEXT_IMAGE
 BASE_IMAGE="$ERPNEXT_IMAGE"
 # Extract repository and tag
