@@ -25,7 +25,8 @@ config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
 # Load erpnext-modules.env file
 if os.path.exists("erpnext-modules.env"):
     data = agent.read_envfile("erpnext-modules.env")
-    config["erpSelectedModules"] = data.get("ERP_NEXT_MODULES", [])
+    modules_str = data.get("ERP_NEXT_MODULES", "")
+    config["erpSelectedModules"] = modules_str.split(",") if modules_str else []
     config["appJson"] = data.get("APPS_JSON")
 else:
     config["erpSelectedModules"] = []

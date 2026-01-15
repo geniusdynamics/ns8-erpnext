@@ -18,8 +18,10 @@ data = json.load(sys.stdin)
 ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
 APP_JSON = data.get("appJson")
 
+ERP_NEXT_MODULES_STR = ",".join(ERP_NEXT_MODULES) if ERP_NEXT_MODULES else ""
+
 agent.write_envfile(
-    "erpnext-modules.env", {"ERP_NEXT_MODULES": ERP_NEXT_MODULES, "APPS_JSON": APP_JSON}
+    "erpnext-modules.env", {"ERP_NEXT_MODULES": ERP_NEXT_MODULES_STR, "APPS_JSON": APP_JSON}
 )
 
 agent.dump_env()
