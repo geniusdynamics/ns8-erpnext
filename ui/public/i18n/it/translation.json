@@ -24,7 +24,18 @@
         "save": "Salva",
         "title": "Impostazioni",
         "configure_instance": "Configura {instance}",
-        "test_field": "Campo di test"
+        "test_field": "Campo di test",
+        "erpnext_fqdn": "Hostname ERPNext (FQDN)",
+        "lets_encrypt": "Richiedi certificato LE",
+        "http_to_https": "Forza HTTPS",
+        "enabled": "Attivato",
+        "disabled": "Disattivato",
+        "advanced": "Avanzato",
+        "configuring": "Configurazione",
+        "instance_configuration": "Configura ERPNext",
+        "domain_already_used_in_traefik": "Dominio già utilizzato in Traefik",
+        "app_json_must_be_array": "App JSON deve essere un array di oggetti",
+        "invalid_json_format": "Formato JSON non valido"
     },
     "error": {
         "error": "Errore",

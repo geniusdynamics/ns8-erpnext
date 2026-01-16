@@ -15,7 +15,18 @@
         "test_field": "Testfeld",
         "configure_instance": "{instance} konfigurieren",
         "save": "Speichern",
-        "title": "Einstellungen"
+        "title": "Einstellungen",
+        "erpnext_fqdn": "ERPNext Hostname (FQDN)",
+        "lets_encrypt": "LE Zertifikat anfordern",
+        "http_to_https": "HTTPS erzwingen",
+        "enabled": "Aktiviert",
+        "disabled": "Deaktiviert",
+        "advanced": "Erweitert",
+        "configuring": "Konfiguration",
+        "instance_configuration": "ERPNext konfigurieren",
+        "domain_already_used_in_traefik": "Domain wird bereits in Traefik verwendet",
+        "app_json_must_be_array": "App JSON muss ein Array von Objekten sein",
+        "invalid_json_format": "Ungültiges JSON Format"
     },
     "common": {
         "required": "erforderlich",

@@ -30,6 +30,19 @@
         "cannot_create_task": "Cannot create task {action}"
     },
     "settings": {
-        "title": "Settings"
-    }
+        "title": "Configurações",
+        "save": "Salvar",
+        "configure_instance": "Configurar {instance}",
+        "erpnext_fqdn": "Hostname ERPNext (FQDN)",
+        "lets_encrypt": "Solicitar certificado LE",
+        "http_to_https": "Forçar HTTPS",
+        "enabled": "Ativado",
+        "disabled": "Desativado",
+        "advanced": "Avançado",
+        "configuring": "Configurando",
+        "instance_configuration": "Configurar ERPNext",
+        "domain_already_used_in_traefik": "Domínio já utilizado no Traefik",
+        "app_json_must_be_array": "App JSON deve ser uma matriz de objetos",
+        "invalid_json_format": "Formato JSON inválido"
+    },
 }

@@ -15,7 +15,18 @@
         "test_field": "Proba-eremua",
         "configure_instance": "{instance} konfiguratu",
         "save": "Gorde",
-        "title": "Ezarpenak"
+        "title": "Ezarpenak",
+        "erpnext_fqdn": "ERPNext Hostname (FQDN)",
+        "lets_encrypt": "LE Ziurtagiria eskatu",
+        "http_to_https": "HTTPS behartu",
+        "enabled": "Gaituta",
+        "disabled": "Ezgaituta",
+        "advanced": "Aurreratua",
+        "configuring": "Konfiguratzen",
+        "instance_configuration": "ERPNext konfiguratu",
+        "domain_already_used_in_traefik": "Domeinua Traefiken dagoeneko erabilita",
+        "app_json_must_be_array": "App JSON objektuen array bat izan behar da",
+        "invalid_json_format": "JSON formatu baliogabea"
     },
     "common": {
         "required": "Beharrezkoa",
