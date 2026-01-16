@@ -27,7 +27,7 @@ if os.path.exists("erpnext-modules.env"):
     data = agent.read_envfile("erpnext-modules.env")
     modules_str = data.get("ERP_NEXT_MODULES", "")
     config["erpSelectedModules"] = modules_str.split(",") if modules_str else []
-    config["appJson"] = data.get("APPS_JSON")
+    config["appJson"] = data.get("APPS_JSON", "")
 else:
     config["erpSelectedModules"] = []
     config["appJson"] = ""
