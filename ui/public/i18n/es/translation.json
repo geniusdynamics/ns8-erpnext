@@ -60,9 +60,20 @@
         "get-status": "Obtener el estado",
         "configure-module": "Configurar módulo",
         "get-configuration": "Obtener la configuración",
-        "get-name": "Obtener el nombre"
+        "get-name": "Obtener el nombre",
+        "build-docker-image": "Construir imagen Docker"
     },
     "task": {
         "cannot_create_task": "No se puede crear la tarea {action}"
+    },
+    "build": {
+        "title": "Construir imagen Docker",
+        "force_rebuild": "Forzar reconstrucción",
+        "no": "No",
+        "yes": "Sí",
+        "apps_to_build": "Apps a construir",
+        "build_image": "Construir imagen",
+        "building_image": "Construyendo imagen Docker",
+        "please_wait": "Por favor espere..."
     }
 }

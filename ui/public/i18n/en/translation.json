@@ -50,7 +50,14 @@
     "cannot_create_task": "Cannot create task {action}"
   },
   "build": {
-    "title": "Build Docker Image"
+    "title": "Build Docker Image",
+    "force_rebuild": "Force rebuild",
+    "no": "No",
+    "yes": "Yes",
+    "apps_to_build": "Apps to be built",
+    "build_image": "Build Image",
+    "building_image": "Building Docker image",
+    "please_wait": "Please wait..."
   },
   "action": {
     "get-status": "Get status",
@@ -60,7 +67,8 @@
     "get-name": "Get name",
     "list-backup-repositories": "List backup repositories",
     "list-backups": "List backups",
-    "list-installed-modules": "List installed modules"
+    "list-installed-modules": "List installed modules",
+    "build-docker-image": "Build Docker image"
   },
   "error": {
     "error": "Error",

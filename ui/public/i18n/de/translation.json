@@ -60,9 +60,20 @@
         "get-status": "Status abfragen",
         "configure-module": "Modul konfigurieren",
         "get-configuration": "Konfiguration abrufen",
-        "get-name": "Name abrufen"
+        "get-name": "Name abrufen",
+        "build-docker-image": "Docker-Image bauen"
     },
     "task": {
         "cannot_create_task": "{task} kann nicht erstellt werden"
+    },
+    "build": {
+        "title": "Docker-Image bauen",
+        "force_rebuild": "Neubau erzwingen",
+        "no": "Nein",
+        "yes": "Ja",
+        "apps_to_build": "Apps die gebaut werden sollen",
+        "build_image": "Image bauen",
+        "building_image": "Docker-Image wird gebaut",
+        "please_wait": "Bitte warten..."
     }
 }

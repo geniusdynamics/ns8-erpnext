@@ -60,9 +60,20 @@
         "get-status": "Egoera berreskuratu",
         "configure-module": "Modulua konfiguratu",
         "get-configuration": "Konfigurazioa berreskuratu",
-        "get-name": "Izena berreskuratu"
+        "get-name": "Izena berreskuratu",
+        "build-docker-image": "Docker irudia eraiki"
     },
     "task": {
         "cannot_create_task": "Ezin da zeregina {action} sortu"
+    },
+    "build": {
+        "title": "Docker irudia eraiki",
+        "force_rebuild": "Birsortu behartu",
+        "no": "Ez",
+        "yes": "Bai",
+        "apps_to_build": "Eraiki beharreko app-ak",
+        "build_image": "Irudia eraiki",
+        "building_image": "Docker irudia eraikitzen",
+        "please_wait": "Mesedez itxaron..."
     }
 }
