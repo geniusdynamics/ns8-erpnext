@@ -32,6 +32,33 @@ if ! command -v jq &>/dev/null; then
 	print_error "jq is required but not installed. Please install jq first."
 	exit 1
 fi
+
+# Cache file for app_json hash
+CACHE_FILE=".app_json_cache"
+CURRENT_APPS_JSON="$APPS_JSON"
+
+# Function to compute hash of the apps JSON
+compute_apps_hash() {
+	echo -n "$1" | sha256sum | cut -d' ' -f1
+}
+
+# Get current apps JSON hash
+CURRENT_HASH=$(compute_apps_hash "$CURRENT_APPS_JSON")
+
+# Check if cache exists and compare
+if [ -f "$CACHE_FILE" ]; then
+	CACHED_HASH=$(cat "$CACHE_FILE")
+	if [ "$CURRENT_HASH" = "$CACHED_HASH" ]; then
+		print_warning "App configuration unchanged. Skipping Docker image build."
+		print_info "To force a rebuild, delete the cache file: rm $CACHE_FILE"
+		exit 0
+	else
+		print_info "App configuration changed. Proceeding with Docker image build..."
+	fi
+else
+	print_info "No cache found. Building Docker image..."
+fi
+
 DEFAULT_ERPNEXT_IMAGE="frappe/erpnext:version-15"
 
 # Ensure ERPNEXT_IMAGE is set
@@ -109,6 +136,10 @@ if [ $? -eq 0 ]; then
 	print_info "Updated ERPNEXT_IMAGE in $ENV_FILE to:"
 	print_info "$CUSTOM_IMAGE_FULL" print_info "To use this image, it's already tagged as: $BASE_IMAGE"
 	print_info "Your existing docker-compose or deployment will automatically use the custom image!"
+
+	# Update the cache with the new hash
+	echo "$CURRENT_HASH" > "$CACHE_FILE"
+	print_info "Cache updated."
 else
 	print_error "Build failed!"
 	exit 1
