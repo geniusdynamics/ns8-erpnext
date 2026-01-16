@@ -61,15 +61,24 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
+            <cv-text-area
+              label="App Json"
+              v-model="app_json"
+              @input="parseAppJson"
+              placeholder='[{"url": "...", "branch": "...", "app_name": "..."}]'
+            ></cv-text-area>
+            <div v-if="appJsonError" class="app-json-error">
+              <NsInlineNotification kind="error" :description="appJsonError" />
+            </div>
             <div>Selected Modules: {{ erpSelectedModules }}</div>
             <cv-multi-select
               :label="'ERP Next Modules to be installed'"
               :options="erpNextModules"
               :title="'ERP Next Modules to be installed'"
               v-model="erpSelectedModules"
+              :disabled="loading.getConfiguration || loading.configureModule"
             >
             </cv-multi-select>
-            <cv-text-area label="App Json" v-model="app_json"></cv-text-area>
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
@@ -148,236 +157,10 @@ export default {
       isHttpToHttpsEnabled: true,
       hasBackup: false,
 
-      erpNextModules: [
-        {
-          label: "ERPNext",
-          value: "erpnext",
-          name: "erpnext",
-          disabled: false,
-        },
-        {
-          label: "Payments",
-          value: "payments",
-          name: "payments",
-          disabled: false,
-        },
-        {
-          label: "Navari CSF KE",
-          value: "csf_ke",
-          name: "csf_ke",
-          disabled: false,
-        },
-        { label: "HRMS", value: "hrms", name: "hrms", disabled: false },
-        {
-          label: "Mpesa Payments",
-          value: "frappe_mpsa_payments",
-          name: "frappe_mpsa_payments",
-          disabled: false,
-        },
-        {
-          label: "Attendance Timesheet",
-          value: "nl-attendance-timesheet",
-          name: "nl-attendance-timesheet",
-          disabled: false,
-        },
-        {
-          label: "Piece Rate Pay",
-          value: "nl-piece-rate-pay",
-          name: "nl-piece-rate-pay",
-          disabled: false,
-        },
-        {
-          label: "Whatsapp (Frappe)",
-          value: "frappe_whatsapp",
-          name: "frappe_whatsapp",
-          disabled: false,
-        },
-        {
-          label: "Whatsapp Chat",
-          value: "whatsapp_chat",
-          name: "whatsapp_chat",
-          disabled: false,
-        },
-        {
-          label: "Education",
-          value: "education",
-          name: "education",
-          disabled: false,
-        },
-        { label: "LMS", value: "lms", name: "lms", disabled: false },
-        { label: "Wiki", value: "wiki", name: "wiki", disabled: false },
-        {
-          label: "Paystack",
-          value: "frappe_paystack",
-          name: "frappe_paystack",
-          disabled: false,
-        },
-        {
-          label: "Print Designer",
-          value: "print_designer",
-          name: "print_designer",
-          disabled: false,
-        },
-        {
-          label: "Webshop",
-          value: "webshop",
-          name: "webshop",
-          disabled: false,
-        },
-        {
-          label: "PibiDAV",
-          value: "pibiDAV",
-          name: "pibiDAV",
-          disabled: false,
-        },
-        {
-          label: "PibiCard",
-          value: "pibicard",
-          name: "pibicard",
-          disabled: false,
-        },
-        {
-          label: "Lending",
-          value: "lending",
-          name: "lending",
-          disabled: false,
-        },
-        {
-          label: "Helpdesk",
-          value: "helpdesk",
-          name: "helpdesk",
-          disabled: false,
-        },
-        {
-          label: "Pibicut",
-          value: "pibicut",
-          name: "pibicut",
-          disabled: false,
-        },
-        {
-          label: "PDF on Submit",
-          value: "pdf_on_submit",
-          name: "pdf_on_submit",
-          disabled: false,
-        },
-        {
-          label: "Insights",
-          value: "insights",
-          name: "insights",
-          disabled: false,
-        },
-        {
-          label: "Jobcard Planning",
-          value: "jobcard_planning",
-          name: "jobcard_planning",
-          disabled: false,
-        },
-        { label: "Marley", value: "marley", name: "marley", disabled: false },
-        { label: "Raven", value: "raven", name: "raven", disabled: false },
-        { label: "CRM", value: "crm", name: "crm", disabled: false },
-        {
-          label: "Builder",
-          value: "builder",
-          name: "builder",
-          disabled: false,
-        },
-        {
-          label: "Check Run",
-          value: "check_run",
-          name: "check_run",
-          disabled: false,
-        },
-        {
-          label: "Inventory Tools",
-          value: "inventory_tools",
-          name: "inventory_tools",
-          disabled: false,
-        },
-        {
-          label: "Employee Self Service",
-          value: "employee_self_service",
-          name: "employee_self_service",
-          disabled: false,
-        },
-        {
-          label: "Expenses",
-          value: "erpnext-expense-management-module",
-          name: "erpnext-expense-management-module",
-          disabled: false,
-        },
-        {
-          label: "QR Code",
-          value: "Frappe-QR-Code",
-          name: "Frappe-QR-Code",
-          disabled: false,
-        },
-        { label: "Drive", value: "drive", name: "drive", disabled: false },
-        {
-          label: "POS Awesome",
-          value: "posawesome",
-          name: "posawesome",
-          disabled: false,
-        },
-        { label: "PropMS", value: "PropMS", name: "PropMS", disabled: false },
-        { label: "Etims", value: "Etims", name: "Etims", disabled: false },
-        {
-          label: "Utility Billing",
-          value: "utility-billing",
-          name: "utility-billing",
-          disabled: false,
-        },
-        {
-          label: "PibiCal",
-          value: "pibical",
-          name: "pibical",
-          disabled: false,
-        },
-        {
-          label: "Junior School",
-          value: "Junior-School",
-          name: "Junior-School",
-          disabled: false,
-        },
-        {
-          label: "KE Compliance",
-          value: "kenya_compliance_via_slade",
-          name: "kenya_compliance_via_slade",
-          disabled: false,
-        },
-        {
-          label: "ProjectIT",
-          value: "ProjectIT",
-          name: "ProjectIT",
-          disabled: false,
-        },
-        {
-          label: "Whitelabel",
-          value: "whitelabel",
-          name: "whitelabel",
-          disabled: false,
-        },
-        {
-          label: "SMPP Gateway",
-          value: "smpp_gateway",
-          name: "smpp_gateway",
-          disabled: false,
-        },
-        { label: "URY", value: "ury", name: "ury", disabled: false },
-        {
-          label: "Nex Bridge",
-          value: "nex_bridge",
-          name: "nex_bridge",
-          disabled: false,
-        },
-        {
-          label: "POS Next",
-          value: "pos_next",
-          name: "pos_next",
-          disabled: false,
-        },
-      ],
       erpSelectedModules: [],
       app_json: "",
+      appJsonError: "",
+      toggleAccordion: [false],
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -394,6 +177,25 @@ export default {
   },
   computed: {
     ...mapState(["instanceName", "core", "appName"]),
+    erpNextModules() {
+      if (!this.app_json) {
+        return [];
+      }
+      try {
+        const apps = JSON.parse(this.app_json);
+        if (!Array.isArray(apps)) {
+          return [];
+        }
+        return apps.map((app) => ({
+          label: app.app_name || app.name || "Unknown",
+          value: app.app_name || app.name || "Unknown",
+          name: app.app_name || app.name || "Unknown",
+          disabled: false,
+        }));
+      } catch (e) {
+        return [];
+      }
+    },
   },
   created() {
     this.getConfiguration();
@@ -409,6 +211,28 @@ export default {
     next();
   },
   methods: {
+    parseAppJson() {
+      this.appJsonError = "";
+      if (!this.app_json) {
+        this.erpSelectedModules = [];
+        return;
+      }
+      try {
+        const apps = JSON.parse(this.app_json);
+        if (!Array.isArray(apps)) {
+          this.appJsonError = this.$t("settings.app_json_must_be_array");
+          return;
+        }
+        const moduleNames = apps
+          .map((app) => app.app_name || app.name)
+          .filter((name) => name);
+        this.erpSelectedModules = this.erpSelectedModules.filter((m) =>
+          moduleNames.includes(m)
+        );
+      } catch (e) {
+        this.appJsonError = this.$t("settings.invalid_json_format");
+      }
+    },
     async getConfiguration() {
       this.loading.getConfiguration = true;
       this.error.getConfiguration = "";
@@ -456,7 +280,7 @@ export default {
       this.host = config.host;
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
-      this.erpSelectedModules = config.erpSelectedModules;
+      this.erpSelectedModules = config.erpSelectedModules || [];
       this.hasBackup = config.hasBackup;
       this.app_json = atob(config.appJson);
       console.log("Has Backup: " + this.hasBackup);
@@ -711,5 +535,9 @@ export default {
 
 .maxwidth {
   max-width: 38rem;
+}
+
+.app-json-error {
+  margin-bottom: $spacing-06;
 }
 </style>
