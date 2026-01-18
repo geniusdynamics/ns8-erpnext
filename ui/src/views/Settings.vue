@@ -186,12 +186,21 @@ export default {
         if (!Array.isArray(apps)) {
           return [];
         }
-        return apps.map((app) => ({
-          label: app.app_name || app.name || "Unknown",
-          value: app.app_name || app.name || "Unknown",
-          name: app.app_name || app.name || "Unknown",
-          disabled: false,
-        }));
+        return apps.map((app) => {
+          let label = app.app_name || app.name;
+          if (!label && app.url) {
+            const urlParts = app.url.split('/');
+            label = urlParts[urlParts.length - 1] || "Unknown";
+          } else if (!label) {
+            label = "Unknown";
+          }
+          return {
+            label: label,
+            value: app.app_name || app.name || label,
+            name: app.app_name || app.name || label,
+            disabled: false,
+          };
+        });
       } catch (e) {
         return [];
       }
