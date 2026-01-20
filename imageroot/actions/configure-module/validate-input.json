@@ -38,6 +38,12 @@
             "type": "string",
             "title": "App JSON configuration",
             "description": "Base64 encoded JSON array containing app configurations with url, branch, and app_name"
+        },
+        "frappeVersion": {
+            "type": "string",
+            "title": "Frappe version",
+            "description": "Frappe version branch to use (e.g., version-15 or version-16)",
+            "enum": ["version-15", "version-16"]
         }
     }
 }

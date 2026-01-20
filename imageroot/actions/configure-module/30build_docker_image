@@ -33,8 +33,9 @@ if ! command -v jq &>/dev/null; then
 	exit 1
 fi
 
-# Function to fetch latest ERPNext v15 tag from GitHub
+# Function to fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
 fetch_erpnext_tag() {
+  local major_version="${FRAPPE_VERSION##version-}"
   local api_url="https://api.github.com/repos/frappe/erpnext/tags"
 
   local tags_json
@@ -43,18 +44,18 @@ fetch_erpnext_tag() {
     return 1
   fi
 
-  local first_v15_tag
-  if ! first_v15_tag=$(echo "$tags_json" | jq -r '.[] | select(.name | startswith("v15.")) | .name' 2>/dev/null | head -1); then
+  local first_tag
+  if ! first_tag=$(echo "$tags_json" | jq -r ".[] | select(.name | startswith(\"v${major_version}.\")) | .name" 2>/dev/null | head -1); then
     print_warning "Failed to parse tags, using default"
     return 1
   fi
 
-  if [ -z "$first_v15_tag" ] || [ "$first_v15_tag" = "null" ]; then
-    print_warning "No v15 tags found, using default"
+  if [ -z "$first_tag" ] || [ "$first_tag" = "null" ]; then
+    print_warning "No v${major_version} tags found, using default"
     return 1
   fi
 
-  echo "$first_v15_tag"
+  echo "$first_tag"
   return 0
 }
 
@@ -84,12 +85,12 @@ else
 	print_info "No cache found. Building Docker image..."
 fi
 
-# Fetch latest ERPNext v15 tag from GitHub
+# Fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
 ERPNEXT_TAG=$(fetch_erpnext_tag) || true
 
 if [ -z "${ERPNEXT_TAG:-}" ]; then
   print_warning "Could not fetch ERPNext tag, using fallback"
-  ERPNEXT_TAG="v15.0.0"
+  ERPNEXT_TAG="v${FRAPPE_VERSION##version-}.0.0"
 fi
 
 print_info "Using ERPNext tag: $ERPNEXT_TAG"
@@ -117,7 +118,7 @@ print_info "Custom Image will be: $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 print_info "Apps to be installed:"
 echo "$APPS_JSON"
 
-FRAPPE_BRANCH="version-15"
+FRAPPE_BRANCH="${FRAPPE_VERSION}"
 
 print_info "Using Frappe branch: $FRAPPE_BRANCH"
 print_info "Building custom ERPNext image with Podman..."

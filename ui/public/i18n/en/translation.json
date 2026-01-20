@@ -38,7 +38,8 @@
     "instance_configuration": "Configure ErpNext",
     "domain_already_used_in_traefik": "Domain already used in traefik",
     "app_json_must_be_array": "App JSON must be an array of objects",
-    "invalid_json_format": "Invalid JSON format"
+    "invalid_json_format": "Invalid JSON format",
+    "frappe_version": "Frappe version"
   },
   "about": {
     "title": "About"
@@ -57,7 +58,8 @@
     "apps_to_build": "Apps to be built",
     "build_image": "Build Image",
     "building_image": "Building Docker image",
-    "please_wait": "Please wait..."
+    "please_wait": "Please wait...",
+    "frappe_version": "Frappe version"
   },
   "action": {
     "get-status": "Get status",

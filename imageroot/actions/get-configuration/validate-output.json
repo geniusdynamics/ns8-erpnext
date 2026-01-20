@@ -31,6 +31,26 @@
             "type": "boolean",
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
+        },
+        "erpSelectedModules": {
+            "type": "array",
+            "title": "ERP Next selected modules",
+            "description": "List of selected ERP Next modules"
+        },
+        "appJson": {
+            "type": "string",
+            "title": "App JSON configuration",
+            "description": "Base64 encoded JSON array containing app configurations"
+        },
+        "frappeVersion": {
+            "type": "string",
+            "title": "Frappe version",
+            "description": "Frappe version branch to use (e.g., version-15 or version-16)"
+        },
+        "hasBackup": {
+            "type": "boolean",
+            "title": "Has backup",
+            "description": "Whether a backup exists for this instance"
         }
     }
 }

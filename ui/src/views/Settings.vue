@@ -79,6 +79,15 @@
               :disabled="loading.getConfiguration || loading.configureModule"
             >
             </cv-multi-select>
+            <cv-select
+              :label="$t('settings.frappe_version')"
+              v-model="frappeVersion"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <cv-select-option value="version-15">version-15</cv-select-option>
+              <cv-select-option value="version-16">version-16</cv-select-option>
+            </cv-select>
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
@@ -160,6 +169,7 @@ export default {
       erpSelectedModules: [],
       app_json: "",
       appJsonError: "",
+      frappeVersion: "version-15",
       toggleAccordion: [false],
       loading: {
         getConfiguration: false,
@@ -291,6 +301,7 @@ export default {
       this.isHttpToHttpsEnabled = config.http2https;
       this.erpSelectedModules = config.erpSelectedModules || [];
       this.hasBackup = config.hasBackup;
+      this.frappeVersion = config.frappeVersion || "version-15";
       this.app_json = atob(config.appJson);
       console.log("Has Backup: " + this.hasBackup);
       console.log("appJson", this.app_json);
@@ -460,6 +471,7 @@ export default {
             http2https: this.isHttpToHttpsEnabled,
             erpSelectedModules: this.erpSelectedModules,
             appJson: btoa(this.app_json),
+            frappeVersion: this.frappeVersion,
           },
           extra: {
             title: this.$t("settings.instance_configuration", {

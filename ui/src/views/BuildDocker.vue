@@ -60,6 +60,15 @@
               :disabled="loading.getConfiguration || loading.buildDockerImage"
             >
             </cv-multi-select>
+            <cv-select
+              :label="$t('build.frappe_version')"
+              v-model="frappeVersion"
+              :disabled="loading.getConfiguration || loading.buildDockerImage"
+              class="mg-bottom"
+            >
+              <cv-select-option value="version-15">version-15</cv-select-option>
+              <cv-select-option value="version-16">version-16</cv-select-option>
+            </cv-select>
             <cv-row v-if="error.buildDockerImage">
               <cv-column>
                 <NsInlineNotification
@@ -116,6 +125,7 @@ export default {
       app_json: "",
       appJsonError: "",
       forceRebuild: false,
+      frappeVersion: "version-15",
       erpSelectedModules: [],
       loading: {
         getConfiguration: false,
@@ -230,6 +240,7 @@ export default {
     getConfigurationCompleted(taskContext, taskResult) {
       const config = taskResult.output;
       this.erpSelectedModules = config.erpSelectedModules || [];
+      this.frappeVersion = config.frappeVersion || "version-15";
       this.app_json = atob(config.appJson);
       console.log("appJson", this.app_json);
 
@@ -258,6 +269,7 @@ export default {
           action: taskAction,
           data: {
             forceRebuild: this.forceRebuild,
+            frappeVersion: this.frappeVersion,
           },
           extra: {
             title: this.$t("build.building_image"),
