@@ -33,6 +33,31 @@ if ! command -v jq &>/dev/null; then
 	exit 1
 fi
 
+# Function to fetch latest ERPNext v15 tag from GitHub
+fetch_erpnext_tag() {
+  local api_url="https://api.github.com/repos/frappe/erpnext/tags"
+
+  local tags_json
+  if ! tags_json=$(curl -fsSL "$api_url" 2>/dev/null); then
+    print_warning "Failed to fetch tags from GitHub, using default"
+    return 1
+  fi
+
+  local first_v15_tag
+  if ! first_v15_tag=$(echo "$tags_json" | jq -r '.[] | select(.name | startswith("v15.")) | .name' 2>/dev/null | head -1); then
+    print_warning "Failed to parse tags, using default"
+    return 1
+  fi
+
+  if [ -z "$first_v15_tag" ] || [ "$first_v15_tag" = "null" ]; then
+    print_warning "No v15 tags found, using default"
+    return 1
+  fi
+
+  echo "$first_v15_tag"
+  return 0
+}
+
 # Cache file for app_json hash
 CACHE_FILE=".app_json_cache"
 CURRENT_APPS_JSON="$APPS_JSON"
@@ -59,7 +84,17 @@ else
 	print_info "No cache found. Building Docker image..."
 fi
 
-DEFAULT_ERPNEXT_IMAGE="frappe/erpnext:version-15"
+# Fetch latest ERPNext v15 tag from GitHub
+ERPNEXT_TAG=$(fetch_erpnext_tag) || true
+
+if [ -z "${ERPNEXT_TAG:-}" ]; then
+  print_warning "Could not fetch ERPNext tag, using fallback"
+  ERPNEXT_TAG="v15.0.0"
+fi
+
+print_info "Using ERPNext tag: $ERPNEXT_TAG"
+
+DEFAULT_ERPNEXT_IMAGE="frappe/erpnext:${ERPNEXT_TAG}"
 
 # Ensure ERPNEXT_IMAGE is set
 if [ -z "${ERPNEXT_IMAGE:-}" ]; then
