@@ -60,15 +60,15 @@
               :disabled="loading.getConfiguration || loading.buildDockerImage"
             >
             </cv-multi-select>
-            <cv-select
+            <cv-dropdown
               :label="$t('build.frappe_version')"
               v-model="frappeVersion"
               :disabled="loading.getConfiguration || loading.buildDockerImage"
               class="mg-bottom"
             >
-              <cv-select-option value="version-15">version-15</cv-select-option>
-              <cv-select-option value="version-16">version-16</cv-select-option>
-            </cv-select>
+              <cv-dropdown-item value="version-15">version-15</cv-dropdown-item>
+              <cv-dropdown-item value="version-16">version-16</cv-dropdown-item>
+            </cv-dropdown>
             <cv-row v-if="error.buildDockerImage">
               <cv-column>
                 <NsInlineNotification

@@ -79,15 +79,15 @@
               :disabled="loading.getConfiguration || loading.configureModule"
             >
             </cv-multi-select>
-            <cv-select
+            <cv-dropdown
               :label="$t('settings.frappe_version')"
               v-model="frappeVersion"
               :disabled="loading.getConfiguration || loading.configureModule"
               class="mg-bottom"
             >
-              <cv-select-option value="version-15">version-15</cv-select-option>
-              <cv-select-option value="version-16">version-16</cv-select-option>
-            </cv-select>
+              <cv-dropdown-item value="version-15">version-15</cv-dropdown-item>
+              <cv-dropdown-item value="version-16">version-16</cv-dropdown-item>
+            </cv-dropdown>
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
