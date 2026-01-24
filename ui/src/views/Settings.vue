@@ -165,7 +165,7 @@
                           bx--btn bx--btn--tertiary bx--btn--sm
                           copy-json-btn
                         "
-                        @click="copyJsonToClipboard"
+                        @click.prevent="copyJsonToClipboard"
                       >
                         Copy JSON
                       </button>
@@ -180,7 +180,6 @@
               :visible="isAddAppModalOpen"
               :auto-hide-off="true"
               size="small"
-              primary-button-disabled="false"
               @primary-click="addApp"
               @secondary-click="closeAddAppModal"
             >
