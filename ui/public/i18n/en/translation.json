@@ -39,7 +39,11 @@
     "domain_already_used_in_traefik": "Domain already used in traefik",
     "app_json_must_be_array": "App JSON must be an array of objects",
     "invalid_json_format": "Invalid JSON format",
-    "frappe_version": "Frappe version"
+    "frappe_version": "Frappe version",
+    "app_name": "App Name",
+    "repository_url": "Repository URL",
+    "branch": "Branch",
+    "labels": "Labels"
   },
   "about": {
     "title": "About"

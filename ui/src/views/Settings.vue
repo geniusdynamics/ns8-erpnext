@@ -65,7 +65,7 @@
               label="App Json"
               v-model="app_json"
               @input="parseAppJson"
-              placeholder='[{"url": "...", "branch": "...", "app_name": "..."}]'
+              placeholder='[{"url": "...", "branch": "...", "app_name": "...", "labels": "..."}]'
             ></cv-text-area>
             <div v-if="appJsonError" class="app-json-error">
               <NsInlineNotification kind="error" :description="appJsonError" />
@@ -88,6 +88,122 @@
               <cv-dropdown-item value="version-15">version-15</cv-dropdown-item>
               <cv-dropdown-item value="version-16">version-16</cv-dropdown-item>
             </cv-dropdown>
+
+            <cv-row class="mg-bottom">
+              <cv-column :sm="4">
+                <h4>Manage Apps</h4>
+              </cv-column>
+            </cv-row>
+            <cv-row class="mg-bottom">
+              <cv-column :sm="12">
+                <cv-tile light>
+                  <div class="apps-container">
+                    <div class="apps-list">
+                      <div v-if="parsedApps.length === 0" class="empty-state">
+                        <p>No apps added yet</p>
+                      </div>
+                      <cv-structured-list v-else>
+                        <template slot="headings">
+                          <cv-structured-list-heading>App Name</cv-structured-list-heading>
+                          <cv-structured-list-heading>URL</cv-structured-list-heading>
+                          <cv-structured-list-heading>Branch</cv-structured-list-heading>
+                          <cv-structured-list-heading>Labels</cv-structured-list-heading>
+                          <cv-structured-list-heading>Actions</cv-structured-list-heading>
+                        </template>
+                        <template slot="items">
+                          <cv-structured-list-item
+                            v-for="(app, index) in parsedApps"
+                            :key="index"
+                          >
+<cv-structured-list-data>{{
+                               app.app_name || app.name || "Unknown"
+                             }}</cv-structured-list-data>
+                             <cv-structured-list-data>{{
+                               app.url || "-"
+                             }}</cv-structured-list-data>
+                             <cv-structured-list-data>{{
+                               app.branch || "main/master"
+                             }}</cv-structured-list-data>
+                             <cv-structured-list-data>{{
+                               app.labels || "-"
+                             }}</cv-structured-list-data>
+                             <cv-structured-list-data>
+                              <cv-button
+                                kind="danger--ghost"
+                                size="small"
+                                @click="removeApp(index)"
+                                :icon="TrashCan20"
+                              >
+                                Remove
+                              </cv-button>
+                            </cv-structured-list-data>
+                          </cv-structured-list-item>
+                        </template>
+                      </cv-structured-list>
+                    </div>
+                    <div class="apps-actions">
+                      <cv-button kind="tertiary" :icon="Add20" @click="openAddAppModal">
+                        Add App via Form
+                      </cv-button>
+                      <button
+                        type="button"
+                        class="bx--btn bx--btn--tertiary bx--btn--sm copy-json-btn"
+                        @click="copyJsonToClipboard"
+                      >
+                        Copy JSON
+                      </button>
+                    </div>
+                  </div>
+                </cv-tile>
+              </cv-column>
+            </cv-row>
+
+            <cv-modal
+              v-model="isAddAppModalOpen"
+              :visible="isAddAppModalOpen"
+              :auto-hide-off="true"
+              size="small"
+              primary-button-disabled="false"
+              @primary-click="addApp"
+              @secondary-click="closeAddAppModal"
+            >
+              <template slot="title">Add App</template>
+              <template slot="content">
+                <cv-form @submit.prevent="addApp">
+                  <cv-text-input
+                    :label="$t('settings.app_name')"
+                    v-model.trim="newApp.app_name"
+                    placeholder="my-custom-app"
+                    :invalid-message="newAppErrors.app_name"
+                    ref="newAppName"
+                  >
+                  </cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.repository_url')"
+                    v-model.trim="newApp.url"
+                    placeholder="https://github.com/user/repo"
+                    :invalid-message="newAppErrors.url"
+                    ref="newAppUrl"
+                  >
+                  </cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.branch')"
+                    v-model.trim="newApp.branch"
+                    placeholder="main"
+                  >
+                  </cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.labels')"
+                    v-model.trim="newApp.labels"
+                    placeholder="label1,label2"
+                  >
+                  </cv-text-input>
+                </cv-form>
+              </template>
+              <template slot="primary-button">Add App</template>
+              <template slot="secondary-button">Cancel</template>
+            </cv-modal>
+
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
@@ -142,9 +258,19 @@ import {
   IconService,
   PageTitleService,
 } from "@nethserver/ns8-ui-lib";
+import {
+  Add20,
+  TrashCan20,
+  Save20,
+} from "@carbon/icons-vue";
 
 export default {
   name: "Settings",
+  components: {
+    Add20,
+    TrashCan20,
+    Save20,
+  },
   mixins: [
     TaskService,
     IconService,
@@ -171,6 +297,17 @@ export default {
       appJsonError: "",
       frappeVersion: "version-15",
       toggleAccordion: [false],
+      isAddAppModalOpen: false,
+      newApp: {
+        app_name: "",
+        url: "",
+        branch: "",
+        labels: "",
+      },
+      newAppErrors: {
+        app_name: "",
+        url: "",
+      },
       loading: {
         getConfiguration: false,
         configureModule: false,
@@ -187,6 +324,20 @@ export default {
   },
   computed: {
     ...mapState(["instanceName", "core", "appName"]),
+    parsedApps() {
+      if (!this.app_json) {
+        return [];
+      }
+      try {
+        const apps = JSON.parse(this.app_json);
+        if (!Array.isArray(apps)) {
+          return [];
+        }
+        return apps;
+      } catch (e) {
+        return [];
+      }
+    },
     erpNextModules() {
       if (!this.app_json) {
         return [];
@@ -230,6 +381,80 @@ export default {
     next();
   },
   methods: {
+    openAddAppModal() {
+      this.newApp = {
+        app_name: "",
+        url: "",
+        branch: "",
+        labels: "",
+      };
+      this.newAppErrors = {
+        app_name: "",
+        url: "",
+      };
+      this.isAddAppModalOpen = true;
+    },
+    closeAddAppModal() {
+      this.isAddAppModalOpen = false;
+    },
+    addApp() {
+      this.newAppErrors.app_name = "";
+      this.newAppErrors.url = "";
+      let isValid = true;
+
+      if (!this.newApp.app_name) {
+        this.newAppErrors.app_name = "App name is required";
+        isValid = false;
+      }
+      if (!this.newApp.url) {
+        this.newAppErrors.url = "Repository URL is required";
+        isValid = false;
+      }
+
+      if (!isValid) {
+        return;
+      }
+
+      try {
+        let currentApps = [];
+        if (this.app_json) {
+          currentApps = JSON.parse(this.app_json);
+          if (!Array.isArray(currentApps)) {
+            currentApps = [];
+          }
+        }
+
+        currentApps.push({
+          app_name: this.newApp.app_name,
+          url: this.newApp.url,
+          branch: this.newApp.branch || "main",
+          labels: this.newApp.labels || "",
+        });
+
+        this.app_json = JSON.stringify(currentApps, null, 2);
+        this.parseAppJson();
+        this.closeAddAppModal();
+      } catch (e) {
+        console.error("Error adding app:", e);
+      }
+    },
+    removeApp(index) {
+      try {
+        let currentApps = JSON.parse(this.app_json);
+        if (Array.isArray(currentApps)) {
+          currentApps.splice(index, 1);
+          this.app_json = JSON.stringify(currentApps, null, 2);
+          this.parseAppJson();
+        }
+      } catch (e) {
+        console.error("Error removing app:", e);
+      }
+    },
+    copyJsonToClipboard() {
+      navigator.clipboard.writeText(this.app_json).then(() => {
+        alert("JSON copied to clipboard!");
+      });
+    },
     parseAppJson() {
       this.appJsonError = "";
       if (!this.app_json) {
@@ -560,5 +785,34 @@ export default {
 
 .app-json-error {
   margin-bottom: $spacing-06;
+}
+
+.apps-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-06;
+}
+
+.apps-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  padding: $spacing-06;
+  text-align: center;
+  color: $text-02;
+}
+
+.apps-actions {
+  display: flex;
+  gap: $spacing-04;
+  align-items: center;
+}
+
+.copy-json-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 </style>
