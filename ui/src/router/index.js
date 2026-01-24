@@ -22,8 +22,8 @@ const routes = [
     component: Settings,
   },
   {
-    path: "/backup-restore",
-    name: "backup-restore",
+    path: "/backuprestore",
+    name: "backuprestore",
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
@@ -31,8 +31,8 @@ const routes = [
       import(/* webpackChunkName: "about" */ "../views/BackupRestore.vue"),
   },
   {
-    path: "/build-docker",
-    name: "build-docker",
+    path: "/builddocker",
+    name: "builddocker",
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
