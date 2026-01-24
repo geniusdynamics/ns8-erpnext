@@ -155,7 +155,7 @@
                       <cv-button
                         kind="tertiary"
                         :icon="Add20"
-                        @click="openAddAppModal"
+                        @click.prevent="openAddAppModal"
                       >
                         Add App via Form
                       </cv-button>
