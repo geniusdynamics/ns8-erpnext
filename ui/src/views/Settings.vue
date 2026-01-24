@@ -104,30 +104,40 @@
                       </div>
                       <cv-structured-list v-else>
                         <template slot="headings">
-                          <cv-structured-list-heading>App Name</cv-structured-list-heading>
-                          <cv-structured-list-heading>URL</cv-structured-list-heading>
-                          <cv-structured-list-heading>Branch</cv-structured-list-heading>
-                          <cv-structured-list-heading>Labels</cv-structured-list-heading>
-                          <cv-structured-list-heading>Actions</cv-structured-list-heading>
+                          <cv-structured-list-heading
+                            >App Name</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >URL</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >Branch</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >Labels</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >Actions</cv-structured-list-heading
+                          >
                         </template>
                         <template slot="items">
                           <cv-structured-list-item
                             v-for="(app, index) in parsedApps"
                             :key="index"
                           >
-<cv-structured-list-data>{{
-                               app.app_name || app.name || "Unknown"
-                             }}</cv-structured-list-data>
-                             <cv-structured-list-data>{{
-                               app.url || "-"
-                             }}</cv-structured-list-data>
-                             <cv-structured-list-data>{{
-                               app.branch || "main/master"
-                             }}</cv-structured-list-data>
-                             <cv-structured-list-data>{{
-                               app.labels || "-"
-                             }}</cv-structured-list-data>
-                             <cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.app_name || app.name || "Unknown"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.url || "-"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.branch || "main/master"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.labels || "-"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>
                               <cv-button
                                 kind="danger--ghost"
                                 size="small"
@@ -142,12 +152,19 @@
                       </cv-structured-list>
                     </div>
                     <div class="apps-actions">
-                      <cv-button kind="tertiary" :icon="Add20" @click="openAddAppModal">
+                      <cv-button
+                        kind="tertiary"
+                        :icon="Add20"
+                        @click="openAddAppModal"
+                      >
                         Add App via Form
                       </cv-button>
                       <button
                         type="button"
-                        class="bx--btn bx--btn--tertiary bx--btn--sm copy-json-btn"
+                        class="
+                          bx--btn bx--btn--tertiary bx--btn--sm
+                          copy-json-btn
+                        "
                         @click="copyJsonToClipboard"
                       >
                         Copy JSON
@@ -258,19 +275,10 @@ import {
   IconService,
   PageTitleService,
 } from "@nethserver/ns8-ui-lib";
-import {
-  Add20,
-  TrashCan20,
-  Save20,
-} from "@carbon/icons-vue";
 
 export default {
   name: "Settings",
-  components: {
-    Add20,
-    TrashCan20,
-    Save20,
-  },
+
   mixins: [
     TaskService,
     IconService,
@@ -350,7 +358,7 @@ export default {
         return apps.map((app) => {
           let label = app.app_name || app.name;
           if (!label && app.url) {
-            const urlParts = app.url.split('/');
+            const urlParts = app.url.split("/");
             label = urlParts[urlParts.length - 1] || "Unknown";
           } else if (!label) {
             label = "Unknown";
@@ -486,13 +494,13 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.getConfigurationAborted,
+        this.getConfigurationAborted
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.getConfigurationCompleted,
+        this.getConfigurationCompleted
       );
 
       const res = await to(
@@ -503,7 +511,7 @@ export default {
             isNotificationHidden: true,
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -569,19 +577,19 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted,
+        this.configureModuleAborted
       );
 
       // register to task validation
       this.core.$root.$once(
         `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed,
+        this.configureModuleValidationFailed
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted,
+        this.configureModuleCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -599,7 +607,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -616,19 +624,19 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted,
+        this.configureModuleAborted
       );
 
       // register to task validation
       this.core.$root.$once(
         `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed,
+        this.configureModuleValidationFailed
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted,
+        this.configureModuleCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -646,7 +654,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -673,19 +681,19 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted,
+        this.configureModuleAborted
       );
 
       // register to task validation
       this.core.$root.$once(
         `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed,
+        this.configureModuleValidationFailed
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted,
+        this.configureModuleCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -705,7 +713,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -735,13 +743,13 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.buildDockerImageAborted,
+        this.buildDockerImageAborted
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.buildDockerImageCompleted,
+        this.buildDockerImageCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -753,7 +761,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
       if (err) {
