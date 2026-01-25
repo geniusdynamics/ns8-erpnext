@@ -94,92 +94,6 @@
                 <h4>Manage Apps</h4>
               </cv-column>
             </cv-row>
-
-            <cv-row class="mg-bottom">
-              <cv-column :sm="4">
-                <h4>Podman Images</h4>
-              </cv-column>
-            </cv-row>
-            <cv-row class="mg-bottom">
-              <cv-column>
-                <cv-tile light>
-                  <div v-if="error.getPodmanImages" class="error-section">
-                    <NsInlineNotification
-                      kind="error"
-                      :title="$t('action.get-podman-images')"
-                      :description="error.getPodmanImages"
-                      :showCloseButton="false"
-                    />
-                  </div>
-                  <div class="images-container">
-                    <div v-if="loading.getPodmanImages" class="loading-section">
-                      <cv-loading>Loading images...</cv-loading>
-                    </div>
-                    <div
-                      v-else-if="podmanImages.length === 0"
-                      class="empty-state"
-                    >
-                      <p>No podman images found</p>
-                    </div>
-                    <cv-structured-list v-else>
-                      <template slot="headings">
-                        <cv-structured-list-heading
-                          >Repository</cv-structured-list-heading
-                        >
-                        <cv-structured-list-heading
-                          >Tag</cv-structured-list-heading
-                        >
-                        <cv-structured-list-heading
-                          >Image ID</cv-structured-list-heading
-                        >
-                        <cv-structured-list-heading
-                          >Created</cv-structured-list-heading
-                        >
-                        <cv-structured-list-heading
-                          >Size</cv-structured-list-heading
-                        >
-                      </template>
-                      <template slot="items">
-                        <cv-structured-list-item
-                          v-for="(image, index) in podmanImages"
-                          :key="index"
-                        >
-                          <cv-structured-list-data>{{
-                            image.repositories && image.repositories.length > 0
-                              ? image.repositories[0]
-                              : "N/A"
-                          }}</cv-structured-list-data>
-                          <cv-structured-list-data>{{
-                            image.tags && image.tags.length > 0
-                              ? image.tags[0]
-                              : "N/A"
-                          }}</cv-structured-list-data>
-                          <cv-structured-list-data>{{
-                            image.id ? image.id.substring(0, 12) : "N/A"
-                          }}</cv-structured-list-data>
-                          <cv-structured-list-data>{{
-                            image.created || "N/A"
-                          }}</cv-structured-list-data>
-                          <cv-structured-list-data>{{
-                            image.size || "N/A"
-                          }}</cv-structured-list-data>
-                        </cv-structured-list-item>
-                      </template>
-                    </cv-structured-list>
-                  </div>
-                  <div class="images-actions">
-                    <cv-button
-                      kind="tertiary"
-                      :icon="Refresh20"
-                      @click.prevent="getPodmanImages"
-                      :disabled="loading.getPodmanImages"
-                    >
-                      Refresh Images
-                    </cv-button>
-                  </div>
-                </cv-tile>
-              </cv-column>
-            </cv-row>
             <cv-row class="mg-bottom">
               <cv-column :sm="12">
                 <cv-tile light>
@@ -305,6 +219,92 @@
               <template slot="primary-button">Add App</template>
               <template slot="secondary-button">Cancel</template>
             </cv-modal>
+
+            <cv-row class="mg-bottom">
+              <cv-column :sm="4">
+                <h4>Podman Images</h4>
+              </cv-column>
+            </cv-row>
+            <cv-row class="mg-bottom">
+              <cv-column>
+                <cv-tile light>
+                  <div v-if="error.getPodmanImages" class="error-section">
+                    <NsInlineNotification
+                      kind="error"
+                      :title="$t('action.get-podman-images')"
+                      :description="error.getPodmanImages"
+                      :showCloseButton="false"
+                    />
+                  </div>
+                  <div class="images-container">
+                    <div v-if="loading.getPodmanImages" class="loading-section">
+                      <cv-loading>Loading images...</cv-loading>
+                    </div>
+                    <div
+                      v-else-if="podmanImages.length === 0"
+                      class="empty-state"
+                    >
+                      <p>No podman images found</p>
+                    </div>
+                    <cv-structured-list v-else>
+                      <template slot="headings">
+                        <cv-structured-list-heading
+                          >Repository</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Tag</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Image ID</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Created</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Size</cv-structured-list-heading
+                        >
+                      </template>
+                      <template slot="items">
+                        <cv-structured-list-item
+                          v-for="(image, index) in podmanImages"
+                          :key="index"
+                        >
+                          <cv-structured-list-data>{{
+                            image.repositories && image.repositories.length > 0
+                              ? image.repositories[0]
+                              : "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.tags && image.tags.length > 0
+                              ? image.tags[0]
+                              : "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.id ? image.id.substring(0, 12) : "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.created || "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.size || "N/A"
+                          }}</cv-structured-list-data>
+                        </cv-structured-list-item>
+                      </template>
+                    </cv-structured-list>
+                  </div>
+                  <div class="images-actions">
+                    <cv-button
+                      kind="tertiary"
+                      :icon="Refresh20"
+                      @click.prevent="getPodmanImages"
+                      :disabled="loading.getPodmanImages"
+                    >
+                      Refresh Images
+                    </cv-button>
+                  </div>
+                </cv-tile>
+              </cv-column>
+            </cv-row>
 
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
