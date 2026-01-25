@@ -353,7 +353,6 @@
 <script>
 import to from "await-to-js";
 import { mapState } from "vuex";
-import { Refresh20, TrashCan20, Save20, Add20 } from "@carbon/icons-vue";
 import {
   QueryParamService,
   UtilService,
@@ -364,12 +363,6 @@ import {
 
 export default {
   name: "Settings",
-  components: {
-    Refresh20,
-    TrashCan20,
-    Save20,
-    Add20,
-  },
 
   mixins: [
     TaskService,
