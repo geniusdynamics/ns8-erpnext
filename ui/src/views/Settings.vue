@@ -522,7 +522,16 @@ export default {
     },
     getPodmanImagesCompleted(taskContext, taskResult) {
       const imagesData = taskResult.output;
-      this.podmanImages = imagesData.images || [];
+      this.podmanImages = (imagesData.images || []).map(image => ({
+        id: image.Id,
+        repositories: image.Names || [],
+        tags: image.Names ? image.Names.map(name => {
+          const parts = name.split(':');
+          return parts.length > 1 ? parts[parts.length - 1] : 'latest';
+        }) : [],
+        created: image.CreatedAt,
+        size: this.formatFileSize(image.VirtualSize)
+      }));
       if (imagesData.error) {
         this.error.getPodmanImages = imagesData.error;
       }
@@ -915,6 +924,13 @@ export default {
     buildDockerImageCompleted() {
       this.loading.buildDockerImage = false;
       this.getConfiguration();
+    },
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
   },
 };
