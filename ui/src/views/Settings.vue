@@ -94,6 +94,92 @@
                 <h4>Manage Apps</h4>
               </cv-column>
             </cv-row>
+
+            <cv-row class="mg-bottom">
+              <cv-column :sm="4">
+                <h4>Podman Images</h4>
+              </cv-column>
+            </cv-row>
+            <cv-row class="mg-bottom">
+              <cv-column>
+                <cv-tile light>
+                  <div v-if="error.getPodmanImages" class="error-section">
+                    <NsInlineNotification
+                      kind="error"
+                      :title="$t('action.get-podman-images')"
+                      :description="error.getPodmanImages"
+                      :showCloseButton="false"
+                    />
+                  </div>
+                  <div class="images-container">
+                    <div v-if="loading.getPodmanImages" class="loading-section">
+                      <cv-loading>Loading images...</cv-loading>
+                    </div>
+                    <div
+                      v-else-if="podmanImages.length === 0"
+                      class="empty-state"
+                    >
+                      <p>No podman images found</p>
+                    </div>
+                    <cv-structured-list v-else>
+                      <template slot="headings">
+                        <cv-structured-list-heading
+                          >Repository</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Tag</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Image ID</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Created</cv-structured-list-heading
+                        >
+                        <cv-structured-list-heading
+                          >Size</cv-structured-list-heading
+                        >
+                      </template>
+                      <template slot="items">
+                        <cv-structured-list-item
+                          v-for="(image, index) in podmanImages"
+                          :key="index"
+                        >
+                          <cv-structured-list-data>{{
+                            image.repositories && image.repositories.length > 0
+                              ? image.repositories[0]
+                              : "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.tags && image.tags.length > 0
+                              ? image.tags[0]
+                              : "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.id ? image.id.substring(0, 12) : "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.created || "N/A"
+                          }}</cv-structured-list-data>
+                          <cv-structured-list-data>{{
+                            image.size || "N/A"
+                          }}</cv-structured-list-data>
+                        </cv-structured-list-item>
+                      </template>
+                    </cv-structured-list>
+                  </div>
+                  <div class="images-actions">
+                    <cv-button
+                      kind="tertiary"
+                      :icon="Refresh20"
+                      @click.prevent="getPodmanImages"
+                      :disabled="loading.getPodmanImages"
+                    >
+                      Refresh Images
+                    </cv-button>
+                  </div>
+                </cv-tile>
+              </cv-column>
+            </cv-row>
             <cv-row class="mg-bottom">
               <cv-column :sm="12">
                 <cv-tile light>
@@ -267,6 +353,7 @@
 <script>
 import to from "await-to-js";
 import { mapState } from "vuex";
+import { Refresh20, TrashCan20, Save20, Add20 } from "@carbon/icons-vue";
 import {
   QueryParamService,
   UtilService,
@@ -277,6 +364,12 @@ import {
 
 export default {
   name: "Settings",
+  components: {
+    Refresh20,
+    TrashCan20,
+    Save20,
+    Add20,
+  },
 
   mixins: [
     TaskService,
@@ -300,6 +393,7 @@ export default {
       hasBackup: false,
 
       erpSelectedModules: [],
+      podmanImages: [],
       app_json: "",
       appJsonError: "",
       frappeVersion: "version-15",
@@ -319,6 +413,7 @@ export default {
         getConfiguration: false,
         configureModule: false,
         buildDockerImage: false,
+        getPodmanImages: false,
       },
       error: {
         getConfiguration: "",
@@ -326,6 +421,7 @@ export default {
         host: "",
         lets_encrypt: "",
         http2https: "",
+        getPodmanImages: "",
       },
     };
   },
@@ -376,6 +472,7 @@ export default {
   },
   created() {
     this.getConfiguration();
+    this.getPodmanImages();
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -388,6 +485,56 @@ export default {
     next();
   },
   methods: {
+    async getPodmanImages() {
+      this.loading.getPodmanImages = true;
+      this.error.getPodmanImages = "";
+      const taskAction = "podman-images-module";
+      const eventId = this.getUuid();
+
+      // register to task error
+      this.core.$root.$once(
+        `${taskAction}-aborted-${eventId}`,
+        this.getPodmanImagesAborted
+      );
+
+      // register to task completion
+      this.core.$root.$once(
+        `${taskAction}-completed-${eventId}`,
+        this.getPodmanImagesCompleted
+      );
+
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: taskAction,
+          extra: {
+            title: this.$t("action." + taskAction),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
+      );
+      const err = res[0];
+
+      if (err) {
+        console.error(`error creating task ${taskAction}`, err);
+        this.error.getPodmanImages = this.getErrorMessage(err);
+        this.loading.getPodmanImages = false;
+        return;
+      }
+    },
+    getPodmanImagesAborted(taskResult, taskContext) {
+      console.error(`${taskContext.action} aborted`, taskResult);
+      this.error.getPodmanImages = this.$t("error.generic_error");
+      this.loading.getPodmanImages = false;
+    },
+    getPodmanImagesCompleted(taskContext, taskResult) {
+      const imagesData = taskResult.output;
+      this.podmanImages = imagesData.images || [];
+      if (imagesData.error) {
+        this.error.getPodmanImages = imagesData.error;
+      }
+      this.loading.getPodmanImages = false;
+    },
     openAddAppModal() {
       this.newApp = {
         app_name: "",
@@ -821,5 +968,28 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.images-container {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: $spacing-06;
+}
+
+.images-actions {
+  display: flex;
+  gap: $spacing-04;
+  align-items: center;
+}
+
+.error-section {
+  margin-bottom: $spacing-06;
+}
+
+.loading-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-06;
 }
 </style>

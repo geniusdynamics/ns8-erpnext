@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Get podman images
+#
+
+import os
+import sys
+import json
+import subprocess
+import agent
+
+# Prepare return variable
+images_data = {}
+
+try:
+    # Run podman images command to get images in JSON format
+    result = subprocess.run(
+        ["podman", "images", "--format", "json"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    images = json.loads(result.stdout)
+    images_data["images"] = images
+    images_data["error"] = None
+except subprocess.CalledProcessError as e:
+    images_data["images"] = []
+    images_data["error"] = f"Failed to get podman images: {e.stderr}"
+except json.JSONDecodeError as e:
+    images_data["images"] = []
+    images_data["error"] = f"Failed to parse podman images output: {str(e)}"
+except Exception as e:
+    images_data["images"] = []
+    images_data["error"] = f"Unexpected error: {str(e)}"
+
+# Dump the images data to stdout
+json.dump(images_data, fp=sys.stdout)
