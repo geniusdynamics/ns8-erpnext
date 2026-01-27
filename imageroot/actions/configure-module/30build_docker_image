@@ -35,28 +35,28 @@ fi
 
 # Function to fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
 fetch_erpnext_tag() {
-  local major_version="${FRAPPE_VERSION##version-}"
-  local api_url="https://api.github.com/repos/frappe/erpnext/tags"
+	local major_version="${FRAPPE_VERSION##version-}"
+	local api_url="https://api.github.com/repos/frappe/erpnext/tags"
 
-  local tags_json
-  if ! tags_json=$(curl -fsSL "$api_url" 2>/dev/null); then
-    print_warning "Failed to fetch tags from GitHub, using default"
-    return 1
-  fi
+	local tags_json
+	if ! tags_json=$(curl -fsSL "$api_url" 2>/dev/null); then
+		print_warning "Failed to fetch tags from GitHub, using default"
+		return 1
+	fi
 
-  local first_tag
-  if ! first_tag=$(echo "$tags_json" | jq -r ".[] | select(.name | startswith(\"v${major_version}.\")) | .name" 2>/dev/null | head -1); then
-    print_warning "Failed to parse tags, using default"
-    return 1
-  fi
+	local first_tag
+	if ! first_tag=$(echo "$tags_json" | jq -r ".[] | select(.name | startswith(\"v${major_version}.\")) | .name" 2>/dev/null | head -1); then
+		print_warning "Failed to parse tags, using default"
+		return 1
+	fi
 
-  if [ -z "$first_tag" ] || [ "$first_tag" = "null" ]; then
-    print_warning "No v${major_version} tags found, using default"
-    return 1
-  fi
+	if [ -z "$first_tag" ] || [ "$first_tag" = "null" ]; then
+		print_warning "No v${major_version} tags found, using default"
+		return 1
+	fi
 
-  echo "$first_tag"
-  return 0
+	echo "$first_tag"
+	return 0
 }
 
 # Cache file for app_json hash
@@ -89,19 +89,15 @@ fi
 ERPNEXT_TAG=$(fetch_erpnext_tag) || true
 
 if [ -z "${ERPNEXT_TAG:-}" ]; then
-  print_warning "Could not fetch ERPNext tag, using fallback"
-  ERPNEXT_TAG="v${FRAPPE_VERSION##version-}.0.0"
+	print_warning "Could not fetch ERPNext tag, using fallback"
+	ERPNEXT_TAG="v${FRAPPE_VERSION##version-}.0.0"
 fi
 
 print_info "Using ERPNext tag: $ERPNEXT_TAG"
 
-DEFAULT_ERPNEXT_IMAGE="frappe/erpnext:${ERPNEXT_TAG}"
+ERPNEXT_IMAGE="frappe/erpnext:${ERPNEXT_TAG}"
 
-# Ensure ERPNEXT_IMAGE is set
-if [ -z "${ERPNEXT_IMAGE:-}" ]; then
-	print_warning "ERPNEXT_IMAGE is not set. Using default: $DEFAULT_ERPNEXT_IMAGE"
-	ERPNEXT_IMAGE="$DEFAULT_ERPNEXT_IMAGE"
-fi
+print_info "ERPNEXT_IMAGE forcibly set to: $ERPNEXT_IMAGE"
 # Extract image name and tag from ERPNEXT_IMAGE
 BASE_IMAGE="$ERPNEXT_IMAGE"
 # Extract repository and tag
@@ -174,7 +170,7 @@ if [ $? -eq 0 ]; then
 	print_info "Your existing docker-compose or deployment will automatically use the custom image!"
 
 	# Update the cache with the new hash
-	echo "$CURRENT_HASH" > "$CACHE_FILE"
+	echo "$CURRENT_HASH" >"$CACHE_FILE"
 	print_info "Cache updated."
 else
 	print_error "Build failed!"
