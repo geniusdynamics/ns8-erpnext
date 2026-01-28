@@ -61,15 +61,6 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
-            <cv-text-area
-              label="App Json"
-              v-model="app_json"
-              @input="parseAppJson"
-              placeholder='[{"url": "...", "branch": "...", "app_name": "...", "labels": "..."}]'
-            ></cv-text-area>
-            <div v-if="appJsonError" class="app-json-error">
-              <NsInlineNotification kind="error" :description="appJsonError" />
-            </div>
             <div>Selected Modules: {{ erpSelectedModules }}</div>
             <cv-multi-select
               :label="'ERP Next Modules to be installed'"
@@ -139,6 +130,14 @@
                             }}</cv-structured-list-data>
                             <cv-structured-list-data>
                               <cv-button
+                                kind="secondary--ghost"
+                                size="small"
+                                @click="editApp(index)"
+                                :icon="Edit20"
+                              >
+                                Edit
+                              </cv-button>
+                              <cv-button
                                 kind="danger--ghost"
                                 size="small"
                                 @click="removeApp(index)"
@@ -183,7 +182,9 @@
               @primary-click="addApp"
               @secondary-click="closeAddAppModal"
             >
-              <template slot="title">Add App</template>
+              <template slot="title">{{
+                editingAppIndex !== null ? "Edit App" : "Add App"
+              }}</template>
               <template slot="content">
                 <cv-form @submit.prevent="addApp">
                   <cv-text-input
@@ -216,7 +217,9 @@
                   </cv-text-input>
                 </cv-form>
               </template>
-              <template slot="primary-button">Add App</template>
+              <template slot="primary-button">{{
+                editingAppIndex !== null ? "Update App" : "Add App"
+              }}</template>
               <template slot="secondary-button">Cancel</template>
             </cv-modal>
 
@@ -311,6 +314,18 @@
               <cv-accordion-item :open="toggleAccordion[0]">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
+                  <cv-text-area
+                    label="App Json"
+                    v-model="app_json"
+                    @input="parseAppJson"
+                    placeholder='[{"url": "...", "branch": "...", "app_name": "...", "labels": "..."}]'
+                  ></cv-text-area>
+                  <div v-if="appJsonError" class="app-json-error">
+                    <NsInlineNotification
+                      kind="error"
+                      :description="appJsonError"
+                    />
+                  </div>
                   <div v-for="module in erpNextModules" :key="module.value">
                     <cv-toggle
                       :label="module.value"
@@ -363,7 +378,6 @@ import {
 
 export default {
   name: "Settings",
-
   mixins: [
     TaskService,
     IconService,
@@ -392,6 +406,7 @@ export default {
       frappeVersion: "version-15",
       toggleAccordion: [false],
       isAddAppModalOpen: false,
+      editingAppIndex: null,
       newApp: {
         app_name: "",
         url: "",
@@ -522,15 +537,17 @@ export default {
     },
     getPodmanImagesCompleted(taskContext, taskResult) {
       const imagesData = taskResult.output;
-      this.podmanImages = (imagesData.images || []).map(image => ({
+      this.podmanImages = (imagesData.images || []).map((image) => ({
         id: image.Id,
         repositories: image.Names || [],
-        tags: image.Names ? image.Names.map(name => {
-          const parts = name.split(':');
-          return parts.length > 1 ? parts[parts.length - 1] : 'latest';
-        }) : [],
+        tags: image.Names
+          ? image.Names.map((name) => {
+              const parts = name.split(":");
+              return parts.length > 1 ? parts[parts.length - 1] : "latest";
+            })
+          : [],
         created: image.CreatedAt,
-        size: this.formatFileSize(image.VirtualSize)
+        size: this.formatFileSize(image.VirtualSize),
       }));
       if (imagesData.error) {
         this.error.getPodmanImages = imagesData.error;
@@ -538,6 +555,7 @@ export default {
       this.loading.getPodmanImages = false;
     },
     openAddAppModal() {
+      this.editingAppIndex = null;
       this.newApp = {
         app_name: "",
         url: "",
@@ -550,8 +568,24 @@ export default {
       };
       this.isAddAppModalOpen = true;
     },
+    editApp(index) {
+      this.editingAppIndex = index;
+      const app = this.parsedApps[index];
+      this.newApp = {
+        app_name: app.app_name || app.name || "",
+        url: app.url || "",
+        branch: app.branch || "",
+        labels: app.labels || "",
+      };
+      this.newAppErrors = {
+        app_name: "",
+        url: "",
+      };
+      this.isAddAppModalOpen = true;
+    },
     closeAddAppModal() {
       this.isAddAppModalOpen = false;
+      this.editingAppIndex = null;
     },
     addApp() {
       this.newAppErrors.app_name = "";
@@ -580,18 +614,26 @@ export default {
           }
         }
 
-        currentApps.push({
+        const appData = {
           app_name: this.newApp.app_name,
           url: this.newApp.url,
           branch: this.newApp.branch || "main",
           labels: this.newApp.labels || "",
-        });
+        };
+
+        if (this.editingAppIndex !== null) {
+          // Update existing app
+          currentApps[this.editingAppIndex] = appData;
+        } else {
+          // Add new app
+          currentApps.push(appData);
+        }
 
         this.app_json = JSON.stringify(currentApps, null, 2);
         this.parseAppJson();
         this.closeAddAppModal();
       } catch (e) {
-        console.error("Error adding app:", e);
+        console.error("Error saving app:", e);
       }
     },
     removeApp(index) {
@@ -926,11 +968,11 @@ export default {
       this.getConfiguration();
     },
     formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
+      if (bytes === 0) return "0 Bytes";
       const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const sizes = ["Bytes", "KB", "MB", "GB"];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     },
   },
 };
