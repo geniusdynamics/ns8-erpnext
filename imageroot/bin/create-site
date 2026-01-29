@@ -36,3 +36,5 @@ else
 	done
 fi
 bench --site frontend migrate
+bench clear-cache
+bench clear-website-cache
