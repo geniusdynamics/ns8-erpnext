@@ -24,7 +24,9 @@ ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/erp-next.pid \
     --pod-id-file %t/erp-next.pod-id \
     --name erp-next \
     --publish 127.0.0.1:${TCP_PORT}:8080 \
-    --replace
+    --replace \
+    --network=slirp4netns:allow_host_loopback=true \
+    --add-host=accountprovider:10.0.2.2
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/erp-next.pod-id
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/erp-next.pod-id -t 10
 ExecStopPost=/usr/bin/podman pod rm --ignore -f --pod-id-file %t/erp-next.pod-id
