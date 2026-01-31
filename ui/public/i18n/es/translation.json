@@ -15,7 +15,18 @@
         "test_field": "Campo de prueba",
         "configure_instance": "Configurar {instance}",
         "save": "Guardar",
-        "title": "Ajustes"
+        "title": "Ajustes",
+        "erpnext_fqdn": "Nombre de host ERPNext (FQDN)",
+        "lets_encrypt": "Solicitar certificado LE",
+        "http_to_https": "Forzar HTTPS",
+        "enabled": "Activado",
+        "disabled": "Desactivado",
+        "advanced": "Avanzado",
+        "configuring": "Configurando",
+        "instance_configuration": "Configurar ERPNext",
+        "domain_already_used_in_traefik": "Dominio ya utilizado en Traefik",
+        "app_json_must_be_array": "App JSON debe ser un array de objetos",
+        "invalid_json_format": "Formato JSON inválido"
     },
     "common": {
         "required": "Obligatorio",
@@ -49,9 +60,20 @@
         "get-status": "Obtener el estado",
         "configure-module": "Configurar módulo",
         "get-configuration": "Obtener la configuración",
-        "get-name": "Obtener el nombre"
+        "get-name": "Obtener el nombre",
+        "build-docker-image": "Construir imagen Docker"
     },
     "task": {
         "cannot_create_task": "No se puede crear la tarea {action}"
+    },
+    "build": {
+        "title": "Construir imagen Docker",
+        "force_rebuild": "Forzar reconstrucción",
+        "no": "No",
+        "yes": "Sí",
+        "apps_to_build": "Apps a construir",
+        "build_image": "Construir imagen",
+        "building_image": "Construyendo imagen Docker",
+        "please_wait": "Por favor espere..."
     }
 }

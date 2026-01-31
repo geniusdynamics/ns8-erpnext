@@ -61,31 +61,275 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
+
+            <cv-dropdown
+              :label="$t('settings.frappe_version')"
+              v-model="frappeVersion"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <cv-dropdown-item value="version-15">version-15</cv-dropdown-item>
+              <cv-dropdown-item value="version-16">version-16</cv-dropdown-item>
+            </cv-dropdown>
+
+            <cv-row class="mg-bottom">
+              <cv-column :sm="4">
+                <h4>Manage Apps</h4>
+              </cv-column>
+            </cv-row>
+            <cv-row class="mg-bottom">
+              <cv-column :sm="12">
+                <cv-tile light>
+                  <div class="apps-container">
+                    <div class="apps-list">
+                      <div v-if="parsedApps.length === 0" class="empty-state">
+                        <p>No apps added yet</p>
+                      </div>
+                      <cv-structured-list v-else>
+                        <template slot="headings">
+                          <cv-structured-list-heading
+                            >App Name</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >URL</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >Branch</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >Labels</cv-structured-list-heading
+                          >
+                          <cv-structured-list-heading
+                            >Actions</cv-structured-list-heading
+                          >
+                        </template>
+                        <template slot="items">
+                          <cv-structured-list-item
+                            v-for="(app, index) in parsedApps"
+                            :key="index"
+                          >
+                            <cv-structured-list-data>{{
+                              app.app_name || app.name || "Unknown"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.url || "-"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.branch || "main/master"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>{{
+                              app.labels || "-"
+                            }}</cv-structured-list-data>
+                            <cv-structured-list-data>
+                              <cv-button
+                                kind="secondary--ghost"
+                                size="small"
+                                @click="editApp(index)"
+                                :icon="Edit20"
+                              >
+                                Edit
+                              </cv-button>
+                              <cv-button
+                                kind="danger--ghost"
+                                size="small"
+                                @click="removeApp(index)"
+                                :icon="TrashCan20"
+                              >
+                                Remove
+                              </cv-button>
+                            </cv-structured-list-data>
+                          </cv-structured-list-item>
+                        </template>
+                      </cv-structured-list>
+                    </div>
+                    <div class="apps-actions">
+                      <cv-button
+                        kind="tertiary"
+                        :icon="Add20"
+                        @click.prevent="openAddAppModal"
+                      >
+                        Add App via Form
+                      </cv-button>
+                      <button
+                        type="button"
+                        class="
+                          bx--btn bx--btn--tertiary bx--btn--sm
+                          copy-json-btn
+                        "
+                        @click.prevent="copyJsonToClipboard"
+                      >
+                        Copy JSON
+                      </button>
+                    </div>
+                  </div>
+                </cv-tile>
+              </cv-column>
+            </cv-row>
             <div>Selected Modules: {{ erpSelectedModules }}</div>
             <cv-multi-select
               :label="'ERP Next Modules to be installed'"
               :options="erpNextModules"
               :title="'ERP Next Modules to be installed'"
               v-model="erpSelectedModules"
+              :disabled="loading.getConfiguration || loading.configureModule"
             >
             </cv-multi-select>
+
+            <cv-modal
+              v-model="isAddAppModalOpen"
+              :visible="isAddAppModalOpen"
+              :auto-hide-off="true"
+              size="small"
+              @primary-click="addApp"
+              @secondary-click="closeAddAppModal"
+            >
+              <template slot="title">{{
+                editingAppIndex !== null ? "Edit App" : "Add App"
+              }}</template>
+              <template slot="content">
+                <cv-form @submit.prevent="addApp">
+                  <cv-text-input
+                    :label="$t('settings.app_name')"
+                    v-model.trim="newApp.app_name"
+                    placeholder="my-custom-app"
+                    :invalid-message="newAppErrors.app_name"
+                    ref="newAppName"
+                  >
+                  </cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.repository_url')"
+                    v-model.trim="newApp.url"
+                    placeholder="https://github.com/user/repo"
+                    :invalid-message="newAppErrors.url"
+                    ref="newAppUrl"
+                  >
+                  </cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.branch')"
+                    v-model.trim="newApp.branch"
+                    placeholder="main"
+                  >
+                  </cv-text-input>
+                  <cv-text-input
+                    :label="$t('settings.labels')"
+                    v-model.trim="newApp.labels"
+                    placeholder="label1,label2"
+                  >
+                  </cv-text-input>
+                </cv-form>
+              </template>
+              <template slot="primary-button">{{
+                editingAppIndex !== null ? "Update App" : "Add App"
+              }}</template>
+              <template slot="secondary-button">Cancel</template>
+            </cv-modal>
+
             <!-- advanced options -->
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
                 <template slot="title">{{ $t("settings.advanced") }}</template>
                 <template slot="content">
-                  <div v-for="module in erpNextModules" :key="module.value">
-                    <cv-toggle
-                      :label="module.value"
-                      :value="module.value"
-                      v-model="erpSelectedModules"
-                      :disabled="
-                        loading.getConfiguration || loading.configureModule
-                      "
-                      class="mg-bottom"
-                    >
-                    </cv-toggle>
+                  <cv-text-area
+                    label="App Json"
+                    v-model="app_json"
+                    @input="parseAppJson"
+                    placeholder='[{"url": "...", "branch": "...", "app_name": "...", "labels": "..."}]'
+                  ></cv-text-area>
+                  <div v-if="appJsonError" class="app-json-error">
+                    <NsInlineNotification
+                      kind="error"
+                      :description="appJsonError"
+                    />
                   </div>
+                  <cv-row class="mg-bottom">
+                    <cv-column :sm="4">
+                      <h4>Podman Images</h4>
+                    </cv-column>
+                  </cv-row>
+                  <cv-row class="mg-bottom">
+                    <cv-column>
+                      <cv-tile light>
+                        <div v-if="error.getPodmanImages" class="error-section">
+                          <NsInlineNotification
+                            kind="error"
+                            :title="$t('action.get-podman-images')"
+                            :description="error.getPodmanImages"
+                            :showCloseButton="false"
+                          />
+                        </div>
+                        <div class="images-container">
+                          <div
+                            v-if="loading.getPodmanImages"
+                            class="loading-section"
+                          >
+                            <cv-loading>Loading images...</cv-loading>
+                          </div>
+                          <div
+                            v-else-if="podmanImages.length === 0"
+                            class="empty-state"
+                          >
+                            <p>No podman images found</p>
+                          </div>
+                          <cv-structured-list v-else>
+                            <template slot="headings">
+                              <cv-structured-list-heading
+                                >Repository</cv-structured-list-heading
+                              >
+                              <cv-structured-list-heading
+                                >Tag</cv-structured-list-heading
+                              >
+                              <cv-structured-list-heading
+                                >Image ID</cv-structured-list-heading
+                              >
+                              <cv-structured-list-heading
+                                >Created</cv-structured-list-heading
+                              >
+                              <cv-structured-list-heading
+                                >Size</cv-structured-list-heading
+                              >
+                            </template>
+                            <template slot="items">
+                              <cv-structured-list-item
+                                v-for="(image, index) in podmanImages"
+                                :key="index"
+                              >
+                                <cv-structured-list-data>{{
+                                  image.repositories &&
+                                  image.repositories.length > 0
+                                    ? image.repositories[0]
+                                    : "N/A"
+                                }}</cv-structured-list-data>
+                                <cv-structured-list-data>{{
+                                  image.tags && image.tags.length > 0
+                                    ? image.tags[0]
+                                    : "N/A"
+                                }}</cv-structured-list-data>
+                                <cv-structured-list-data>{{
+                                  image.id ? image.id.substring(0, 12) : "N/A"
+                                }}</cv-structured-list-data>
+                                <cv-structured-list-data>{{
+                                  image.created || "N/A"
+                                }}</cv-structured-list-data>
+                                <cv-structured-list-data>{{
+                                  image.size || "N/A"
+                                }}</cv-structured-list-data>
+                              </cv-structured-list-item>
+                            </template>
+                          </cv-structured-list>
+                        </div>
+                        <div class="images-actions">
+                          <cv-button
+                            kind="tertiary"
+                            :icon="Refresh20"
+                            @click.prevent="getPodmanImages"
+                            :disabled="loading.getPodmanImages"
+                          >
+                            Refresh Images
+                          </cv-button>
+                        </div>
+                      </cv-tile>
+                    </cv-column>
+                  </cv-row>
                 </template>
               </cv-accordion-item>
             </cv-accordion>
@@ -147,238 +391,29 @@ export default {
       isHttpToHttpsEnabled: true,
       hasBackup: false,
 
-      erpNextModules: [
-        {
-          label: "ERPNext",
-          value: "erpnext",
-          name: "erpnext",
-          disabled: false,
-        },
-        {
-          label: "Payments",
-          value: "payments",
-          name: "payments",
-          disabled: false,
-        },
-        {
-          label: "Navari CSF KE",
-          value: "csf_ke",
-          name: "csf_ke",
-          disabled: false,
-        },
-        { label: "HRMS", value: "hrms", name: "hrms", disabled: false },
-        {
-          label: "Mpesa Payments",
-          value: "frappe_mpsa_payments",
-          name: "frappe_mpsa_payments",
-          disabled: false,
-        },
-        {
-          label: "Attendance Timesheet",
-          value: "nl-attendance-timesheet",
-          name: "nl-attendance-timesheet",
-          disabled: false,
-        },
-        {
-          label: "Piece Rate Pay",
-          value: "nl-piece-rate-pay",
-          name: "nl-piece-rate-pay",
-          disabled: false,
-        },
-        {
-          label: "Whatsapp (Frappe)",
-          value: "frappe_whatsapp",
-          name: "frappe_whatsapp",
-          disabled: false,
-        },
-        {
-          label: "Whatsapp Chat",
-          value: "whatsapp_chat",
-          name: "whatsapp_chat",
-          disabled: false,
-        },
-        {
-          label: "Education",
-          value: "education",
-          name: "education",
-          disabled: false,
-        },
-        { label: "LMS", value: "lms", name: "lms", disabled: false },
-        { label: "Wiki", value: "wiki", name: "wiki", disabled: false },
-        {
-          label: "Paystack",
-          value: "frappe_paystack",
-          name: "frappe_paystack",
-          disabled: false,
-        },
-        {
-          label: "Print Designer",
-          value: "print_designer",
-          name: "print_designer",
-          disabled: false,
-        },
-        {
-          label: "Webshop",
-          value: "webshop",
-          name: "webshop",
-          disabled: false,
-        },
-        {
-          label: "PibiDAV",
-          value: "pibiDAV",
-          name: "pibiDAV",
-          disabled: false,
-        },
-        {
-          label: "PibiCard",
-          value: "pibicard",
-          name: "pibicard",
-          disabled: false,
-        },
-        {
-          label: "Lending",
-          value: "lending",
-          name: "lending",
-          disabled: false,
-        },
-        {
-          label: "Helpdesk",
-          value: "helpdesk",
-          name: "helpdesk",
-          disabled: false,
-        },
-        {
-          label: "Pibicut",
-          value: "pibicut",
-          name: "pibicut",
-          disabled: false,
-        },
-        {
-          label: "PDF on Submit",
-          value: "pdf_on_submit",
-          name: "pdf_on_submit",
-          disabled: false,
-        },
-        {
-          label: "Insights",
-          value: "insights",
-          name: "insights",
-          disabled: false,
-        },
-        {
-          label: "Jobcard Planning",
-          value: "jobcard_planning",
-          name: "jobcard_planning",
-          disabled: false,
-        },
-        { label: "Marley", value: "marley", name: "marley", disabled: false },
-        { label: "Raven", value: "raven", name: "raven", disabled: false },
-        { label: "CRM", value: "crm", name: "crm", disabled: false },
-        {
-          label: "Builder",
-          value: "builder",
-          name: "builder",
-          disabled: false,
-        },
-        {
-          label: "Check Run",
-          value: "check_run",
-          name: "check_run",
-          disabled: false,
-        },
-        {
-          label: "Inventory Tools",
-          value: "inventory_tools",
-          name: "inventory_tools",
-          disabled: false,
-        },
-        {
-          label: "Employee Self Service",
-          value: "employee_self_service",
-          name: "employee_self_service",
-          disabled: false,
-        },
-        {
-          label: "Expenses",
-          value: "erpnext-expense-management-module",
-          name: "erpnext-expense-management-module",
-          disabled: false,
-        },
-        {
-          label: "QR Code",
-          value: "Frappe-QR-Code",
-          name: "Frappe-QR-Code",
-          disabled: false,
-        },
-        { label: "Drive", value: "drive", name: "drive", disabled: false },
-        {
-          label: "POS Awesome",
-          value: "posawesome",
-          name: "posawesome",
-          disabled: false,
-        },
-        { label: "PropMS", value: "PropMS", name: "PropMS", disabled: false },
-        { label: "Etims", value: "Etims", name: "Etims", disabled: false },
-        {
-          label: "Utility Billing",
-          value: "utility-billing",
-          name: "utility-billing",
-          disabled: false,
-        },
-        {
-          label: "PibiCal",
-          value: "pibical",
-          name: "pibical",
-          disabled: false,
-        },
-        {
-          label: "Junior School",
-          value: "Junior-School",
-          name: "Junior-School",
-          disabled: false,
-        },
-        {
-          label: "KE Compliance",
-          value: "kenya_compliance_via_slade",
-          name: "kenya_compliance_via_slade",
-          disabled: false,
-        },
-        {
-          label: "ProjectIT",
-          value: "ProjectIT",
-          name: "ProjectIT",
-          disabled: false,
-        },
-        {
-          label: "Whitelabel",
-          value: "whitelabel",
-          name: "whitelabel",
-          disabled: false,
-        },
-        {
-          label: "SMPP Gateway",
-          value: "smpp_gateway",
-          name: "smpp_gateway",
-          disabled: false,
-        },
-        { label: "URY", value: "ury", name: "ury", disabled: false },
-        {
-          label: "Nex Bridge",
-          value: "nex_bridge",
-          name: "nex_bridge",
-          disabled: false,
-        },
-        {
-          label: "POS Next",
-          value: "pos_next",
-          name: "pos_next",
-          disabled: false,
-        },
-      ],
       erpSelectedModules: [],
+      podmanImages: [],
+      app_json: "",
+      appJsonError: "",
+      frappeVersion: "version-15",
+      toggleAccordion: [false],
+      isAddAppModalOpen: false,
+      editingAppIndex: null,
+      newApp: {
+        app_name: "",
+        url: "",
+        branch: "",
+        labels: "",
+      },
+      newAppErrors: {
+        app_name: "",
+        url: "",
+      },
       loading: {
         getConfiguration: false,
         configureModule: false,
+        buildDockerImage: false,
+        getPodmanImages: false,
       },
       error: {
         getConfiguration: "",
@@ -386,14 +421,58 @@ export default {
         host: "",
         lets_encrypt: "",
         http2https: "",
+        getPodmanImages: "",
       },
     };
   },
   computed: {
     ...mapState(["instanceName", "core", "appName"]),
+    parsedApps() {
+      if (!this.app_json) {
+        return [];
+      }
+      try {
+        const apps = JSON.parse(this.app_json);
+        if (!Array.isArray(apps)) {
+          return [];
+        }
+        return apps;
+      } catch (e) {
+        return [];
+      }
+    },
+    erpNextModules() {
+      if (!this.app_json) {
+        return [];
+      }
+      try {
+        const apps = JSON.parse(this.app_json);
+        if (!Array.isArray(apps)) {
+          return [];
+        }
+        return apps.map((app) => {
+          let label = app.app_name || app.name;
+          if (!label && app.url) {
+            const urlParts = app.url.split("/");
+            label = urlParts[urlParts.length - 1] || "Unknown";
+          } else if (!label) {
+            label = "Unknown";
+          }
+          return {
+            label: label,
+            value: app.app_name || app.name || label,
+            name: app.app_name || app.name || label,
+            disabled: false,
+          };
+        });
+      } catch (e) {
+        return [];
+      }
+    },
   },
   created() {
     this.getConfiguration();
+    this.getPodmanImages();
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -406,22 +485,22 @@ export default {
     next();
   },
   methods: {
-    async getConfiguration() {
-      this.loading.getConfiguration = true;
-      this.error.getConfiguration = "";
-      const taskAction = "get-configuration";
+    async getPodmanImages() {
+      this.loading.getPodmanImages = true;
+      this.error.getPodmanImages = "";
+      const taskAction = "podman-images-module";
       const eventId = this.getUuid();
 
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.getConfigurationAborted,
+        this.getPodmanImagesAborted
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.getConfigurationCompleted,
+        this.getPodmanImagesCompleted
       );
 
       const res = await to(
@@ -432,7 +511,189 @@ export default {
             isNotificationHidden: true,
             eventId,
           },
-        }),
+        })
+      );
+      const err = res[0];
+
+      if (err) {
+        console.error(`error creating task ${taskAction}`, err);
+        this.error.getPodmanImages = this.getErrorMessage(err);
+        this.loading.getPodmanImages = false;
+        return;
+      }
+    },
+    getPodmanImagesAborted(taskResult, taskContext) {
+      console.error(`${taskContext.action} aborted`, taskResult);
+      this.error.getPodmanImages = this.$t("error.generic_error");
+      this.loading.getPodmanImages = false;
+    },
+    getPodmanImagesCompleted(taskContext, taskResult) {
+      const imagesData = taskResult.output;
+      this.podmanImages = (imagesData.images || []).map((image) => ({
+        id: image.Id,
+        repositories: image.Names || [],
+        tags: image.Names
+          ? image.Names.map((name) => {
+              const parts = name.split(":");
+              return parts.length > 1 ? parts[parts.length - 1] : "latest";
+            })
+          : [],
+        created: image.CreatedAt,
+        size: this.formatFileSize(image.VirtualSize),
+      }));
+      if (imagesData.error) {
+        this.error.getPodmanImages = imagesData.error;
+      }
+      this.loading.getPodmanImages = false;
+    },
+    openAddAppModal() {
+      this.editingAppIndex = null;
+      this.newApp = {
+        app_name: "",
+        url: "",
+        branch: "",
+        labels: "",
+      };
+      this.newAppErrors = {
+        app_name: "",
+        url: "",
+      };
+      this.isAddAppModalOpen = true;
+    },
+    editApp(index) {
+      this.editingAppIndex = index;
+      const app = this.parsedApps[index];
+      this.newApp = {
+        app_name: app.app_name || app.name || "",
+        url: app.url || "",
+        branch: app.branch || "",
+        labels: app.labels || "",
+      };
+      this.newAppErrors = {
+        app_name: "",
+        url: "",
+      };
+      this.isAddAppModalOpen = true;
+    },
+    closeAddAppModal() {
+      this.isAddAppModalOpen = false;
+      this.editingAppIndex = null;
+    },
+    addApp() {
+      this.newAppErrors.app_name = "";
+      this.newAppErrors.url = "";
+      let isValid = true;
+
+      if (!this.newApp.app_name) {
+        this.newAppErrors.app_name = "App name is required";
+        isValid = false;
+      }
+      if (!this.newApp.url) {
+        this.newAppErrors.url = "Repository URL is required";
+        isValid = false;
+      }
+
+      if (!isValid) {
+        return;
+      }
+
+      try {
+        let currentApps = [];
+        if (this.app_json) {
+          currentApps = JSON.parse(this.app_json);
+          if (!Array.isArray(currentApps)) {
+            currentApps = [];
+          }
+        }
+
+        const appData = {
+          app_name: this.newApp.app_name,
+          url: this.newApp.url,
+          branch: this.newApp.branch || "main",
+          labels: this.newApp.labels || "",
+        };
+
+        if (this.editingAppIndex !== null) {
+          // Update existing app
+          currentApps[this.editingAppIndex] = appData;
+        } else {
+          // Add new app
+          currentApps.push(appData);
+        }
+
+        this.app_json = JSON.stringify(currentApps, null, 2);
+        this.parseAppJson();
+        this.closeAddAppModal();
+      } catch (e) {
+        console.error("Error saving app:", e);
+      }
+    },
+    removeApp(index) {
+      try {
+        let currentApps = JSON.parse(this.app_json);
+        if (Array.isArray(currentApps)) {
+          currentApps.splice(index, 1);
+          this.app_json = JSON.stringify(currentApps, null, 2);
+          this.parseAppJson();
+        }
+      } catch (e) {
+        console.error("Error removing app:", e);
+      }
+    },
+    copyJsonToClipboard() {
+      navigator.clipboard.writeText(this.app_json).then(() => {
+        alert("JSON copied to clipboard!");
+      });
+    },
+    parseAppJson() {
+      this.appJsonError = "";
+      if (!this.app_json) {
+        this.erpSelectedModules = [];
+        return;
+      }
+      try {
+        const apps = JSON.parse(this.app_json);
+        if (!Array.isArray(apps)) {
+          this.appJsonError = this.$t("settings.app_json_must_be_array");
+          return;
+        }
+        const moduleNames = apps
+          .map((app) => app.app_name || app.name)
+          .filter((name) => name);
+        this.erpSelectedModules = this.erpSelectedModules.filter((m) =>
+          moduleNames.includes(m)
+        );
+      } catch (e) {
+        this.appJsonError = this.$t("settings.invalid_json_format");
+      }
+    },
+    async getConfiguration() {
+      this.loading.getConfiguration = true;
+      this.error.getConfiguration = "";
+      const taskAction = "get-configuration";
+      const eventId = this.getUuid();
+
+      // register to task error
+      this.core.$root.$once(
+        `${taskAction}-aborted-${eventId}`,
+        this.getConfigurationAborted
+      );
+
+      // register to task completion
+      this.core.$root.$once(
+        `${taskAction}-completed-${eventId}`,
+        this.getConfigurationCompleted
+      );
+
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: taskAction,
+          extra: {
+            title: this.$t("action." + taskAction),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
       );
       const err = res[0];
 
@@ -453,9 +714,13 @@ export default {
       this.host = config.host;
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
-      this.erpSelectedModules = config.erpSelectedModules;
       this.hasBackup = config.hasBackup;
-      console.log("Has Backup: " + this.hasBackup);
+      this.frappeVersion = config.frappeVersion || "version-15";
+      this.app_json = atob(config.appJson);
+
+      this.$nextTick(() => {
+        this.erpSelectedModules = config.erpSelectedModules || [];
+      });
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
@@ -495,19 +760,19 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted,
+        this.configureModuleAborted
       );
 
       // register to task validation
       this.core.$root.$once(
         `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed,
+        this.configureModuleValidationFailed
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted,
+        this.configureModuleCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -525,7 +790,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -542,19 +807,19 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted,
+        this.configureModuleAborted
       );
 
       // register to task validation
       this.core.$root.$once(
         `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed,
+        this.configureModuleValidationFailed
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted,
+        this.configureModuleCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -572,7 +837,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -599,19 +864,19 @@ export default {
       // register to task error
       this.core.$root.$once(
         `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted,
+        this.configureModuleAborted
       );
 
       // register to task validation
       this.core.$root.$once(
         `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed,
+        this.configureModuleValidationFailed
       );
 
       // register to task completion
       this.core.$root.$once(
         `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted,
+        this.configureModuleCompleted
       );
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
@@ -621,6 +886,8 @@ export default {
             lets_encrypt: this.isLetsEncryptEnabled,
             http2https: this.isHttpToHttpsEnabled,
             erpSelectedModules: this.erpSelectedModules,
+            appJson: btoa(this.app_json),
+            frappeVersion: this.frappeVersion,
           },
           extra: {
             title: this.$t("settings.instance_configuration", {
@@ -629,7 +896,7 @@ export default {
             description: this.$t("settings.configuring"),
             eventId,
           },
-        }),
+        })
       );
       const err = res[0];
 
@@ -651,6 +918,55 @@ export default {
       // reload configuration
       this.getConfiguration();
     },
+    async buildDockerImage() {
+      const taskAction = "build-docker-image";
+      const eventId = this.getUuid();
+      this.loading.buildDockerImage = true;
+
+      // register to task error
+      this.core.$root.$once(
+        `${taskAction}-aborted-${eventId}`,
+        this.buildDockerImageAborted
+      );
+
+      // register to task completion
+      this.core.$root.$once(
+        `${taskAction}-completed-${eventId}`,
+        this.buildDockerImageCompleted
+      );
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: taskAction,
+          extra: {
+            title: this.$t("settings.instance_configuration", {
+              instance: this.instanceName,
+            }),
+            description: this.$t("settings.configuring"),
+            eventId,
+          },
+        })
+      );
+      const err = res[0];
+      if (err) {
+        console.error(`error creating task ${taskAction}`, err);
+        return;
+      }
+    },
+    buildDockerImageAborted(taskResult, taskContext) {
+      this.loading.buildDockerImage = false;
+      console.log(`${taskContext.icon} aborted`, taskResult);
+    },
+    buildDockerImageCompleted() {
+      this.loading.buildDockerImage = false;
+      this.getConfiguration();
+    },
+    formatFileSize(bytes) {
+      if (bytes === 0) return "0 Bytes";
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB", "GB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    },
   },
 };
 </script>
@@ -663,5 +979,61 @@ export default {
 
 .maxwidth {
   max-width: 38rem;
+}
+
+.app-json-error {
+  margin-bottom: $spacing-06;
+}
+
+.apps-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-06;
+}
+
+.apps-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  padding: $spacing-06;
+  text-align: center;
+  color: $text-02;
+}
+
+.apps-actions {
+  display: flex;
+  gap: $spacing-04;
+  align-items: center;
+}
+
+.copy-json-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.images-container {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: $spacing-06;
+}
+
+.images-actions {
+  display: flex;
+  gap: $spacing-04;
+  align-items: center;
+}
+
+.error-section {
+  margin-bottom: $spacing-06;
+}
+
+.loading-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-06;
 }
 </style>

@@ -21,7 +21,7 @@
     "no_volumes": "No volumes",
     "webapp": "ERPNEXT Webapp",
     "open_webapp": "Open ERPNEXT",
-    "not_configured":"ERPNEXT is not configured",
+    "not_configured": "ERPNEXT is not configured",
     "configure": "Configure"
   },
   "settings": {
@@ -36,7 +36,14 @@
     "advanced": "Advanced",
     "configuring": "Configuring",
     "instance_configuration": "Configure ErpNext",
-    "domain_already_used_in_traefik": "Domain already used in traefik"
+    "domain_already_used_in_traefik": "Domain already used in traefik",
+    "app_json_must_be_array": "App JSON must be an array of objects",
+    "invalid_json_format": "Invalid JSON format",
+    "frappe_version": "Frappe version",
+    "app_name": "App Name",
+    "repository_url": "Repository URL",
+    "branch": "Branch",
+    "labels": "Labels"
   },
   "about": {
     "title": "About"
@@ -47,6 +54,17 @@
   "task": {
     "cannot_create_task": "Cannot create task {action}"
   },
+  "build": {
+    "title": "Build Docker Image",
+    "force_rebuild": "Force rebuild",
+    "no": "No",
+    "yes": "Yes",
+    "apps_to_build": "Apps to be built",
+    "build_image": "Build Image",
+    "building_image": "Building Docker image",
+    "please_wait": "Please wait...",
+    "frappe_version": "Frappe version"
+  },
   "action": {
     "get-status": "Get status",
     "get-configuration": "Get configuration",
@@ -55,7 +73,8 @@
     "get-name": "Get name",
     "list-backup-repositories": "List backup repositories",
     "list-backups": "List backups",
-    "list-installed-modules": "List installed modules"
+    "list-installed-modules": "List installed modules",
+    "build-docker-image": "Build Docker image"
   },
   "error": {
     "error": "Error",

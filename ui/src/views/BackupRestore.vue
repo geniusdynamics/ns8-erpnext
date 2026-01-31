@@ -87,7 +87,7 @@ import {
 } from "@nethserver/ns8-ui-lib";
 
 export default {
-  name: "Settings",
+  name: "BackupRestore",
   mixins: [
     TaskService,
     IconService,
@@ -96,7 +96,7 @@ export default {
     PageTitleService,
   ],
   pageTitle() {
-    return this.$t("settings.title") + " - " + this.appName;
+    return this.$t("backup.title") + " - " + this.appName;
   },
   data() {
     return {

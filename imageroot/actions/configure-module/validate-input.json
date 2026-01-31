@@ -7,14 +7,16 @@
         {
             "host": "erpnext.domain.org",
             "http2https": true,
-            "lets_encrypt": true
+            "lets_encrypt": true,
+            "appJson": "W3sidXJsIjoiaHR0cHM6Ly9naXRodWIuY29tL2ZyYXBwZS9lcnBuZXh0IiwiYnJhbmNoIjoidmVyc2lvbi0xNSIsImFwcF9uYW1lIjoiZXJwbmV4dCJ9XQ=="
         }
     ],
     "type": "object",
     "required": [
         "host",
         "http2https",
-        "lets_encrypt"
+        "lets_encrypt",
+        "appJson"
     ],
     "properties": {
         "host": {
@@ -31,6 +33,17 @@
             "type": "boolean",
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
+        },
+        "appJson": {
+            "type": "string",
+            "title": "App JSON configuration",
+            "description": "Base64 encoded JSON array containing app configurations with url, branch, and app_name"
+        },
+        "frappeVersion": {
+            "type": "string",
+            "title": "Frappe version",
+            "description": "Frappe version branch to use (e.g., version-15 or version-16)",
+            "enum": ["version-15", "version-16"]
         }
     }
 }

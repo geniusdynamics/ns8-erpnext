@@ -15,7 +15,18 @@
         "test_field": "Proba-eremua",
         "configure_instance": "{instance} konfiguratu",
         "save": "Gorde",
-        "title": "Ezarpenak"
+        "title": "Ezarpenak",
+        "erpnext_fqdn": "ERPNext Hostname (FQDN)",
+        "lets_encrypt": "LE Ziurtagiria eskatu",
+        "http_to_https": "HTTPS behartu",
+        "enabled": "Gaituta",
+        "disabled": "Ezgaituta",
+        "advanced": "Aurreratua",
+        "configuring": "Konfiguratzen",
+        "instance_configuration": "ERPNext konfiguratu",
+        "domain_already_used_in_traefik": "Domeinua Traefiken dagoeneko erabilita",
+        "app_json_must_be_array": "App JSON objektuen array bat izan behar da",
+        "invalid_json_format": "JSON formatu baliogabea"
     },
     "common": {
         "required": "Beharrezkoa",
@@ -49,9 +60,20 @@
         "get-status": "Egoera berreskuratu",
         "configure-module": "Modulua konfiguratu",
         "get-configuration": "Konfigurazioa berreskuratu",
-        "get-name": "Izena berreskuratu"
+        "get-name": "Izena berreskuratu",
+        "build-docker-image": "Docker irudia eraiki"
     },
     "task": {
         "cannot_create_task": "Ezin da zeregina {action} sortu"
+    },
+    "build": {
+        "title": "Docker irudia eraiki",
+        "force_rebuild": "Birsortu behartu",
+        "no": "Ez",
+        "yes": "Bai",
+        "apps_to_build": "Eraiki beharreko app-ak",
+        "build_image": "Irudia eraiki",
+        "building_image": "Docker irudia eraikitzen",
+        "please_wait": "Mesedez itxaron..."
     }
 }

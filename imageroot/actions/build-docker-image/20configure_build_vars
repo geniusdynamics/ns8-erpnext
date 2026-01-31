@@ -19,10 +19,8 @@ ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
 APP_JSON = data.get("appJson")
 FRAPPE_VERSION = data.get("frappeVersion", "version-15")
 
-ERP_NEXT_MODULES_STR = ",".join(ERP_NEXT_MODULES) if ERP_NEXT_MODULES else ""
-
 agent.write_envfile(
-    "erpnext-modules.env", {"ERP_NEXT_MODULES": ERP_NEXT_MODULES_STR, "APPS_JSON": APP_JSON, "FRAPPE_VERSION": FRAPPE_VERSION}
+    "erpnext-modules.env", {"ERP_NEXT_MODULES": ",".join(ERP_NEXT_MODULES) if ERP_NEXT_MODULES else "", "APPS_JSON": APP_JSON, "FRAPPE_VERSION": FRAPPE_VERSION}
 )
 
 agent.dump_env()

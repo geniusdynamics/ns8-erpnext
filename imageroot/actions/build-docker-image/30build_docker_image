@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo "Building Docker Image"
+../configure-module/30build_docker_image
+
+echo "Docker Image Built"

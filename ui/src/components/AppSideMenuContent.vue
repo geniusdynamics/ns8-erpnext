@@ -36,11 +36,18 @@
         <span>{{ $t("about.title") }}</span>
       </cv-side-nav-link>
       <cv-side-nav-link
-        @click="goToAppPage(instanceName, 'backup-restore')"
-        :class="{ 'current-page': isLinkActive('backup-restore') }"
+        @click="goToAppPage(instanceName, 'backuprestore')"
+        :class="{ 'current-page': isLinkActive('backuprestore') }"
       >
         <template v-slot:nav-icon><Information20 /></template>
         <span>{{ $t("backup.title") }}</span>
+      </cv-side-nav-link>
+      <cv-side-nav-link
+        @click="goToAppPage(instanceName, 'builddocker')"
+        :class="{ 'current-page': isLinkActive('builddocker') }"
+      >
+        <template v-slot:nav-icon><Information20 /></template>
+        <span>{{ $t("build.title") }}</span>
       </cv-side-nav-link>
     </cv-side-nav-items>
   </div>

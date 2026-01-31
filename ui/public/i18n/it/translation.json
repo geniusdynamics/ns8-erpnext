@@ -24,7 +24,18 @@
         "save": "Salva",
         "title": "Impostazioni",
         "configure_instance": "Configura {instance}",
-        "test_field": "Campo di test"
+        "test_field": "Campo di test",
+        "erpnext_fqdn": "Hostname ERPNext (FQDN)",
+        "lets_encrypt": "Richiedi certificato LE",
+        "http_to_https": "Forza HTTPS",
+        "enabled": "Attivato",
+        "disabled": "Disattivato",
+        "advanced": "Avanzato",
+        "configuring": "Configurazione",
+        "instance_configuration": "Configura ERPNext",
+        "domain_already_used_in_traefik": "Dominio già utilizzato in Traefik",
+        "app_json_must_be_array": "App JSON deve essere un array di oggetti",
+        "invalid_json_format": "Formato JSON non valido"
     },
     "error": {
         "error": "Errore",
@@ -46,10 +57,21 @@
         "get-name": "Visualizza nome",
         "list-backup-repositories": "Elenca repository di backup",
         "list-backups": "Elenca backup",
-        "list-installed-modules": "Elenco moduli installati"
+        "list-installed-modules": "Elenco moduli installati",
+        "build-docker-image": "Compila immagine Docker"
     },
     "task": {
         "cannot_create_task": "Impossibile eseguire task {action}"
+    },
+    "build": {
+        "title": "Compila immagine Docker",
+        "force_rebuild": "Forza ricompilazione",
+        "no": "No",
+        "yes": "Sì",
+        "apps_to_build": "App da compilare",
+        "build_image": "Compila immagine",
+        "building_image": "Compilazione immagine Docker",
+        "please_wait": "Attendere prego..."
     },
     "about": {
         "title": "Informazioni"

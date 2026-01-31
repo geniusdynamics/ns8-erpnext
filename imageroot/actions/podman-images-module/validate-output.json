@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Get podman images",
+  "$id": "http://nethserver.org/json-schema/task/input/erpnext/podman-images",
+  "description": "Get list of podman images",
+  "examples": [
+    {
+      "images": [
+        {
+          "id": "sha256:abc123",
+          "repositories": ["docker.io/library/nginx:latest"],
+          "tags": ["latest"],
+          "created": "2023-01-01 12:00:00 +0000 UTC",
+          "size": "142MB"
+        }
+      ],
+      "error": null
+    }
+  ],
+  "type": "object",
+  "required": ["images", "error"],
+  "properties": {
+    "images": {
+      "type": "array",
+      "title": "Podman images list",
+      "description": "List of podman images with their details",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Image ID"
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Image repositories"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Image tags"
+          },
+          "created": {
+            "type": "string",
+            "description": "Creation timestamp"
+          },
+          "size": {
+            "type": "string",
+            "description": "Image size"
+          }
+        }
+      }
+    },
+    "error": {
+      "type": ["string", "null"],
+      "title": "Error message",
+      "description": "Error message if the operation failed, null otherwise"
+    }
+  }
+}
