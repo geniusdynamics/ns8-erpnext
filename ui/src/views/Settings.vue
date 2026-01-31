@@ -714,12 +714,13 @@ export default {
       this.host = config.host;
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
-      this.erpSelectedModules = config.erpSelectedModules || [];
       this.hasBackup = config.hasBackup;
       this.frappeVersion = config.frappeVersion || "version-15";
       this.app_json = atob(config.appJson);
-      console.log("Has Backup: " + this.hasBackup);
-      console.log("appJson", this.app_json);
+
+      this.$nextTick(() => {
+        this.erpSelectedModules = config.erpSelectedModules || [];
+      });
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
