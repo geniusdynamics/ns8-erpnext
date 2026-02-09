@@ -1,103 +1,121 @@
-# Upgrade to V4
+# Upgrade Guide: V3 to V4
 
 ## Overview
 
-In the new ns8-erpnext we build docker at runtime where you pass in the apps.json you need to build your app.
+The V4 release introduces a runtime Docker image building approach, allowing you to customize your ERPNext installation with custom apps defined via `apps.json` configuration.
 
-## Architecture
+## What's New in V4
 
-The module uses a runtime Docker image building approach where:
+- **Runtime Docker Building**: Images are built on-demand based on your `apps.json` configuration
+- **Custom App Support**: Add any Frappe/ERPNext compatible apps from Git repositories
+- **Podman Integration**: Container management via Podman
+- **Flexible Configuration**: JSON-based app management through the Settings UI
 
-- Custom apps are defined via JSON configuration
-- Docker images are built on-demand based on the apps.json configuration
-- Podman is used for container management
+---
 
-## Configuration Settings UI
+## Configuration Reference
 
-The Settings page (`ui/src/views/Settings.vue`) provides the following configuration options:
+### Settings UI Location
 
-### 1. FQDN (Fully Qualified Domain Name)
+Access configuration at: `ui/src/views/Settings.vue`
 
-- **Field**: Host/URL input
-- **Purpose**: Set the URL where ERPNext will be accessible
-- **Example**: `erpnext.example.org`
-- **Validation**: Required field
+### Configuration Options
 
-### 2. TLS/SSL Configuration
+#### 1. Fully Qualified Domain Name (FQDN)
 
-- **Let's Encrypt**: Toggle to enable automatic SSL certificate generation
-- **HTTP to HTTPS Redirect**: Toggle to force HTTPS redirects (enabled by default)
+| Field | Details |
+|-------|---------|
+| **Input Type** | Host/URL |
+| **Purpose** | Define the URL where ERPNext will be accessible |
+| **Example** | `erpnext.example.org` |
+| **Validation** | Required |
 
-### 3. Frappe Version Selection
+#### 2. TLS/SSL Configuration
 
-- **Options**:
-  - `version-15` (default)
-  - `version-16`
-- **Purpose**: Select the Frappe framework version to use
+| Option | Description |
+|--------|-------------|
+| **Let's Encrypt** | Enable automatic SSL certificate generation |
+| **HTTP to HTTPS Redirect** | Force HTTPS redirects (enabled by default) |
 
-### 4. App Management
+#### 3. Frappe Version Selection
 
-#### Adding Custom Apps
+Available versions:
+- `version-15` (default)
+- `version-16`
 
-Apps can be added via the UI modal with the following fields:
+#### 4. App Management
 
-- **App Name** (required): The application identifier
-- **Repository URL** (required): Git repository URL for the app
-- **Branch**: Git branch to use (defaults to "main")
-- **Labels**: Comma-separated labels for the app
+##### Adding Custom Apps
 
-#### App Management Features
+Apps can be added via the UI modal with these fields:
 
-- **Add App via Form**: Opens a modal to add new apps
+| Field | Required | Description |
+|-------|----------|-------------|
+| **App Name** | Yes | Application identifier |
+| **Repository URL** | Yes | Git repository URL |
+| **Branch** | No | Git branch (defaults to `main`) |
+| **Labels** | No | Comma-separated labels |
+
+##### App Management Features
+
+- **Add App**: Opens modal to add new apps
 - **Edit App**: Modify existing app details
-- **Remove App**: Delete apps from the configuration
-- **Copy JSON**: Copy the current apps.json to clipboard
-- **JSON Editor**: Advanced users can directly edit the apps.json in the accordion section
+- **Remove App**: Delete apps from configuration
+- **Copy JSON**: Copy current `apps.json` to clipboard
+- **JSON Editor**: Direct `apps.json` editing (advanced users)
 
-#### Apps Display
+##### Apps Display
 
 Apps are displayed in a structured list showing:
-
 - App Name
-- URL
+- Repository URL
 - Branch
 - Labels
-- Actions (Edit/Remove buttons)
+- Actions (Edit/Remove)
 
-### 5. ERPNext Modules Selection
+#### 5. ERPNext Modules Selection
 
-- **Multi-select component** showing available modules
-- **Dynamic population**: Options are generated from the apps.json configuration
-- **Pre-selected values**: Previously selected modules are restored when loading configuration
-- **Filtering**: When apps are removed, their modules are automatically deselected
+- **Component**: Multi-select dropdown
+- **Options**: Dynamically populated from `apps.json`
+- **Persistence**: Previously selected modules are restored on load
+- **Auto-filter**: Modules from removed apps are automatically deselected
 
-### 6. Podman Images (Advanced)
+#### 6. Podman Images (Advanced)
 
-- **View**: Lists all built Podman images with details (Repository, Tag, ID, Created, Size)
-- **Refresh**: Button to refresh the images list
-- **Purpose**: Monitor built Docker images
+| Feature | Description |
+|---------|-------------|
+| **View** | List all built images with Repository, Tag, ID, Created, Size |
+| **Refresh** | Update the images list |
+| **Purpose** | Monitor built Docker images |
+
+---
 
 ## Data Flow
 
-1. **Configuration Loading** (`getConfiguration`):
-   - Fetches current configuration from backend
-   - Decodes base64 appJson
-   - Restores selected modules
-   - Populates all form fields
+### 1. Configuration Loading (`getConfiguration`)
 
-2. **App JSON Processing**:
-   - Stored as base64 encoded string in backend
-   - Parsed into structured list for display
-   - Used to generate multi-select options
-   - Filters selected modules to only include valid apps
+1. Fetches current configuration from backend
+2. Decodes base64-encoded `appJson`
+3. Restores selected modules
+4. Populates all form fields
 
-3. **Configuration Saving** (`configureModule`):
-   - Validates host field
-   - Encodes appJson to base64
-   - Sends all configuration data to backend
-   - Triggers module reconfiguration
+### 2. App JSON Processing
 
-## JSON Format
+1. Stored as base64-encoded string in backend
+2. Parsed into structured list for UI display
+3. Generates multi-select options
+4. Filters selected modules to include only valid apps
+
+### 3. Configuration Saving (`configureModule`)
+
+1. Validates host field
+2. Encodes `appJson` to base64
+3. Sends configuration data to backend
+4. Triggers module reconfiguration
+
+---
+
+## JSON Format Specification
 
 The `app_json` field expects an array of app objects:
 
@@ -107,22 +125,80 @@ The `app_json` field expects an array of app objects:
     "app_name": "my-custom-app",
     "url": "https://github.com/user/repo",
     "branch": "main",
-    "labels": "production,custom"
+    "labels": "production"
   }
 ]
 ```
 
+### Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `app_name` | String | Yes | Unique application identifier |
+| `url` | String | Yes | Git repository URL |
+| `branch` | String | No | Git branch name (default: `main`) |
+| `labels` | String | No | Comma-separated labels |
+
+---
+
+## Upgrade Instructions: V3 to V4
+
+### Pre-Upgrade Checklist
+
+1. **Document Current Apps**: Note all currently installed apps and their versions
+2. **Gather Repository Information**: Collect GitHub URLs and installation names for each app
+3. **Verify Frappe Version Compatibility**: Ensure apps support your target Frappe version
+
+### Upgrade Steps
+
+1. **Add Your Apps**: Use either the UI form or direct JSON input
+
+   Example configuration:
+   ```json
+   [
+     {
+       "app_name": "your-app-name",
+       "url": "https://github.com/user/repo",
+       "branch": "main",
+       "labels": "production"
+     }
+   ]
+   ```
+
+2. **Select Frappe Version**: Choose either `version-15` or `version-16`
+
+3. **Save Configuration**: Submit the configuration to trigger the build
+
+---
+
 ## Important Notes
 
-1. **App Name Consistency**: The multi-select uses `app_name` or `name` field to match selected modules with available options
-2. **Base64 Encoding**: The appJson is base64 encoded when sent to the backend
-3. **Validation**: Apps must have at least an app_name and URL
-4. **Podman Integration**: The module interfaces with Podman for container management
-5. **Dynamic Options**: The ERPNext Modules multi-select options are dynamically generated from the apps.json
+### App Management
 
-**NOTE**
+- The multi-select uses `app_name` or `name` field to match selected modules with available options
+- `appJson` is base64-encoded when transmitted to the backend
+- Apps must have at least `app_name` and `url` defined
+- Module options are dynamically generated from `apps.json`
 
-- Always ensure apps.json is valid JSON before saving
-- Selected modules are filtered to only include apps that exist in the configuration
-- Podman images are specific to the configured apps and Frappe version
-- Make sure you install the apps that were previously installed to avoid installtion issues
+### Version Compatibility
+
+- **Critical**: Install apps with the same Frappe version they require
+- Version mismatch will cause build failures even if the image builds successfully
+
+### Data Integrity
+
+- Always validate `apps.json` is valid JSON before saving
+- Selected modules are filtered to only include existing apps
+- Podman images are specific to configured apps and Frappe version
+- Install all previously used apps to avoid data inconsistency issues
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Build failures | Verify Frappe version compatibility for all apps |
+| Missing modules | Check that all previously installed apps are included in `apps.json` |
+| Invalid JSON | Validate `apps.json` syntax before saving |
+| Image not found | Refresh Podman images list in Advanced settings |
