@@ -10,53 +10,53 @@ NC='\033[0m' # No Color
 
 # Function to print colored output
 print_info() {
-	echo -e "${GREEN}[INFO]${NC} $1"
+  echo -e "${GREEN}[INFO]${NC} $1"
 }
 
 print_warning() {
-	echo -e "${YELLOW}[WARNING]${NC} $1"
+  echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 print_error() {
-	echo -e "${RED}[ERROR]${NC} $1"
+  echo -e "${RED}[ERROR]${NC} $1"
 }
 
 # Check if podman is installed
 if ! command -v podman &>/dev/null; then
-	print_error "podman is required but not installed. Please install podman first."
-	exit 1
+  print_error "podman is required but not installed. Please install podman first."
+  exit 1
 fi
 
 # Check if jq is installed
 if ! command -v jq &>/dev/null; then
-	print_error "jq is required but not installed. Please install jq first."
-	exit 1
+  print_error "jq is required but not installed. Please install jq first."
+  exit 1
 fi
 
 # Function to fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
 fetch_erpnext_tag() {
-	local major_version="${FRAPPE_VERSION##version-}"
-	local api_url="https://api.github.com/repos/frappe/erpnext/tags"
+  local major_version="${FRAPPE_VERSION##version-}"
+  local api_url="https://api.github.com/repos/frappe/erpnext/tags"
 
-	local tags_json
-	if ! tags_json=$(curl -fsSL "$api_url" 2>/dev/null); then
-		print_warning "Failed to fetch tags from GitHub, using default"
-		return 1
-	fi
+  local tags_json
+  if ! tags_json=$(curl -fsSL "$api_url" 2>/dev/null); then
+    print_warning "Failed to fetch tags from GitHub, using default"
+    return 1
+  fi
 
-	local first_tag
-	if ! first_tag=$(echo "$tags_json" | jq -r ".[] | select(.name | startswith(\"v${major_version}.\")) | .name" 2>/dev/null | head -1); then
-		print_warning "Failed to parse tags, using default"
-		return 1
-	fi
+  local first_tag
+  if ! first_tag=$(echo "$tags_json" | jq -r ".[] | select(.name | startswith(\"v${major_version}.\")) | .name" 2>/dev/null | head -1); then
+    print_warning "Failed to parse tags, using default"
+    return 1
+  fi
 
-	if [ -z "$first_tag" ] || [ "$first_tag" = "null" ]; then
-		print_warning "No v${major_version} tags found, using default"
-		return 1
-	fi
+  if [ -z "$first_tag" ] || [ "$first_tag" = "null" ]; then
+    print_warning "No v${major_version} tags found, using default"
+    return 1
+  fi
 
-	echo "$first_tag"
-	return 0
+  echo "$first_tag"
+  return 0
 }
 
 # Cache file for app_json hash
@@ -65,32 +65,34 @@ CURRENT_APPS_JSON="$APPS_JSON"
 
 # Function to compute hash of the apps JSON
 compute_apps_hash() {
-	echo -n "$1" | sha256sum | cut -d' ' -f1
+  echo -n "$1" | sha256sum | cut -d' ' -f1
 }
-
-# Get current apps JSON hash
-CURRENT_HASH=$(compute_apps_hash "$CURRENT_APPS_JSON")
-
-# Check if cache exists and compare
-if [ -f "$CACHE_FILE" ]; then
-	CACHED_HASH=$(cat "$CACHE_FILE")
-	if [ "$CURRENT_HASH" = "$CACHED_HASH" ]; then
-		print_warning "App configuration unchanged. Skipping Docker image build."
-		print_info "To force a rebuild, delete the cache file: rm $CACHE_FILE"
-		exit 0
-	else
-		print_info "App configuration changed. Proceeding with Docker image build..."
-	fi
-else
-	print_info "No cache found. Building Docker image..."
-fi
-
 # Fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
 ERPNEXT_TAG=$(fetch_erpnext_tag) || true
 
 if [ -z "${ERPNEXT_TAG:-}" ]; then
-	print_warning "Could not fetch ERPNext tag, using fallback"
-	ERPNEXT_TAG="v${FRAPPE_VERSION##version-}.0.0"
+  print_warning "Could not fetch ERPNext tag, using fallback"
+  ERPNEXT_TAG="v${FRAPPE_VERSION##version-}.0.0"
+fi
+BUILD_FINGERPRINT=$(printf "%s\n%s" \
+  "$CURRENT_APPS_JSON" \
+  "$ERPNEXT_TAG")
+# Get current apps JSON hash
+CURRENT_HASH=$(compute_apps_hash "$BUILD_FINGERPRINT")
+
+# Check if cache exists and compare
+if [ -f "$CACHE_FILE" ]; then
+  CACHED_HASH=$(cat "$CACHE_FILE")
+  if [ "$CURRENT_HASH" = "$CACHED_HASH" ]; then
+    print_warning "App configuration unchanged. Skipping Docker image build."
+    print_info "To force a rebuild, delete the cache file: rm $CACHE_FILE"
+    exit 0
+  else
+    rm $CACHE_FILE
+    print_info "App configuration changed. Proceeding with Docker image build..."
+  fi
+else
+  print_info "No cache found. Building Docker image..."
 fi
 
 print_info "Using ERPNext tag: $ERPNEXT_TAG"
@@ -121,58 +123,58 @@ print_info "Building custom ERPNext image with Podman..."
 
 # Build the image with Podman
 podman build --network=host \
-	--jobs=4 \
-	--build-arg APPS_JSON_BASE64="$APPS_JSON" \
-	--build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
-	-t "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
-	-f ../actions/configure-module/Dockerfile \
-	.
+  --jobs=4 \
+  --build-arg APPS_JSON_BASE64="$APPS_JSON" \
+  --build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
+  -t "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
+  -f ../actions/configure-module/Dockerfile \
+  .
 
 if [ $? -eq 0 ]; then
-	print_info "Build completed successfully!"
-	print_info "Image tagged as: $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
+  print_info "Build completed successfully!"
+  print_info "Image tagged as: $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 
-	# Also tag as latest
-	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$CUSTOM_IMAGE_NAME:latest"
+  # Also tag as latest
+  podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$CUSTOM_IMAGE_NAME:latest"
 
-	# Tag with the same name as base image (for drop-in replacement)
-	podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$BASE_IMAGE"
-	print_info "Also tagged as: $BASE_IMAGE (drop-in replacement)"
+  # Tag with the same name as base image (for drop-in replacement)
+  podman tag "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" "$BASE_IMAGE"
+  print_info "Also tagged as: $BASE_IMAGE (drop-in replacement)"
 
-	echo ""
-	print_info "To push the image to a registry:"
-	echo "  podman push $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
-	echo "  podman push $CUSTOM_IMAGE_NAME:latest"
-	echo "  podman push $BASE_IMAGE"
+  echo ""
+  print_info "To push the image to a registry:"
+  echo "  podman push $CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
+  echo "  podman push $CUSTOM_IMAGE_NAME:latest"
+  echo "  podman push $BASE_IMAGE"
 
-	echo ""
-	print_info "Image size:"
-	podman images "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
-	ENV_FILE="environment"
+  echo ""
+  print_info "Image size:"
+  podman images "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+  ENV_FILE="environment"
 
-	# Ensure env file exists
-	[ -f "$ENV_FILE" ] || {
-		print_error "Env file not found"
-		exit 1
-	}
+  # Ensure env file exists
+  [ -f "$ENV_FILE" ] || {
+    print_error "Env file not found"
+    exit 1
+  }
 
-	CUSTOM_IMAGE_FULL="$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
+  CUSTOM_IMAGE_FULL="$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG"
 
-	# Update or add ERPNEXT_IMAGE
-	if grep -q '^ERPNEXT_IMAGE=' "$ENV_FILE"; then
-		sed -i "s|^ERPNEXT_IMAGE=.*|ERPNEXT_IMAGE=$CUSTOM_IMAGE_FULL|" "$ENV_FILE"
-	else
-		echo "ERPNEXT_IMAGE=$CUSTOM_IMAGE_FULL" >>"$ENV_FILE"
-	fi
+  # Update or add ERPNEXT_IMAGE
+  if grep -q '^ERPNEXT_IMAGE=' "$ENV_FILE"; then
+    sed -i "s|^ERPNEXT_IMAGE=.*|ERPNEXT_IMAGE=$CUSTOM_IMAGE_FULL|" "$ENV_FILE"
+  else
+    echo "ERPNEXT_IMAGE=$CUSTOM_IMAGE_FULL" >>"$ENV_FILE"
+  fi
 
-	print_info "Updated ERPNEXT_IMAGE in $ENV_FILE to:"
-	print_info "$CUSTOM_IMAGE_FULL" print_info "To use this image, it's already tagged as: $BASE_IMAGE"
-	print_info "Your existing docker-compose or deployment will automatically use the custom image!"
+  print_info "Updated ERPNEXT_IMAGE in $ENV_FILE to:"
+  print_info "$CUSTOM_IMAGE_FULL" print_info "To use this image, it's already tagged as: $BASE_IMAGE"
+  print_info "Your existing docker-compose or deployment will automatically use the custom image!"
 
-	# Update the cache with the new hash
-	echo "$CURRENT_HASH" >"$CACHE_FILE"
-	print_info "Cache updated."
+  # Update the cache with the new hash
+  echo "$CURRENT_HASH" >"$CACHE_FILE"
+  print_info "Cache updated."
 else
-	print_error "Build failed!"
-	exit 1
+  print_error "Build failed!"
+  exit 1
 fi
