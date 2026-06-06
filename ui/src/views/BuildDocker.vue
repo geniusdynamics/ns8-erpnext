@@ -90,6 +90,28 @@
         </cv-tile>
       </cv-column>
     </cv-row>
+    <cv-row v-if="builtVersion">
+      <cv-column>
+        <cv-tile light>
+          <h5>{{ $t("build.built_version") }}</h5>
+          <dl class="build-info">
+            <dt>{{ $t("build.built_version") }}</dt>
+            <dd>{{ builtVersion }}</dd>
+            <dt>{{ $t("build.built_image") }}</dt>
+            <dd>{{ builtImage }}</dd>
+            <dt>{{ $t("build.built_at") }}</dt>
+            <dd>{{ builtAt }}</dd>
+          </dl>
+        </cv-tile>
+      </cv-column>
+    </cv-row>
+    <cv-row v-else-if="!loading.getConfiguration">
+      <cv-column>
+        <cv-tile light>
+          <p>{{ $t("build.no_build_yet") }}</p>
+        </cv-tile>
+      </cv-column>
+    </cv-row>
   </cv-grid>
 </template>
 
@@ -127,6 +149,9 @@ export default {
       forceRebuild: false,
       frappeVersion: "version-15",
       erpSelectedModules: [],
+      builtVersion: "",
+      builtImage: "",
+      builtAt: "",
       loading: {
         getConfiguration: false,
         buildDockerImage: false,
@@ -242,7 +267,9 @@ export default {
       this.erpSelectedModules = config.erpSelectedModules || [];
       this.frappeVersion = config.frappeVersion || "version-15";
       this.app_json = atob(config.appJson);
-      console.log("appJson", this.app_json);
+      this.builtVersion = config.builtVersion || "";
+      this.builtImage = config.builtImage || "";
+      this.builtAt = config.builtAt || "";
 
       this.loading.getConfiguration = false;
     },
@@ -308,5 +335,16 @@ export default {
 
 .app-json-error {
   margin-bottom: $spacing-06;
+}
+
+.build-info {
+  dt {
+    font-weight: 600;
+    margin-top: $spacing-03;
+  }
+  dd {
+    margin-left: 0;
+    margin-bottom: $spacing-03;
+  }
 }
 </style>

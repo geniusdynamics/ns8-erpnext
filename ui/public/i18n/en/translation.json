@@ -63,7 +63,11 @@
     "build_image": "Build Image",
     "building_image": "Building Docker image",
     "please_wait": "Please wait...",
-    "frappe_version": "Frappe version"
+    "frappe_version": "Frappe version",
+    "built_version": "Built version",
+    "built_image": "Image",
+    "built_at": "Built at",
+    "no_build_yet": "No Docker image has been built yet"
   },
   "action": {
     "get-status": "Get status",

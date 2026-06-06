@@ -74,6 +74,11 @@
         "apps_to_build": "Apps die gebaut werden sollen",
         "build_image": "Image bauen",
         "building_image": "Docker-Image wird gebaut",
-        "please_wait": "Bitte warten..."
+        "please_wait": "Bitte warten...",
+        "frappe_version": "Frappe-Version",
+        "built_version": "Gebaute Version",
+        "built_image": "Image",
+        "built_at": "Gebaut am",
+        "no_build_yet": "Es wurde noch kein Docker-Image gebaut"
     }
 }

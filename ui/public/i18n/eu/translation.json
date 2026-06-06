@@ -74,6 +74,11 @@
         "apps_to_build": "Eraiki beharreko app-ak",
         "build_image": "Irudia eraiki",
         "building_image": "Docker irudia eraikitzen",
-        "please_wait": "Mesedez itxaron..."
+        "please_wait": "Mesedez itxaron...",
+        "frappe_version": "Frappe bertsioa",
+        "built_version": "Eraikitako bertsioa",
+        "built_image": "Irudia",
+        "built_at": "Eraikia noiz",
+        "no_build_yet": "Oraindik ez da Docker irudirik eraiki"
     }
 }

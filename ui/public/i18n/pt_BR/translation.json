@@ -54,6 +54,11 @@
         "apps_to_build": "Apps para compilar",
         "build_image": "Compilar imagem",
         "building_image": "Compilando imagem Docker",
-        "please_wait": "Por favor aguarde..."
+        "please_wait": "Por favor aguarde...",
+        "frappe_version": "Versão do Frappe",
+        "built_version": "Versão compilada",
+        "built_image": "Imagem",
+        "built_at": "Compilado em",
+        "no_build_yet": "Nenhuma imagem Docker foi compilada ainda"
     }
 }
