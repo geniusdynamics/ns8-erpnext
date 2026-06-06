@@ -51,6 +51,21 @@
             "type": "boolean",
             "title": "Has backup",
             "description": "Whether a backup exists for this instance"
+        },
+        "builtVersion": {
+            "type": "string",
+            "title": "Built ERPNext version",
+            "description": "The ERPNext version tag of the last built Docker image"
+        },
+        "builtImage": {
+            "type": "string",
+            "title": "Built Docker image",
+            "description": "The full Docker image name and tag of the last build"
+        },
+        "builtAt": {
+            "type": "string",
+            "title": "Built at timestamp",
+            "description": "ISO 8601 timestamp of when the Docker image was last built"
         }
     }
 }
