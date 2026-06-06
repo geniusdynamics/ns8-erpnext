@@ -80,8 +80,18 @@ BUILD_FINGERPRINT=$(printf "%s\n%s" \
 # Get current apps JSON hash
 CURRENT_HASH=$(compute_apps_hash "$BUILD_FINGERPRINT")
 
-# Check if cache exists and compare
-if [ -f "$CACHE_FILE" ]; then
+# Save old image reference before any changes
+OLD_ERPNEXT_IMAGE=""
+if [ -f "environment" ]; then
+  OLD_ERPNEXT_IMAGE=$(grep '^ERPNEXT_IMAGE=' environment | cut -d'=' -f2 || echo "")
+fi
+
+# If force rebuild is requested, skip the cache check
+FORCE_REBUILD="${FORCE_REBUILD:-false}"
+if [ "$FORCE_REBUILD" = "true" ]; then
+  print_info "Force rebuild requested. Removing cache and proceeding..."
+  rm -f "$CACHE_FILE"
+elif [ -f "$CACHE_FILE" ]; then
   CACHED_HASH=$(jq -r '.hash' "$CACHE_FILE" 2>/dev/null || echo "")
   if [ "$CURRENT_HASH" = "$CACHED_HASH" ]; then
     print_warning "App configuration unchanged. Skipping Docker image build."
@@ -181,6 +191,18 @@ if [ $? -eq 0 ]; then
     '{hash: $hash, version: $version, image: $image, built_at: $built_at}')
   echo "$CACHE_JSON" >"$CACHE_FILE"
   print_info "Cache updated."
+
+  # Remove old image if it exists and differs from the new one
+  if [ -n "$OLD_ERPNEXT_IMAGE" ] && [ "$OLD_ERPNEXT_IMAGE" != "$CUSTOM_IMAGE_FULL" ]; then
+    print_info "Removing old image: $OLD_ERPNEXT_IMAGE"
+    podman rmi "$OLD_ERPNEXT_IMAGE" 2>/dev/null || print_warning "Could not remove old image (may be in use or already removed)"
+  fi
+
+  # Clean up force rebuild flag from env file so subsequent non-force builds work
+  if grep -q '^FORCE_REBUILD=' erpnext-modules.env 2>/dev/null; then
+    sed -i '/^FORCE_REBUILD=/d' erpnext-modules.env
+    print_info "Cleared force rebuild flag."
+  fi
 else
   print_error "Build failed!"
   exit 1
