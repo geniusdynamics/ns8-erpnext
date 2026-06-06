@@ -82,7 +82,7 @@ CURRENT_HASH=$(compute_apps_hash "$BUILD_FINGERPRINT")
 
 # Check if cache exists and compare
 if [ -f "$CACHE_FILE" ]; then
-  CACHED_HASH=$(cat "$CACHE_FILE")
+  CACHED_HASH=$(jq -r '.hash' "$CACHE_FILE" 2>/dev/null || echo "")
   if [ "$CURRENT_HASH" = "$CACHED_HASH" ]; then
     print_warning "App configuration unchanged. Skipping Docker image build."
     print_info "To force a rebuild, delete the cache file: rm $CACHE_FILE"
@@ -168,11 +168,18 @@ if [ $? -eq 0 ]; then
   fi
 
   print_info "Updated ERPNEXT_IMAGE in $ENV_FILE to:"
-  print_info "$CUSTOM_IMAGE_FULL" print_info "To use this image, it's already tagged as: $BASE_IMAGE"
+  print_info "$CUSTOM_IMAGE_FULL"
+  print_info "To use this image, it's already tagged as: $BASE_IMAGE"
   print_info "Your existing docker-compose or deployment will automatically use the custom image!"
 
-  # Update the cache with the new hash
-  echo "$CURRENT_HASH" >"$CACHE_FILE"
+  # Update the cache with hash, version, image, and timestamp
+  CACHE_JSON=$(jq -n \
+    --arg hash "$CURRENT_HASH" \
+    --arg version "$ERPNEXT_TAG" \
+    --arg image "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
+    --arg built_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{hash: $hash, version: $version, image: $image, built_at: $built_at}')
+  echo "$CACHE_JSON" >"$CACHE_FILE"
   print_info "Cache updated."
 else
   print_error "Build failed!"
