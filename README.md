@@ -385,6 +385,21 @@ This project is licensed under the [GPL-3.0 License](LICENSE).
 
 ---
 
+## Backup DBs 
+
+```bash
+runagent -m erpnext1
+podman exec -it backend bench --site frontend backup
+```
+
+## Copy Files from container to localfolder
+
+```bash 
+runagent -m erpnext1
+
+podman cp backend:/home/frappe/frappe-bench/sites/frontend/private/backups/<filename> .
+```
+
 <div align="center">
   <strong>Built with ❤️ for the NethServer Community</strong><br>
   <sub>ERPNext • NethServer 8 • Open Source ERP</sub>
