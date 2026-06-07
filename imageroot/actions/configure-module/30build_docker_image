@@ -2,6 +2,9 @@
 
 set -e
 source erpnext-modules.env
+# No-cache flag for podman build
+NO_CACHE=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -90,6 +93,7 @@ fi
 FORCE_REBUILD="${FORCE_REBUILD:-false}"
 if [ "$FORCE_REBUILD" = "true" ]; then
   print_info "Force rebuild requested. Removing cache and proceeding..."
+  NO_CACHE="--no-cache"
   rm -f "$CACHE_FILE"
 elif [ -f "$CACHE_FILE" ]; then
   CACHED_HASH=$(jq -r '.hash' "$CACHE_FILE" 2>/dev/null || echo "")
@@ -102,7 +106,8 @@ elif [ -f "$CACHE_FILE" ]; then
     print_info "App configuration changed. Proceeding with Docker image build..."
   fi
 else
-  print_info "No cache found. Building Docker image..."
+  print_info "No cache found. Building Docker image from scratch..."
+  NO_CACHE="--no-cache"
 fi
 
 print_info "Using ERPNext tag: $ERPNEXT_TAG"
@@ -133,6 +138,7 @@ print_info "Building custom ERPNext image with Podman..."
 
 # Build the image with Podman
 podman build --network=host \
+  $NO_CACHE \
   --jobs=4 \
   --build-arg APPS_JSON_BASE64="$APPS_JSON" \
   --build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
