@@ -2,6 +2,9 @@
 
 set -e
 source erpnext-modules.env
+# No-cache flag for podman build
+NO_CACHE=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -80,9 +83,20 @@ BUILD_FINGERPRINT=$(printf "%s\n%s" \
 # Get current apps JSON hash
 CURRENT_HASH=$(compute_apps_hash "$BUILD_FINGERPRINT")
 
-# Check if cache exists and compare
-if [ -f "$CACHE_FILE" ]; then
-  CACHED_HASH=$(cat "$CACHE_FILE")
+# Save old image reference before any changes
+OLD_ERPNEXT_IMAGE=""
+if [ -f "environment" ]; then
+  OLD_ERPNEXT_IMAGE=$(grep '^ERPNEXT_IMAGE=' environment | cut -d'=' -f2 || echo "")
+fi
+
+# If force rebuild is requested, skip the cache check
+FORCE_REBUILD="${FORCE_REBUILD:-false}"
+if [ "$FORCE_REBUILD" = "true" ]; then
+  print_info "Force rebuild requested. Removing cache and proceeding..."
+  NO_CACHE="--no-cache"
+  rm -f "$CACHE_FILE"
+elif [ -f "$CACHE_FILE" ]; then
+  CACHED_HASH=$(jq -r '.hash' "$CACHE_FILE" 2>/dev/null || echo "")
   if [ "$CURRENT_HASH" = "$CACHED_HASH" ]; then
     print_warning "App configuration unchanged. Skipping Docker image build."
     print_info "To force a rebuild, delete the cache file: rm $CACHE_FILE"
@@ -92,7 +106,8 @@ if [ -f "$CACHE_FILE" ]; then
     print_info "App configuration changed. Proceeding with Docker image build..."
   fi
 else
-  print_info "No cache found. Building Docker image..."
+  print_info "No cache found. Building Docker image from scratch..."
+  NO_CACHE="--no-cache"
 fi
 
 print_info "Using ERPNext tag: $ERPNEXT_TAG"
@@ -123,6 +138,7 @@ print_info "Building custom ERPNext image with Podman..."
 
 # Build the image with Podman
 podman build --network=host \
+  $NO_CACHE \
   --jobs=4 \
   --build-arg APPS_JSON_BASE64="$APPS_JSON" \
   --build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
@@ -168,12 +184,31 @@ if [ $? -eq 0 ]; then
   fi
 
   print_info "Updated ERPNEXT_IMAGE in $ENV_FILE to:"
-  print_info "$CUSTOM_IMAGE_FULL" print_info "To use this image, it's already tagged as: $BASE_IMAGE"
+  print_info "$CUSTOM_IMAGE_FULL"
+  print_info "To use this image, it's already tagged as: $BASE_IMAGE"
   print_info "Your existing docker-compose or deployment will automatically use the custom image!"
 
-  # Update the cache with the new hash
-  echo "$CURRENT_HASH" >"$CACHE_FILE"
+  # Update the cache with hash, version, image, and timestamp
+  CACHE_JSON=$(jq -n \
+    --arg hash "$CURRENT_HASH" \
+    --arg version "$ERPNEXT_TAG" \
+    --arg image "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
+    --arg built_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{hash: $hash, version: $version, image: $image, built_at: $built_at}')
+  echo "$CACHE_JSON" >"$CACHE_FILE"
   print_info "Cache updated."
+
+  # Remove old image if it exists and differs from the new one
+  if [ -n "$OLD_ERPNEXT_IMAGE" ] && [ "$OLD_ERPNEXT_IMAGE" != "$CUSTOM_IMAGE_FULL" ]; then
+    print_info "Removing old image: $OLD_ERPNEXT_IMAGE"
+    podman rmi "$OLD_ERPNEXT_IMAGE" 2>/dev/null || print_warning "Could not remove old image (may be in use or already removed)"
+  fi
+
+  # Clean up force rebuild flag from env file so subsequent non-force builds work
+  if grep -q '^FORCE_REBUILD=' erpnext-modules.env 2>/dev/null; then
+    sed -i '/^FORCE_REBUILD=/d' erpnext-modules.env
+    print_info "Cleared force rebuild flag."
+  fi
 else
   print_error "Build failed!"
   exit 1

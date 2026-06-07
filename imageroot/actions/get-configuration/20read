@@ -40,6 +40,23 @@ if os.path.exists("backup_paths.env"):
 else:
     config["hasBackup"] = False
 
+cache_file = ".app_json_cache"
+if os.path.exists(cache_file):
+    try:
+        with open(cache_file) as f:
+            cache_data = json.load(f)
+        config["builtVersion"] = cache_data.get("version", "")
+        config["builtImage"] = cache_data.get("image", "")
+        config["builtAt"] = cache_data.get("built_at", "")
+    except (json.JSONDecodeError, IOError):
+        config["builtVersion"] = ""
+        config["builtImage"] = ""
+        config["builtAt"] = ""
+else:
+    config["builtVersion"] = ""
+    config["builtImage"] = ""
+    config["builtAt"] = ""
+
 
 # Dump the configuration to stdout
 json.dump(config, fp=sys.stdout)

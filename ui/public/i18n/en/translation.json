@@ -40,6 +40,7 @@
     "app_json_must_be_array": "App JSON must be an array of objects",
     "invalid_json_format": "Invalid JSON format",
     "frappe_version": "Frappe version",
+    "force_rebuild": "Force rebuild (no cache)",
     "app_name": "App Name",
     "repository_url": "Repository URL",
     "branch": "Branch",
@@ -63,7 +64,11 @@
     "build_image": "Build Image",
     "building_image": "Building Docker image",
     "please_wait": "Please wait...",
-    "frappe_version": "Frappe version"
+    "frappe_version": "Frappe version",
+    "built_version": "Built version",
+    "built_image": "Image",
+    "built_at": "Built at",
+    "no_build_yet": "No Docker image has been built yet"
   },
   "action": {
     "get-status": "Get status",
