@@ -72,6 +72,21 @@
               <cv-dropdown-item value="version-16">version-16</cv-dropdown-item>
             </cv-dropdown>
 
+            <cv-toggle
+              value="forceRebuild"
+              :label="$t('settings.force_rebuild')"
+              v-model="isForceRebuild"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              class="mg-bottom"
+            >
+              <template slot="text-left">{{
+                $t("settings.disabled")
+              }}</template>
+              <template slot="text-right">{{
+                $t("settings.enabled")
+              }}</template>
+            </cv-toggle>
+
             <cv-row class="mg-bottom">
               <cv-column :sm="4">
                 <h4>Manage Apps</h4>
@@ -389,6 +404,7 @@ export default {
       host: "",
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
+      isForceRebuild: false,
       hasBackup: false,
 
       erpSelectedModules: [],
@@ -888,6 +904,7 @@ export default {
             erpSelectedModules: this.erpSelectedModules,
             appJson: btoa(this.app_json),
             frappeVersion: this.frappeVersion,
+            forceRebuild: this.isForceRebuild,
           },
           extra: {
             title: this.$t("settings.instance_configuration", {

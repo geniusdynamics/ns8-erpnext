@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+import os
+
+data = json.load(sys.stdin)
+force_rebuild = data.get("forceRebuild", False)
+
+if force_rebuild:
+    cache_file = ".app_json_cache"
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+        print("Build cache deleted. Next build will use --no-cache.")
+    else:
+        print("No build cache found, nothing to delete.")
