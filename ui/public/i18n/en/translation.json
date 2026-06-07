@@ -40,6 +40,7 @@
     "app_json_must_be_array": "App JSON must be an array of objects",
     "invalid_json_format": "Invalid JSON format",
     "frappe_version": "Frappe version",
+    "force_rebuild": "Force rebuild (no cache)",
     "app_name": "App Name",
     "repository_url": "Repository URL",
     "branch": "Branch",
