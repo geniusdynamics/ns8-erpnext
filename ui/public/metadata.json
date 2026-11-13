@@ -1,9 +1,12 @@
 {
   "name": "ERPNEXT",
   "description": {
-    "en": "The most agile ERP on the planet: ERPNext is the world's best free and open source ERP"
+    "en": "The most agile ERP on the planet: ERPNext is the world's best free and open source ERP",
+    "it": "ERPNext è un ERP open source per contabilità, magazzino, vendite, acquisti e produzione."
   },
-  "categories": ["office"],
+  "categories": [
+    "office"
+  ],
   "authors": [
     {
       "name": "Genius Dynamics",
