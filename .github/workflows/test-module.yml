@@ -1,4 +1,6 @@
 name: Test module
+# The run belongs to the default branch under workflow_run: name the tested one.
+run-name: "Test ${{ github.event.workflow_run.head_branch || github.ref_name }} on QEMU"
 
 on:
   workflow_dispatch:
@@ -12,15 +14,14 @@ on:
     types: [completed]
 
 jobs:
-  module:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == '' }}
-    uses: NethServer/ns8-github-actions/.github/workflows/module-info.yml@main
-  run_tests:
-    needs: module
-    uses: NethServer/ns8-github-actions/.github/workflows/test-on-digitalocean-infra.yml@main
+  run:
+    name: "Run tests"
+    permissions:
+      contents: write
+      pull-requests: write
+      statuses: write
+    uses: NethServer/ns8-github-actions/.github/workflows/test-module-qemu.yml@v1
     with:
-      args: "ghcr.io/${{needs.module.outputs.owner}}/${{needs.module.outputs.name}}:${{needs.module.outputs.tag}}"
-      repo_ref: ${{needs.module.outputs.sha}}
-      debug_shell: ${{ github.event.inputs.debug_shell == 'true' || false }}
-    secrets:
-      do_token: ${{ secrets.do_token }}
+      ui_tests_strategy: on_renovate_ui_change
+      debug_shell: ${{ github.event.inputs.debug_shell == 'true' }}
+      # Other inputs: https://github.com/NethServer/ns8-github-actions/blob/v1/docs/test-module-qemu.md#inputs
