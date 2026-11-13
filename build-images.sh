@@ -14,6 +14,9 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="erpnext"
+# Node.js 25+ no longer ships Corepack, install it from npm
+# renovate: datasource=npm packageName=corepack
+corepack_version=0.36.0
 
 # Create a new empty container image
 container=$(buildah from scratch)
@@ -21,7 +24,8 @@ container=$(buildah from scratch)
 # Reuse existing nodebuilder-erpnext container, to speed up builds
 if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-erpnext; then
 	echo "Pulling NodeJS runtime..."
-	buildah from --name nodebuilder-erpnext -v "${PWD}:/usr/src:Z" docker.io/library/node:lts
+	buildah from --name nodebuilder-erpnext -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.0-slim
+	buildah run nodebuilder-erpnext sh -c "npm install -g corepack@${corepack_version} && corepack enable"
 fi
 
 echo "Build static UI files with node..."
@@ -38,14 +42,14 @@ buildah add "${container}" ui/dist /ui
 # Select you image(s) with the label org.nethserver.images
 # ghcr.io/xxxxx is the GitHub container registry or your own registry or docker.io for Docker Hub
 # The image tag is set to latest by default, but can be overridden with the IMAGETAG environment variable
-# --label="org.nethserver.images=docker.io/mariadb:10.11.5 docker.io/roundcube/roundcubemail:1.6.4-apache"
+# --label="org.nethserver.images=docker.io/mariadb:10.11.19 docker.io/roundcube/roundcubemail:1.6.4-apache"
 # rootfull=0 === rootless container
 # tcp-ports-demand=1 number of tcp Port to reserve , 1 is the minimum, can be udp or tcp
 buildah config --entrypoint=/ \
 	--label="org.nethserver.authorizations=traefik@node:routeadm" \
 	--label="org.nethserver.tcp-ports-demand=1" \
 	--label="org.nethserver.rootfull=0" \
-	--label="org.nethserver.images=docker.io/mariadb:10.11.5  docker.io/redis:6.2-alpine" \
+	--label="org.nethserver.images=docker.io/mariadb:10.11.19  docker.io/redis:6.2.24-alpine3.22" \
 	"${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"
