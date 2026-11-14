@@ -66,6 +66,13 @@
             "type": "string",
             "title": "Built at timestamp",
             "description": "ISO 8601 timestamp of when the Docker image was last built"
+        },
+        "apps": {
+            "type": "array",
+            "description": "The app list of the image, decoded",
+            "items": {
+                "type": "object"
+            }
         }
     }
 }

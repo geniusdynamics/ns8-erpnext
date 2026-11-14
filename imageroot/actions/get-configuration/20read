@@ -11,6 +11,8 @@
 
 import os
 import sys
+import base64
+import binascii
 import json
 import agent
 
@@ -28,10 +30,15 @@ if os.path.exists("erpnext-modules.env"):
     modules_str = data.get("ERP_NEXT_MODULES", "")
     config["erpSelectedModules"] = modules_str.split(",") if modules_str else []
     config["appJson"] = data.get("APPS_JSON", "")
+    try:
+        config["apps"] = json.loads(base64.b64decode(config["appJson"])) if config["appJson"] else []
+    except (ValueError, binascii.Error):
+        config["apps"] = []
     config["frappeVersion"] = data.get("FRAPPE_VERSION", "version-15")
 else:
     config["erpSelectedModules"] = []
     config["appJson"] = ""
+    config["apps"] = []
     config["frappeVersion"] = "version-15"
 
 if os.path.exists("backup_paths.env"):
