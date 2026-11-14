@@ -8,6 +8,26 @@
             "host": "erpnext.domain.org",
             "http2https": true,
             "lets_encrypt": true,
+            "frappeVersion": "version-15",
+            "apps": [
+                {
+                    "url": "https://github.com/frappe/erpnext",
+                    "branch": "version-15"
+                },
+                {
+                    "url": "https://github.com/frappe/hrms",
+                    "branch": "version-15"
+                }
+            ],
+            "erpSelectedModules": [
+                "erpnext",
+                "hrms"
+            ]
+        },
+        {
+            "host": "erpnext.domain.org",
+            "http2https": true,
+            "lets_encrypt": true,
             "appJson": "W3sidXJsIjoiaHR0cHM6Ly9naXRodWIuY29tL2ZyYXBwZS9lcnBuZXh0IiwiYnJhbmNoIjoidmVyc2lvbi0xNSIsImFwcF9uYW1lIjoiZXJwbmV4dCJ9XQ=="
         }
     ],
@@ -15,8 +35,7 @@
     "required": [
         "host",
         "http2https",
-        "lets_encrypt",
-        "appJson"
+        "lets_encrypt"
     ],
     "properties": {
         "host": {
@@ -37,13 +56,58 @@
         "appJson": {
             "type": "string",
             "title": "App JSON configuration",
-            "description": "Base64 encoded JSON array containing app configurations with url, branch, and app_name"
+            "description": "The app list encoded in base64, as earlier releases sent it. Use apps instead."
         },
         "frappeVersion": {
             "type": "string",
             "title": "Frappe version",
             "description": "Frappe version branch to use (e.g., version-15 or version-16)",
-            "enum": ["version-15", "version-16"]
+            "enum": [
+                "version-15",
+                "version-16"
+            ]
+        },
+        "apps": {
+            "type": "array",
+            "minItems": 1,
+            "title": "Apps of the ERPNext image",
+            "description": "Frappe apps built into the image, in the frappe_docker apps.json format. Default: ERPNext of frappeVersion.",
+            "items": {
+                "type": "object",
+                "required": [
+                    "url"
+                ],
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "pattern": "^https://",
+                        "description": "Git repository of the app"
+                    },
+                    "branch": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Branch or tag; default frappeVersion"
+                    },
+                    "app_name": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*$",
+                        "description": "App name; default the repository name"
+                    }
+                }
+            }
+        },
+        "erpSelectedModules": {
+            "type": "array",
+            "title": "Apps to install on the site",
+            "description": "Names of apps of the list to install on the site. Default: every app of the list.",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+            }
+        },
+        "forceRebuild": {
+            "type": "boolean",
+            "description": "Build the image again even if the app list did not change"
         }
     }
 }

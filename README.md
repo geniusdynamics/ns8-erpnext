@@ -84,25 +84,42 @@ Configure your ERPNext instance using the NethServer web interface or API:
 
 ### API Configuration
 
+The image is built with the apps of `apps`, given as JSON in the
+[frappe_docker `apps.json`](https://github.com/frappe/frappe_docker/blob/main/docs/custom-apps.md)
+format. `erpSelectedModules` picks the apps installed on the site; every
+picked app must be in `apps`.
+
 ```bash
-api-cli run configure-module --agent module/erpnext1 --data - <<EOF
+api-cli run configure-module --agent module/erpnext1 --data - <<JSON
 {
   "host": "erp.company.com",
   "http2https": true,
   "lets_encrypt": true,
+  "frappeVersion": "version-15",
+  "apps": [
+    {"url": "https://github.com/frappe/erpnext", "branch": "version-15"},
+    {"url": "https://github.com/frappe/hrms", "branch": "version-15"}
+  ],
   "erpSelectedModules": ["erpnext", "hrms"]
 }
-EOF
+JSON
 ```
+
+The first configuration builds the image (several minutes); later ones
+rebuild it only when the app list or the ERPNext release changes.
 
 ### Configuration Parameters
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `host` | string | Fully qualified domain name | Required |
-| `http2https` | boolean | Enable HTTP to HTTPS redirection | `false` |
-| `lets_encrypt` | boolean | Enable Let's Encrypt certificate | `false` |
-| `erpSelectedModules` | array | List of ERPNext modules to install | `[]` |
+| `http2https` | boolean | Enable HTTP to HTTPS redirection | Required |
+| `lets_encrypt` | boolean | Enable Let's Encrypt certificate | Required |
+| `frappeVersion` | string | `version-15` or `version-16` | `version-15` |
+| `apps` | array | Apps of the image: `url`, optional `branch` (default `frappeVersion`) and `app_name` (default the repository name) | ERPNext of `frappeVersion` |
+| `appJson` | string | The same list encoded in base64, as earlier releases sent it | |
+| `erpSelectedModules` | array | Names of the apps to install on the site | every app of `apps` |
+| `forceRebuild` | boolean | Build the image again even if nothing changed | `false` |
 
 ## 📦 Available ERPNext Modules
 

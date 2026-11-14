@@ -40,29 +40,27 @@ if ! command -v jq &>/dev/null; then
 fi
 
 # Function to fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
+# Latest frappe/erpnext image tag of the selected major version, from Docker
+# Hub, where the base image is pulled from. Messages go to stderr: stdout is
+# the tag. Without an answer, use the pinned release below.
+# renovate: datasource=docker packageName=docker.io/frappe/erpnext
+FALLBACK_TAG_V15=v15.125.0
+FALLBACK_TAG_V16=v16.55.0
 fetch_erpnext_tag() {
   local major_version="${FRAPPE_VERSION##version-}"
-  local api_url="https://api.github.com/repos/frappe/erpnext/tags"
-
-  local tags_json
-  if ! tags_json=$(curl -fsSL "$api_url" 2>/dev/null); then
-    print_warning "Failed to fetch tags from GitHub, using default"
+  local api_url="https://hub.docker.com/v2/repositories/frappe/erpnext/tags?page_size=100&name=v${major_version}."
+  local tags_json tag
+  if ! tags_json=$(curl -fsSL --max-time 30 "$api_url" 2>/dev/null); then
+    print_warning "Cannot read the frappe/erpnext tags from Docker Hub" >&2
     return 1
   fi
-
-  local first_tag
-  if ! first_tag=$(echo "$tags_json" | jq -r ".[] | select(.name | startswith(\"v${major_version}.\")) | .name" 2>/dev/null | head -1); then
-    print_warning "Failed to parse tags, using default"
+  tag=$(echo "$tags_json" | jq -r '.results[].name' 2>/dev/null |
+    grep -E "^v${major_version}\.[0-9]+\.[0-9]+$" | sort -V | tail -1)
+  if [ -z "$tag" ]; then
+    print_warning "No v${major_version} release of frappe/erpnext found on Docker Hub" >&2
     return 1
   fi
-
-  if [ -z "$first_tag" ] || [ "$first_tag" = "null" ]; then
-    print_warning "No v${major_version} tags found, using default"
-    return 1
-  fi
-
-  echo "$first_tag"
-  return 0
+  echo "$tag"
 }
 
 # Cache file for app_json hash
@@ -77,8 +75,9 @@ compute_apps_hash() {
 ERPNEXT_TAG=$(fetch_erpnext_tag) || true
 
 if [ -z "${ERPNEXT_TAG:-}" ]; then
-  print_warning "Could not fetch ERPNext tag, using fallback"
-  ERPNEXT_TAG="v${FRAPPE_VERSION##version-}.0.0"
+  fallback="FALLBACK_TAG_V${FRAPPE_VERSION##version-}"
+  ERPNEXT_TAG="${!fallback:-$FALLBACK_TAG_V15}"
+  print_warning "Using the pinned ERPNext release ${ERPNEXT_TAG}"
 fi
 BUILD_FINGERPRINT=$(printf "%s\n%s" \
   "$CURRENT_APPS_JSON" \
