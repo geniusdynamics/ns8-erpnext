@@ -36,7 +36,9 @@ FROM docker.io/frappe/base:${FRAPPE_BRANCH} AS backend
 
 USER frappe
 
-COPY --from=builder --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
+# frappe/base creates the frappe user as uid 1000 with primary group 0
+# (useradd -u 1000 -g 0): there is no "frappe" group to look up
+COPY --from=builder --chown=1000:0 /home/frappe/frappe-bench /home/frappe/frappe-bench
 
 WORKDIR /home/frappe/frappe-bench
 

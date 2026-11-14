@@ -5,23 +5,30 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+#
+# Save the app list of the ERPNext image and the apps to install on the
+# site (see bin/erpnext_apps.py for the accepted formats).
+#
+
 import json
+import os
 import sys
+
 import agent
 
-# Try to parse the stdin as JSON.
-# If parsing fails, output everything to stderr
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+from erpnext_apps import AppsError, parse  # noqa: E402
+
 data = json.load(sys.stdin)
-
-# This is specific to you module, so you need to change it accordingly.
-
-ERP_NEXT_MODULES = data.get("erpSelectedModules", [])
-APP_JSON = data.get("appJson")
 FRAPPE_VERSION = data.get("frappeVersion", "version-15")
-FORCE_REBUILD = data.get("forceRebuild", False)
 
-agent.write_envfile(
-    "erpnext-modules.env", {"ERP_NEXT_MODULES": ",".join(ERP_NEXT_MODULES) if ERP_NEXT_MODULES else "", "APPS_JSON": APP_JSON, "FRAPPE_VERSION": FRAPPE_VERSION, "FORCE_REBUILD": str(FORCE_REBUILD).lower()}
-)
+try:
+    apps, apps_b64, modules = parse(data, FRAPPE_VERSION)
+except AppsError as ex:
+    agent.set_status("validation-failed")
+    json.dump([{"field": ex.field, "parameter": ex.field, "value": ex.value, "error": ex.error}], fp=sys.stdout)
+    sys.exit(3)
 
-agent.dump_env()
+envfile = {"ERP_NEXT_MODULES": ",".join(modules), "APPS_JSON": apps_b64, "FRAPPE_VERSION": FRAPPE_VERSION}
+envfile["FORCE_REBUILD"] = str(data.get("forceRebuild", False)).lower()
+agent.write_envfile("erpnext-modules.env", envfile)

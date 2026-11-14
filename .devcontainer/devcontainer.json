@@ -1,8 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/javascript-node
 {
-  "name": "ns8-erp-next",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18-bullseye",
+  "name": "ns8-erpnext",
+  "build": {
+    "dockerfile": "../ui/Containerfile"
+  },
   // Configure tool-specific properties.
   "customizations": {
     // Configure properties specific to VS Code.
@@ -12,8 +14,6 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "octref.vetur",
-        "shenjiaolong.vue-helper",
-        "waderyan.gitblame",
         "streetsidesoftware.code-spell-checker"
       ]
     }
@@ -25,5 +25,6 @@
   // --network=host is required for hot-reload
   "runArgs": ["--userns=keep-id", "--network=host"],
   "containerUser": "node",
-  "remoteUser": "node"
+  "remoteUser": "node",
+  "overrideCommand": true
 }
