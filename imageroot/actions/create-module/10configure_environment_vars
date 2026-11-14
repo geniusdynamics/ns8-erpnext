@@ -39,10 +39,12 @@ agent.write_envfile("database.env", mariadb)
 #     -e REDIS_QUEUE=redis-cache:6379 \
 #     -e SOCKETIO_PORT=9000 \
 erpnext_config = {
-    "DB_HOST": "mariadb-app",
+    # The containers share the pod network: container names resolve only
+    # while the container runs, 127.0.0.1 always does
+    "DB_HOST": "127.0.0.1",
     "DB_PORT": "3306",
-    "REDIS_CACHE": "redis-cache:6379",
-    "REDIS_QUEUE": "redis-cache:6379",
+    "REDIS_CACHE": "127.0.0.1:6379",
+    "REDIS_QUEUE": "127.0.0.1:6379",
     "SOCKETIO_PORT": "9000"
 }
 agent.write_envfile("configurator.env", erpnext_config)

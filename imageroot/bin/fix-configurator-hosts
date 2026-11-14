@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Earlier releases pointed bench to the containers by name (mariadb-app,
+# redis-cache), which resolve only while those containers run: site creation
+# failed with "Can't connect to MySQL server on 'mariadb-app'". The
+# configurator writes these values into common_site_config.json at every
+# start, so fixing configurator.env is enough.
+
+set -e
+exec 1>&2
+[ -f configurator.env ] || exit 0
+sed -i -E \
+    -e 's/^DB_HOST=mariadb-app$/DB_HOST=127.0.0.1/' \
+    -e 's/^(REDIS_CACHE|REDIS_QUEUE)=redis-[a-z]+:/\1=127.0.0.1:/' \
+    configurator.env
