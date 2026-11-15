@@ -13,6 +13,8 @@ A comprehensive ERP (Enterprise Resource Planning) solution for NethServer 8, po
 - [Available ERPNext Modules](#available-erpnext-modules)
 - [Management](#management)
 - [Advanced Usage](#advanced-usage)
+- [App catalogue](#-app-catalogue)
+- [Multiple sites](#-multiple-sites)
 - [Backup & Restore](#backup--restore)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
@@ -43,7 +45,7 @@ The module consists of several interconnected services:
 - 🔧 **Easy Configuration**: Web-based setup through NethServer UI
 - 📱 **Responsive Design**: Mobile-friendly interface
 - 🚀 **High Performance**: Optimized container architecture
-- 💾 **Backup Integration**: Built-in backup and restore functionality
+- 💾 **Backup Integration**: every site is saved by the NethServer backup
 
 ## 🚀 Installation
 
@@ -210,31 +212,95 @@ The module uses several environment variables stored in `/home/erpnext1/.config/
 - `TCP_PORT` - Assigned TCP port
 - `ERP_NEXT_MODULES` - Selected modules
 
+## 📚 App catalogue
+
+The `apps` list of the Settings page is the catalogue of the instance: the
+apps built into the image. Each site then installs or uninstalls any of them
+from the **Sites** page.
+
+- **Frappe marketplace**: the Add App dialog lists the apps of
+  [frappe/marketplace](https://github.com/frappe/marketplace), the registry
+  that pilot reads, that have a stable release for the selected Frappe
+  version. Picking one fills the repository, branch and title. The same list
+  is available with `api-cli run module/erpnext1/list-marketplace-apps --data '{"frappeVersion":"version-15"}'`.
+- **Any GitHub repository**: fill the repository URL, branch, app name and an
+  optional title by hand.
+- **Private repositories**: mark the app as private and store a GitHub token
+  (`gitToken` of `configure-module`). The token is kept in a 0600 state file,
+  saved by the backup, never returned (`hasGitToken` says whether one is
+  stored) and given to the image build as a build secret, only for the private
+  repositories. `clearGitToken` removes it.
+
+The `apps` JSON stays accepted by `configure-module` as before; `title` and
+`private` are optional fields of its entries.
+
+## 🌐 Multiple sites
+
+The instance can serve several Frappe sites. Each site has its own host name,
+Traefik route, certificate, database and apps.
+
+- The default site `frontend` answers on the host name of the Settings page,
+  and on any name that no other site claims, as earlier releases did.
+- Each added site is named after its host name, as Frappe Cloud does. It gets
+  its own Traefik route (`<module>-<host>`), with its own HTTPS redirection and
+  Let's Encrypt options. A certificate request that fails, for example because
+  the DNS does not point to the node yet, only affects that site.
+- The frontend nginx picks the site from the `Host` header, through the map in
+  `state/nginx-sites.conf` (generated from `state/sites.json`).
+- A site can install any app built into the image (the `apps` list), and
+  uninstall it. Before an uninstall, the site goes into maintenance mode and
+  bench takes a backup of it.
+
+Use the **Sites** page, or the actions:
+
+```bash
+api-cli run module/erpnext1/list-sites
+api-cli run module/erpnext1/add-site --data '{"host":"erp2.example.org","http2https":true,"lets_encrypt":false,"admin_password":"Secret,1234","apps":["erpnext"]}'
+api-cli run module/erpnext1/set-site-apps --data '{"name":"erp2.example.org","apps":["erpnext","hrms"]}'
+api-cli run module/erpnext1/set-site-route --data '{"name":"erp2.example.org","http2https":true,"lets_encrypt":true}'
+api-cli run module/erpnext1/remove-site --data '{"name":"erp2.example.org"}'
+```
+
+`list-sites` is read-only and returns no secret: the sites, their route
+options, the installed apps and the state of the certificate that Traefik
+presents for each host. `remove-site` keeps a backup of the removed site in
+the sites volume, under `.archived_sites`.
+
 ## 💾 Backup & Restore
 
-### Automatic Backups
+### NethServer backups
 
-The module integrates with NethServer's backup system. Backups include:
-- ERPNext database
-- File attachments
-- Configuration files
-- Custom applications
+The module uses the NethServer backup system: add the instance to a backup
+schedule on the cluster **Backup** page. There is no backup button in the
+module. Before Restic runs, `bin/module-dump-state` dumps the database of
+every site with `mariadb-dump --single-transaction` into
+`state/dumps/<site>/database.sql`, with `site.json` beside it (installed
+apps, scheduler state). A failed dump fails the backup. A backup saves:
 
-### Manual Backup
+- the database dump of every site (`state/dumps`)
+- the `sites` volume: site configuration, public and private files
+- the module settings (host, apps of the image, selected apps)
 
-Create a manual backup:
+After Restic, `bin/module-cleanup-state` removes the dumps.
+
+Run a dump by hand, for example to check it:
 ```bash
-api-cli run app-backup --agent module/erpnext1
+runagent -m erpnext1 module-dump-state
+runagent -m erpnext1 ls -l dumps/frontend
+runagent -m erpnext1 module-cleanup-state
 ```
 
-### Restore from Backup
+### Restore
 
-```bash
-api-cli run restore-backup --agent module/erpnext1 --data '{
-  "repository": "backup-repo-name",
-  "path": "backup-path"
-}'
-```
+Restore the instance from the cluster **Backup** page. The restore builds
+the image with the saved apps, sets the route with Let's Encrypt off,
+starts the services, then `bin/restore-sites` restores the database of
+every site with `bench restore`, puts back the scheduler state and runs
+`bench migrate`. Backups of earlier releases (`backup_paths.env`, or the
+frappe backups under `sites/<site>/private/backups`) still restore.
+
+Turn Let's Encrypt on again once the DNS points to the node: a restore or a
+clone never requests a certificate.
 
 ## 🔍 Troubleshooting
 

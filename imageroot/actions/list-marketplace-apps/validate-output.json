@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "list-marketplace-apps output",
+    "$id": "http://nethserver.org/json-schema/task/output/erpnext/list-marketplace-apps",
+    "description": "Marketplace apps with a stable release for the Frappe version, as entries of the configure-module apps list",
+    "examples": [
+        {
+            "apps": [
+                {
+                    "app_name": "hrms",
+                    "url": "https://github.com/frappe/hrms",
+                    "branch": "version-15",
+                    "version": "15.64.2",
+                    "title": "Frappe HR",
+                    "description": "Open Source HR and Payroll Software",
+                    "category": "Applications",
+                    "dependencies": [
+                        "erpnext"
+                    ]
+                }
+            ]
+        }
+    ],
+    "type": "object",
+    "required": [
+        "apps"
+    ],
+    "properties": {
+        "apps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "app_name",
+                    "url",
+                    "branch",
+                    "title"
+                ]
+            }
+        },
+        "error": {
+            "type": "string"
+        }
+    }
+}

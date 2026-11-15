@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Restore the database of every site saved in the backup, in the state/
+# directory, once the services run. Restic already put back the "sites"
+# volume (site_config.json, public and private files).
+#
+# Sources, in order of preference:
+#   1. state/dumps/<site>/database.sql, written by module-dump-state
+#   2. state/backup_paths.env of earlier releases: DB_PATH is the frappe
+#      backup of the site "frontend", inside the sites volume
+#   3. the newest frappe backup of each site, sites/<site>/private/backups
+#
+# bench restore makes the database and its user again, as frappe does.
+# Then the scheduler gets its saved state back and bench migrates the site:
+# the image built at restore time can be a newer release.
+#
+
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import agent  # noqa: E402
+import erpnext_sites as es  # noqa: E402
+
+DUMPS = "dumps"
+SERVICES = ["backend.service", "websocket.service", "scheduler.service",
+            "queue-short.service", "queue-long.service", "frontend.service"]
+
+
+def newest_frappe_backup(site):
+    script = 'ls -1t "sites/$1/private/backups/"*-database.sql.gz 2>/dev/null | head -n 1'
+    proc = es.podman("exec", "backend", "sh", "-c", script, "sh", site, check=False)
+    path = proc.stdout.strip()
+    return f"{es.BENCH_SITES}/{path[len('sites/'):]}" if path else None
+
+
+def plan():
+    """Return a list of (site, dump, where, metadata); where is "host"
+    for a file of state/, "container" for a path of the backend container"""
+    items = []
+    if os.path.isdir(DUMPS):
+        for site in sorted(os.listdir(DUMPS)):
+            dump = os.path.join(DUMPS, site, "database.sql")
+            if not os.path.isfile(dump):
+                continue
+            meta = {}
+            try:
+                with open(os.path.join(DUMPS, site, "site.json")) as f:
+                    meta = json.load(f)
+            except (OSError, ValueError):
+                pass
+            items.append((site, dump, "host", meta))
+        # Written by module-dump-state: it lists every site, even none
+        return items
+
+    if os.path.isfile("backup_paths.env"):
+        paths = agent.read_envfile("backup_paths.env")
+        if paths.get("DB_PATH"):
+            es.log("Restoring a backup of an earlier release (backup_paths.env)")
+            return [("frontend", paths["DB_PATH"], "container", {})]
+
+    for site in es.list_sites():
+        db_name = es.site_config(site).get("db_name")
+        if db_name and es.mariadb("SELECT 1", db_name, check=False) is not None:
+            continue  # the database exists: not a site of the backup
+        dump = newest_frappe_backup(site)
+        if not dump:
+            raise es.SiteError(f"no database dump found for site {site}")
+        es.log(f"Restoring site {site} from the frappe backup {dump}")
+        items.append((site, dump, "container", {}))
+    return items
+
+
+def restore_site(site, dump, where, meta):
+    if site not in es.list_sites():
+        raise es.SiteError(f"site {site} is missing from the sites volume")
+    if where == "host":
+        # Copied as the frappe user, through stdin
+        path = f"/tmp/ns8-restore-{site}.sql"
+        with open(dump) as fdump:
+            es.podman("exec", "-i", "backend", "sh", "-c", 'umask 077; cat > "$1"', "sh", path, stdin=fdump)
+    else:
+        path = dump
+    try:
+        es.log(f"Restoring the database of site {site}")
+        es.bench(
+            "--site", site, "restore", "--force", path,
+            locked=True, root_password=True,
+        )
+    finally:
+        if where == "host":
+            es.podman("exec", "backend", "rm", "-f", path, check=False)
+
+    # bench restore leaves the scheduler disabled on a new database. Backups
+    # of earlier releases do not say: production sites run it.
+    if meta.get("scheduler_enabled", True):
+        es.bench("--site", site, "enable-scheduler", locked=True)
+    es.bench("--site", site, "migrate", locked=True)
+
+
+def main():
+    es.wait_ready()
+    items = plan()
+    if not items:
+        es.log("No site in the backup: nothing to restore")
+        return
+    for item in items:
+        restore_site(*item)
+    agent.run_helper("systemctl", "--user", "try-restart", *SERVICES).check_returncode()
+    es.log("Restored site(s): " + ", ".join(i[0] for i in items))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (es.SiteError, OSError, ValueError) as ex:
+        print(agent.SD_ERR + f"restore-sites failed: {ex}", file=sys.stderr)
+        sys.exit(1)

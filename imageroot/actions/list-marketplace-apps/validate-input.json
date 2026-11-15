@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "list-marketplace-apps input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/list-marketplace-apps",
+    "description": "List the apps of the Frappe marketplace registry for a Frappe version",
+    "examples": [
+        {
+            "frappeVersion": "version-15"
+        }
+    ],
+    "type": "object",
+    "properties": {
+        "frappeVersion": {
+            "type": "string",
+            "enum": [
+                "version-15",
+                "version-16"
+            ]
+        }
+    }
+}

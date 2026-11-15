@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import os
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+agent.set_weight(os.path.basename(__file__), 0)  # Validation step, no task progress at all
+
+request = json.load(sys.stdin)
+name = request["name"]
+
+
+def fail(field, error, value):
+    agent.set_status("validation-failed")
+    json.dump([{"field": field, "parameter": field, "value": value, "error": error}], fp=sys.stdout)
+    sys.exit(3)
+
+
+if name != es.DEFAULT_SITE and name not in es.load_sites():
+    fail("name", "site_not_found", name)
+unknown = [a for a in request["apps"] if a not in es.image_apps()]
+if unknown:
+    fail("apps", "app_not_in_image", ",".join(unknown))
+if not es.is_running("backend") or es.installed_apps(name) is None:
+    fail("name", "site_not_running", name)

@@ -41,12 +41,6 @@ else:
     config["apps"] = []
     config["frappeVersion"] = "version-15"
 
-if os.path.exists("backup_paths.env"):
-    data = agent.read_envfile("backup_paths.env")
-    config["hasBackup"] = True
-else:
-    config["hasBackup"] = False
-
 cache_file = ".app_json_cache"
 if os.path.exists(cache_file):
     try:
@@ -64,6 +58,20 @@ else:
     config["builtImage"] = ""
     config["builtAt"] = ""
 
+
+# The token itself is a secret: only say whether there is one
+config["hasGitToken"] = os.path.exists("git-token")
+
+# Sites and their installed apps (see list-sites). The certificate check
+# is left to list-sites: get-configuration must answer fast.
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites  # noqa: E402
+
+try:
+    config["sites"] = erpnext_sites.describe_sites()
+except erpnext_sites.SiteError as ex:
+    print(agent.SD_WARNING + f"cannot list the sites: {ex}", file=sys.stderr)
+    config["sites"] = []
 
 # Dump the configuration to stdout
 json.dump(config, fp=sys.stdout)

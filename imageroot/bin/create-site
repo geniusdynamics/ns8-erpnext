@@ -5,8 +5,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-wait-for-it -t 120 redis-cache:6379
-wait-for-it -t 120 redis-cache:6379
+#
+# Runs in the create-site container at every start of the module: create
+# the default site "frontend" if it is missing, install the selected apps
+# that are not installed yet and migrate the site.
+#
+
+wait-for-it -t 120 127.0.0.1:6379
+wait-for-it -t 120 127.0.0.1:6380
 export start=$(date +%s)
 until [[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty") ]] &&
 	[[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty") ]] &&
@@ -19,22 +25,43 @@ until [[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empt
 	fi
 done
 echo "sites/common_site_config.json found"
-bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --set-default
-# Convert the JSON-like string to a bash array
+
+# The restore (bin/restore-sites) and the site actions take the same lock:
+# never run bench on a site at the same time
+if command -v flock >/dev/null 2>&1; then
+	exec 9>sites/.ns8-sites.lock
+	flock 9
+fi
+
+if [[ -f sites/frontend/site_config.json ]]; then
+	# During a restore the site files are back before its database: leave
+	# the site to bin/restore-sites
+	if ! bench --site frontend list-apps >/dev/null 2>&1; then
+		echo "Site frontend has no working database yet (restore in progress?): nothing to do"
+		exit 0
+	fi
+else
+	bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --set-default || exit 1
+	NEW_SITE=1
+fi
+
+# Convert the comma separated list to a bash array
 ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES" | tr -d "[]'" | tr -d ' ')
 IFS=',' read -r -a ERP_NEXT_MODULES_ARRAY <<<"$ERPNEXT_MODULES"
-# Check if the array is empty
-if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ]; then
+# An empty list on an existing site means "Frappe only" (set-site-apps)
+if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ] && [ -n "$NEW_SITE" ]; then
 	echo "No modules specified, installing erpnext by default."
-	bench --site frontend install-app erpnext
-else
-	# Iterate over the array
-	for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
-		echo "Processing $module"
-		# Add your logic here, e.g., installing apps
-		bench --site frontend install-app "$module"
-	done
+	ERP_NEXT_MODULES_ARRAY=(erpnext)
 fi
+INSTALLED=$(bench --site frontend list-apps 2>/dev/null)
+for module in "${ERP_NEXT_MODULES_ARRAY[@]}"; do
+	if grep -qE "^${module}( |$)" <<<"$INSTALLED"; then
+		echo "$module is already installed"
+		continue
+	fi
+	echo "Installing $module"
+	bench --site frontend install-app "$module"
+done
 bench --site frontend migrate
 bench clear-cache
 bench clear-website-cache

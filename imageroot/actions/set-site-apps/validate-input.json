@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "set-site-apps input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/set-site-apps",
+    "description": "Set the apps installed on a site: install the missing ones, uninstall the others. Frappe always stays.",
+    "examples": [
+        {
+            "name": "frontend",
+            "apps": [
+                "erpnext",
+                "hrms"
+            ]
+        },
+        {
+            "name": "erp2.example.org",
+            "apps": []
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name",
+        "apps"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]+$",
+            "description": "Site name, as list-sites returns it"
+        },
+        "apps": {
+            "type": "array",
+            "uniqueItems": true,
+            "description": "Apps of the image that the site must have, in install order",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+            }
+        }
+    }
+}

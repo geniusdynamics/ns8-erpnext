@@ -72,6 +72,12 @@ def parse(data, version):
         entry = {"url": app["url"].strip(), "branch": (app.get("branch") or version).strip()}
         if app.get("app_name") or app.get("name"):
             entry["app_name"] = name
+        # Catalogue metadata for the UI: bench ignores it, the build drops it
+        if isinstance(app.get("title"), str) and app["title"].strip():
+            entry["title"] = app["title"].strip()[:100]
+        # Cloned with the stored GitHub token (configure-module gitToken)
+        if app.get("private") is True:
+            entry["private"] = True
         clean.append(entry)
         names.append(name)
 
@@ -84,3 +90,41 @@ def parse(data, version):
 
     encoded = base64.b64encode(json.dumps(clean, separators=(",", ":")).encode()).decode()
     return clean, encoded, selected
+
+
+def saved_request(saved):
+    """configure-module fields for the apps saved in erpnext-modules.env
+
+    Restore and clone call configure-module again: without these fields it
+    would build ERPNext alone and drop the other apps of the image."""
+    request = {}
+    if saved.get("APPS_JSON"):
+        request["appJson"] = saved["APPS_JSON"]
+    # Earlier releases may have saved a Python list, like "['erpnext']"
+    modules = [m.strip(" '\"[]") for m in saved.get("ERP_NEXT_MODULES", "").split(",")]
+    modules = [m for m in modules if APP_NAME.match(m)]
+    if modules:
+        request["erpSelectedModules"] = modules
+    if saved.get("FRAPPE_VERSION") in ("version-15", "version-16"):
+        request["frappeVersion"] = saved["FRAPPE_VERSION"]
+    return request
+
+
+GIT_TOKEN_FILE = "git-token"
+
+
+def save_git_token(data):
+    """gitToken: a GitHub token that can read the private app repositories,
+    kept in a 0600 state file and never returned. clearGitToken removes it."""
+    import os
+
+    if data.get("clearGitToken"):
+        if os.path.exists(GIT_TOKEN_FILE):
+            os.remove(GIT_TOKEN_FILE)
+    token = (data.get("gitToken") or "").strip()
+    if token:
+        tmp = GIT_TOKEN_FILE + ".tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(token)
+        os.replace(tmp, GIT_TOKEN_FILE)

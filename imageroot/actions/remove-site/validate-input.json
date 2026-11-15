@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "remove-site input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/remove-site",
+    "description": "Remove an added site, its database and its Traefik route. The default site cannot be removed.",
+    "examples": [
+        {
+            "name": "erp2.example.org"
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]+$",
+            "description": "Site name, as list-sites returns it"
+        }
+    }
+}

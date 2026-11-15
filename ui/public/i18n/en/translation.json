@@ -2,7 +2,10 @@
   "common": {
     "required": "Required",
     "work_in_progress": "Work in progress",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "cancel": "Cancel",
+    "please_read_carefully": "Please read carefully",
+    "type_to_confirm": "Type '{name}' to confirm"
   },
   "status": {
     "title": "Status",
@@ -44,13 +47,34 @@
     "app_name": "App Name",
     "repository_url": "Repository URL",
     "branch": "Branch",
-    "labels": "Labels"
+    "labels": "Labels",
+    "app_title": "Title",
+    "app_title_placeholder": "Optional display name",
+    "marketplace": "Frappe marketplace",
+    "marketplace_placeholder": "Pick an app, or fill the fields below",
+    "marketplace_loading": "Loading the marketplace...",
+    "marketplace_helper": "Apps of github.com/frappe/marketplace with a stable release for the selected Frappe version",
+    "marketplace_unreachable": "Cannot read the marketplace: fill the fields by hand",
+    "git_token": "GitHub token for private repositories",
+    "git_token_helper": "Optional. A token that can read the apps marked as private repositories. It is stored on the node and never shown again.",
+    "git_token_stored": "A token is stored. Type a new one to replace it.",
+    "git_token_clear": "Remove the stored token",
+    "app_private": "Private repository: clone it with the GitHub token"
   },
   "about": {
     "title": "About"
   },
   "backup": {
-    "title": "Backup & Restore"
+    "title": "Backup & Restore",
+    "managed_by_nethserver": "Backups are managed by NethServer",
+    "managed_by_nethserver_description": "Add this instance to a backup schedule in the NethServer Backup page. Every backup saves all the sites of this instance: no extra step is needed here.",
+    "what_is_saved": "What a backup saves",
+    "saved_databases": "A consistent dump of the database of every site",
+    "saved_files": "The files of every site: site configuration, public and private files",
+    "saved_settings": "The instance settings: host name, apps of the image, selected apps",
+    "how_to_restore": "Restore",
+    "how_to_restore_description": "Restore the instance from the NethServer Backup page. The restore builds the image with the saved apps, then restores the database of every site. Let's Encrypt stays off after a restore: turn it on again in the Settings once the DNS points to the node.",
+    "go_to_backup_page": "Go to the Backup page"
   },
   "task": {
     "cannot_create_task": "Cannot create task {action}"
@@ -79,7 +103,13 @@
     "list-backup-repositories": "List backup repositories",
     "list-backups": "List backups",
     "list-installed-modules": "List installed modules",
-    "build-docker-image": "Build Docker image"
+    "build-docker-image": "Build Docker image",
+    "list-sites": "List sites",
+    "add-site": "Add site",
+    "remove-site": "Remove site",
+    "set-site-apps": "Set site apps",
+    "set-site-route": "Set site route",
+    "list-marketplace-apps": "List marketplace apps"
   },
   "error": {
     "error": "Error",
@@ -92,5 +122,60 @@
     "404": "Resource not found",
     "cannot_retrieve_module_info": "Cannot retrieve module info",
     "cannot_retrieve_installed_modules": "Cannot retrieve installed modules"
+  },
+  "sites": {
+    "title": "Sites",
+    "description": "Each site has its own host name, Traefik route, certificate, database and apps. The default site answers on the host name of the Settings page. Apps must be part of the image: add them in the Settings page first.",
+    "add_site": "Add site",
+    "host": "Host name",
+    "host_helper": "The host name is also the site name. Point its DNS to this node before requesting a Let's Encrypt certificate.",
+    "admin_password": "Administrator password",
+    "admin_password_confirm": "Confirm the Administrator password",
+    "admin_password_helper": "Password of the Administrator user of the new site. It is not stored by the module.",
+    "password_too_short": "The password must have at least 8 characters",
+    "password_length": "At least 8 characters",
+    "password_lowercase": "A lowercase letter",
+    "password_uppercase": "An uppercase letter",
+    "password_number": "A number",
+    "password_symbol": "A symbol",
+    "password_equal": "The passwords match",
+    "lets_encrypt_helper": "If the certificate request fails, for example because the DNS does not point to this node yet, only this site is affected: it keeps the default certificate until the request succeeds.",
+    "apps_to_install": "Apps to install",
+    "installed_apps": "Installed apps",
+    "apps": "Apps",
+    "certificate": "Certificate",
+    "certificate_valid": "Valid",
+    "certificate_not_valid": "Not trusted",
+    "certificate_unknown": "Unknown",
+    "lets_encrypt_pending": "Let's Encrypt requested",
+    "actions": "Actions",
+    "default": "Default",
+    "missing": "Missing",
+    "frappe_only": "Frappe only",
+    "edit": "Edit",
+    "edit_site": "Edit {site}",
+    "save": "Save",
+    "remove": "Remove",
+    "remove_site": "Remove site",
+    "remove_site_description": "The site {site}, its route and its database are removed. A backup of the site is kept in the sites volume, under .archived_sites.",
+    "default_site_route_helper": "Change the host name, HTTPS and Let's Encrypt options of the default site in the Settings page.",
+    "uninstall_warning_title": "Apps will be uninstalled",
+    "uninstall_warning": "Uninstalling {apps} deletes their data from this site. A backup of the site is taken first.",
+    "task_failed": "The site task failed",
+    "task_running": "Working on the sites",
+    "running_add": "Creating the site and installing its apps: this takes a few minutes.",
+    "running_apps": "Installing and uninstalling apps: this takes a few minutes.",
+    "running_route": "Updating the route of the site.",
+    "running_remove": "Removing the site.",
+    "adding_site": "Add site {site}",
+    "setting_apps": "Set the apps of {site}",
+    "setting_route": "Set the route of {site}",
+    "removing_site": "Remove site {site}",
+    "host_not_valid": "Not a valid host name",
+    "site_already_exists": "A site with this host name already exists",
+    "domain_already_used_in_traefik": "Host name already used by another route",
+    "app_not_in_image": "This app is not part of the image",
+    "module_not_running": "Configure and start the instance first",
+    "not_answering": "Not answering"
   }
 }

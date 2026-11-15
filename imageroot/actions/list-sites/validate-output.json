@@ -1,0 +1,117 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "list-sites output",
+    "$id": "http://nethserver.org/json-schema/task/output/erpnext/list-sites",
+    "description": "Sites of the instance, with their apps",
+    "examples": [
+        {
+            "sites": [
+                {
+                    "name": "frontend",
+                    "host": "erp.example.org",
+                    "default": true,
+                    "http2https": true,
+                    "lets_encrypt": true,
+                    "exists": true,
+                    "apps": [
+                        "erpnext"
+                    ],
+                    "certificate": "valid",
+                    "online": true
+                },
+                {
+                    "name": "erp2.example.org",
+                    "host": "erp2.example.org",
+                    "default": false,
+                    "http2https": true,
+                    "lets_encrypt": false,
+                    "exists": true,
+                    "apps": [],
+                    "certificate": "not_valid",
+                    "online": true
+                }
+            ],
+            "available_apps": [
+                "erpnext",
+                "hrms"
+            ]
+        }
+    ],
+    "type": "object",
+    "required": [
+        "sites",
+        "available_apps"
+    ],
+    "properties": {
+        "sites": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/site"
+            }
+        },
+        "available_apps": {
+            "type": "array",
+            "description": "Apps built into the image, that a site can install",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "definitions": {
+        "site": {
+            "type": "object",
+            "required": [
+                "name",
+                "host",
+                "default",
+                "http2https",
+                "lets_encrypt",
+                "exists",
+                "apps"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Site name: frontend for the default site, the host name for the others"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "boolean",
+                    "description": "The default site answers on the module host and on any name no other site claims"
+                },
+                "http2https": {
+                    "type": "boolean"
+                },
+                "lets_encrypt": {
+                    "type": "boolean"
+                },
+                "exists": {
+                    "type": "boolean",
+                    "description": "The site directory exists in the sites volume"
+                },
+                "apps": {
+                    "type": "array",
+                    "description": "Installed apps, Frappe excluded",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "certificate": {
+                    "type": "string",
+                    "enum": [
+                        "valid",
+                        "not_valid",
+                        "unknown"
+                    ],
+                    "description": "valid: Traefik presents a certificate of a public CA for the host"
+                },
+                "online": {
+                    "type": "boolean",
+                    "description": "The site answers /api/method/ping through the frontend"
+                }
+            }
+        }
+    }
+}
