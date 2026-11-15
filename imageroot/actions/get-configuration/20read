@@ -59,6 +59,9 @@ else:
     config["builtAt"] = ""
 
 
+# The token itself is a secret: only say whether there is one
+config["hasGitToken"] = os.path.exists("git-token")
+
 # Sites and their installed apps (see list-sites). The certificate check
 # is left to list-sites: get-configuration must answer fast.
 sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))

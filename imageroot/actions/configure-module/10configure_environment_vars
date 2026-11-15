@@ -17,7 +17,7 @@ import sys
 import agent
 
 sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
-from erpnext_apps import AppsError, parse  # noqa: E402
+from erpnext_apps import AppsError, parse, save_git_token  # noqa: E402
 
 data = json.load(sys.stdin)
 FRAPPE_VERSION = data.get("frappeVersion", "version-15")
@@ -31,3 +31,4 @@ except AppsError as ex:
 
 envfile = {"ERP_NEXT_MODULES": ",".join(modules), "APPS_JSON": apps_b64, "FRAPPE_VERSION": FRAPPE_VERSION}
 agent.write_envfile("erpnext-modules.env", envfile)
+save_git_token(data)

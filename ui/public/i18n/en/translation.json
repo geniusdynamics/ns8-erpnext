@@ -47,7 +47,19 @@
     "app_name": "App Name",
     "repository_url": "Repository URL",
     "branch": "Branch",
-    "labels": "Labels"
+    "labels": "Labels",
+    "app_title": "Title",
+    "app_title_placeholder": "Optional display name",
+    "marketplace": "Frappe marketplace",
+    "marketplace_placeholder": "Pick an app, or fill the fields below",
+    "marketplace_loading": "Loading the marketplace...",
+    "marketplace_helper": "Apps of github.com/frappe/marketplace with a stable release for the selected Frappe version",
+    "marketplace_unreachable": "Cannot read the marketplace: fill the fields by hand",
+    "git_token": "GitHub token for private repositories",
+    "git_token_helper": "Optional. A token that can read the apps marked as private repositories. It is stored on the node and never shown again.",
+    "git_token_stored": "A token is stored. Type a new one to replace it.",
+    "git_token_clear": "Remove the stored token",
+    "app_private": "Private repository: clone it with the GitHub token"
   },
   "about": {
     "title": "About"
@@ -96,7 +108,8 @@
     "add-site": "Add site",
     "remove-site": "Remove site",
     "set-site-apps": "Set site apps",
-    "set-site-route": "Set site route"
+    "set-site-route": "Set site route",
+    "list-marketplace-apps": "List marketplace apps"
   },
   "error": {
     "error": "Error",
@@ -162,6 +175,7 @@
     "site_already_exists": "A site with this host name already exists",
     "domain_already_used_in_traefik": "Host name already used by another route",
     "app_not_in_image": "This app is not part of the image",
-    "module_not_running": "Configure and start the instance first"
+    "module_not_running": "Configure and start the instance first",
+    "not_answering": "Not answering"
   }
 }
