@@ -173,7 +173,6 @@ print_info "Building custom ERPNext image with Podman..."
 # layer, and public repositories are cloned without it. Without a token the
 # secret is "-".
 GIT_TOKEN_SECRET=$(mktemp -p . .git-token-build.XXXXXX)
-trap 'rm -f "$GIT_TOKEN_SECRET"' EXIT
 if [ -s git-token ] && [ -n "${PRIVATE_REPOS// /}" ]; then
   cat git-token >"$GIT_TOKEN_SECRET"
   print_info "Using the stored GitHub token for: $PRIVATE_REPOS"
@@ -182,6 +181,12 @@ else
 fi
 
 # Build the image with Podman
+# The build output goes to the task log; on a failure, repeat its errors at
+# the end, where the log is read, with the failing step
+BUILD_LOG=$(mktemp -p . .build-log.XXXXXX)
+trap 'rm -f "$GIT_TOKEN_SECRET" "$BUILD_LOG"' EXIT
+set +e
+set -o pipefail
 podman build --network=host \
   $NO_CACHE \
   --jobs=4 \
@@ -195,7 +200,19 @@ podman build --network=host \
   --build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
   -t "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
   -f ../actions/configure-module/Dockerfile \
-  .
+  . 2>&1 | tee "$BUILD_LOG"
+BUILD_STATUS=$?
+set -e
+if [ "$BUILD_STATUS" -ne 0 ]; then
+  print_error "The image build failed (exit code $BUILD_STATUS). Frappe ${FRAPPE_BRANCH}, apps:"
+  echo "$BUILD_APPS_JSON" | base64 -d | jq -r '.[] | "  \(.app_name // (.url | split("/") | last)) \(.url) \(.branch)"'
+  print_error "Errors reported by the build:"
+  grep -E "Error|ERROR|error:|fatal:|Traceback|Exception|not found|Could not|Aborted|exit status|returned a non-zero" "$BUILD_LOG" |
+    grep -v "^ *$" | tail -n 40 | sed 's/^/  /'
+  print_error "Last lines of the build:"
+  tail -n 25 "$BUILD_LOG" | sed 's/^/  /'
+  exit 1
+fi
 
 if [ $? -eq 0 ]; then
   print_info "Build completed successfully!"

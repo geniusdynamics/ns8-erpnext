@@ -234,6 +234,17 @@ from the **Sites** page.
 The `apps` JSON stays accepted by `configure-module` as before; `title` and
 `private` are optional fields of its entries.
 
+### Checks before the build
+
+`configure-module` and `build-docker-image` check the app list before anything
+changes (`05validate_apps`): each repository must answer (smart HTTP, as
+`git ls-remote`), each branch must exist, a `version-N` branch must match the
+Frappe version, and the `frappe` range of the app's `pyproject.toml` must admit
+it. A refused list fails with a validation error that names the app; the
+running instance and its settings stay as they are. If the build still fails,
+the end of the task log repeats the errors of the build, the app list and its
+last lines.
+
 ## 🌐 Multiple sites
 
 The instance can serve several Frappe sites. Each site has its own host name,
