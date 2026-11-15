@@ -44,7 +44,7 @@ erpnext_config = {
     "DB_HOST": "127.0.0.1",
     "DB_PORT": "3306",
     "REDIS_CACHE": "127.0.0.1:6379",
-    "REDIS_QUEUE": "127.0.0.1:6379",
+    "REDIS_QUEUE": "127.0.0.1:6380",
     "SOCKETIO_PORT": "9000"
 }
 agent.write_envfile("configurator.env", erpnext_config)
