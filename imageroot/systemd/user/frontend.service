@@ -11,13 +11,16 @@ EnvironmentFile=%S/state/environment
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/frontend.pid %t/frontend.ctr-id
+# Host header -> site map, from sites.json (see bin/erpnext_sites.py)
+ExecStartPre=runagent write-nginx-sites
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/frontend.pid \
     --cidfile %t/frontend.ctr-id --cgroups=no-conmon \
      --pod-id-file %t/erp-next.pod-id --replace -d --name frontend \
     -v sites:/home/frappe/frappe-bench/sites \
     -v logs:/home/frappe/frappe-bench/logs \
+    -v %S/state/nginx-sites.conf:/etc/nginx/conf.d/00-ns8-sites.conf:Z \
     -e BACKEND=backend:8000 \
-    -e FRAPPE_SITE_NAME_HEADER=frontend \
+    -e FRAPPE_SITE_NAME_HEADER=$$erp_site \
     -e SOCKETIO=websocket:9000 \
     -e UPSTREAM_REAL_IP_ADDRESS=127.0.0.1 \
     -e UPSTREAM_REAL_IP_HEADER=X-Forwarded-For \

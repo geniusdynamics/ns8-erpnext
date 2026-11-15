@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "set-site-route input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/set-site-route",
+    "description": "Change the HTTPS redirection and the Let's Encrypt certificate of an added site. The default site uses configure-module.",
+    "examples": [
+        {
+            "name": "erp2.example.org",
+            "http2https": true,
+            "lets_encrypt": true
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name",
+        "http2https",
+        "lets_encrypt"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]+$",
+            "description": "Site name, as list-sites returns it"
+        },
+        "http2https": {
+            "type": "boolean",
+            "description": "Redirect HTTP to HTTPS"
+        },
+        "lets_encrypt": {
+            "type": "boolean",
+            "description": "Request a Let's Encrypt certificate"
+        }
+    }
+}

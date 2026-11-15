@@ -1,5 +1,6 @@
 *** Settings ***
 Library    SSHLibrary
+Library    Collections
 
 *** Variables ***
 ${HOST}       erpnext.example.org
@@ -8,6 +9,9 @@ ${HOST}       erpnext.example.org
 ${APPS}       [{"url":"https://github.com/frappe/erpnext","branch":"version-15","app_name":"erpnext"}]
 # A record of the site that the backup must keep
 ${TODO}       ns8-backup-check
+# A second site, with its own host name and route
+${SITE2}      erp2.example.org
+${SITE2_PW}   Nethesis,1234
 
 *** Keywords ***
 ERPNext site has the app
@@ -36,6 +40,28 @@ Site has the test ToDo
     ${counts} =    Evaluate    [l.strip() for l in $output.splitlines() if l.strip().isdigit()]
     Should Not Be Empty    ${counts}
     Should Be Equal As Strings    ${counts}[-1]    1
+
+Site has the app
+    [Arguments]    ${site}    ${app}
+    ${output} =    Run bench    ${module_id}    --site ${site} list-apps
+    Should Contain    ${output}    ${app}
+
+Administrator logs in on
+    [Arguments]    ${host}    ${password}
+    ${rc} =    Execute Command    curl -k -s -f -o /dev/null --resolve ${host}:443:127.0.0.1 -X POST -d usr=Administrator -d pwd=${password} https://${host}/api/method/login
+    ...    return_rc=True  return_stdout=False
+    RETURN    ${rc}
+
+Second site answers on its host
+    ${rc} =    Administrator logs in on    ${SITE2}    ${SITE2_PW}
+    Should Be Equal As Integers    ${rc}  0
+
+Sites of the instance
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/list-sites --data '{}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${sites} =    Evaluate    {s["name"]: s for s in json.loads($output)["sites"]}    modules=json
+    RETURN    ${sites}
 
 *** Test Cases ***
 Check if erpnext is installed correctly
@@ -78,6 +104,35 @@ Check if a record can be added to the site
     Should Contain    ${output}    ${TODO}
     Site has the test ToDo    ${module_id}
 
+Check if a second site can be added
+    # Creates the site and installs ERPNext on it: a few minutes
+    ${rc} =    Execute Command    api-cli run module/${module_id}/add-site --data '{"host":"${SITE2}","http2https":true,"lets_encrypt":false,"admin_password":"${SITE2_PW}","apps":["erpnext"]}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${sites} =    Sites of the instance
+    Should Be True    ${sites}[frontend][default]
+    Should Contain    ${sites}[frontend][apps]    erpnext
+    Should Be Equal    ${sites}[${SITE2}][host]    ${SITE2}
+    Should Contain    ${sites}[${SITE2}][apps]    erpnext
+    Should Not Be True    ${sites}[${SITE2}][lets_encrypt]
+
+Check if a site name already in use is refused
+    ${rc} =    Execute Command    api-cli run module/${module_id}/add-site --data '{"host":"${SITE2}","admin_password":"${SITE2_PW}"}'
+    ...    return_rc=True  return_stdout=False
+    Should Not Be Equal As Integers    ${rc}  0
+    ${rc} =    Execute Command    api-cli run module/${module_id}/remove-site --data '{"name":"frontend"}'
+    ...    return_rc=True  return_stdout=False
+    Should Not Be Equal As Integers    ${rc}  0
+
+Check if each host reaches its own site
+    Wait Until Keyword Succeeds    5 minutes    10 seconds    Second site answers on its host
+    # The password of the second site does not open the default site
+    ${rc} =    Administrator logs in on    ${HOST}    ${SITE2_PW}
+    Should Not Be Equal As Integers    ${rc}  0
+    ${rc} =    Administrator logs in on    ${HOST}    admin
+    Should Be Equal As Integers    ${rc}  0
+    ERPNext answers through Traefik
+
 Check if module-dump-state dumps every site
     ${rc} =    Execute Command    runagent -m ${module_id} module-dump-state
     ...    return_rc=True  return_stdout=False
@@ -92,6 +147,9 @@ Check if module-dump-state dumps every site
     Should Be Equal    ${meta}[site]    frontend
     ${apps} =    Evaluate    [a["name"] for a in $meta["apps"]]
     Should Contain    ${apps}    erpnext
+    ${rc} =    Execute Command    runagent -m ${module_id} test -s dumps/${SITE2}/database.sql
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
 
 Check if module-cleanup-state removes the dumps
     ${rc} =    Execute Command    runagent -m ${module_id} module-cleanup-state
@@ -151,6 +209,12 @@ Check if the restored site has the data of the backup
     Should Be Equal    ${config}[erpSelectedModules]    ${{["erpnext"]}}
     Wait Until Keyword Succeeds    10 minutes    10 seconds    ERPNext answers through Traefik
 
+Check if the restored second site has its route and data
+    ${sites} =    Sites of the instance
+    Should Contain    ${sites}[${SITE2}][apps]    erpnext
+    Should Not Be True    ${sites}[${SITE2}][lets_encrypt]
+    Wait Until Keyword Succeeds    5 minutes    10 seconds    Second site answers on its host
+
 Check if the test backup is removed
     ${rc} =    Execute Command    api-cli run cluster/remove-backup --data '{"id":${backup_id}}'
     ...    return_rc=True  return_stdout=False
@@ -158,6 +222,27 @@ Check if the test backup is removed
     ${rc} =    Execute Command    api-cli run cluster/remove-backup-repository --data '{"id":"${repository}"}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
+
+Check if an app can be uninstalled from a site
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/set-site-apps --data '{"name":"${SITE2}","apps":[]}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${output} =    Run bench    ${module_id}    --site ${SITE2} list-apps
+    Should Not Contain    ${output}    erpnext
+    # The default site keeps its apps
+    Site has the app    frontend    erpnext
+    Second site answers on its host
+
+Check if a site can be removed
+    ${rc} =    Execute Command    api-cli run module/${module_id}/remove-site --data '{"name":"${SITE2}"}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${sites} =    Sites of the instance
+    Dictionary Should Not Contain Key    ${sites}    ${SITE2}
+    ${rc} =    Execute Command    runagent -m ${module_id} podman exec backend test -e sites/${SITE2}
+    ...    return_rc=True  return_stdout=False
+    Should Not Be Equal As Integers    ${rc}  0
+    Wait Until Keyword Succeeds    2 minutes    10 seconds    ERPNext answers through Traefik
 
 Check if erpnext is removed correctly
     ${rc} =    Execute Command    remove-module --no-preserve ${module_id}

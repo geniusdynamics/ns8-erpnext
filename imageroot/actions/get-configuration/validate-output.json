@@ -68,6 +68,13 @@
             "items": {
                 "type": "object"
             }
+        },
+        "sites": {
+            "type": "array",
+            "description": "Sites with their route options and installed apps, as list-sites returns them, without the certificate state",
+            "items": {
+                "type": "object"
+            }
         }
     }
 }

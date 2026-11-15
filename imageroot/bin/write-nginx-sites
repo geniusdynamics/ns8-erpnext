@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Write nginx-sites.conf (Host header -> site) from sites.json. Runs in the
+# state/ directory before the frontend container starts.
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import erpnext_sites as es  # noqa: E402
+
+es.write_nginx_map()

@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Unpublish the site, then drop it. bench drop-site takes a backup and
+# moves the site directory to sites/.archived_sites, inside the sites
+# volume: remove it from there once the backup is not needed.
+#
+
+import json
+import os
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+name = json.load(sys.stdin)["name"]
+
+try:
+    es.delete_site_route(name)
+    sites = es.load_sites()
+    sites.pop(name, None)
+    es.save_sites(sites)
+    es.write_nginx_map(sites)
+    es.restart_frontend()
+    agent.set_progress(30)
+    if name in es.list_sites():
+        es.bench(
+            "drop-site", name, "--archived-sites-path", es.BENCH_SITES + "/.archived_sites",
+            locked=True, root_password=True,
+        )
+except es.SiteError as ex:
+    print(agent.SD_ERR + f"remove-site {name} failed: {ex}", file=sys.stderr)
+    sys.exit(1)

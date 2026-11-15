@@ -59,5 +59,16 @@ else:
     config["builtAt"] = ""
 
 
+# Sites and their installed apps (see list-sites). The certificate check
+# is left to list-sites: get-configuration must answer fast.
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites  # noqa: E402
+
+try:
+    config["sites"] = erpnext_sites.describe_sites()
+except erpnext_sites.SiteError as ex:
+    print(agent.SD_WARNING + f"cannot list the sites: {ex}", file=sys.stderr)
+    config["sites"] = []
+
 # Dump the configuration to stdout
 json.dump(config, fp=sys.stdout)
