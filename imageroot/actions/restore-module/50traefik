@@ -5,17 +5,32 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-import sys
+#
+# Configure the module again with the restored settings: build the image
+# with the saved apps, set the route and start the services. Let's Encrypt
+# stays off: the DNS may not point to this node yet.
+#
+
 import json
-import agent
 import os
+import sys
+
+import agent
+import agent.tasks
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+from erpnext_apps import saved_request  # noqa: E402
 
 request = json.load(sys.stdin)
 renv = request['environment']
 
-configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data={
-    "lets_encrypt": renv["TRAEFIK_LETS_ENCRYPT"] == "True",
+saved = agent.read_envfile("erpnext-modules.env") if os.path.exists("erpnext-modules.env") else {}
+data = {
     "host": renv["TRAEFIK_HOST"],
-    "http2https": renv["TRAEFIK_HTTP2HTTPS"] == "True",
-})
+    "http2https": str(renv.get("TRAEFIK_HTTP2HTTPS", "True")).lower() == "true",
+    "lets_encrypt": False,
+}
+data.update(saved_request(saved))
+
+configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data=data)
 agent.assert_exp(configure_retval['exit_code'] == 0, "The configure-module subtask failed!")

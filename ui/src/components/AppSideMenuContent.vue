@@ -39,7 +39,7 @@
         @click="goToAppPage(instanceName, 'backuprestore')"
         :class="{ 'current-page': isLinkActive('backuprestore') }"
       >
-        <template v-slot:nav-icon><Information20 /></template>
+        <template v-slot:nav-icon><DataBackup20 /></template>
         <span>{{ $t("backup.title") }}</span>
       </cv-side-nav-link>
       <cv-side-nav-link
@@ -57,6 +57,7 @@
 import Settings20 from "@carbon/icons-vue/es/settings/20";
 import Information20 from "@carbon/icons-vue/es/information/20";
 import Activity20 from "@carbon/icons-vue/es/activity/20";
+import DataBackup20 from "@carbon/icons-vue/es/data-backup/20";
 import { mapState } from "vuex";
 import { QueryParamService, UtilService } from "@nethserver/ns8-ui-lib";
 
@@ -66,6 +67,7 @@ export default {
     Settings20,
     Information20,
     Activity20,
+    DataBackup20,
   },
   mixins: [QueryParamService, UtilService],
   data() {

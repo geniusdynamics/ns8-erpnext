@@ -84,3 +84,21 @@ def parse(data, version):
 
     encoded = base64.b64encode(json.dumps(clean, separators=(",", ":")).encode()).decode()
     return clean, encoded, selected
+
+
+def saved_request(saved):
+    """configure-module fields for the apps saved in erpnext-modules.env
+
+    Restore and clone call configure-module again: without these fields it
+    would build ERPNext alone and drop the other apps of the image."""
+    request = {}
+    if saved.get("APPS_JSON"):
+        request["appJson"] = saved["APPS_JSON"]
+    # Earlier releases may have saved a Python list, like "['erpnext']"
+    modules = [m.strip(" '\"[]") for m in saved.get("ERP_NEXT_MODULES", "").split(",")]
+    modules = [m for m in modules if APP_NAME.match(m)]
+    if modules:
+        request["erpSelectedModules"] = modules
+    if saved.get("FRAPPE_VERSION") in ("version-15", "version-16"):
+        request["frappeVersion"] = saved["FRAPPE_VERSION"]
+    return request

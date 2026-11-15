@@ -1,8 +1,14 @@
 #!/bin/bash
 
 #
-# Copyright (C) 2022 Nethesis S.r.l.
+# Copyright (C) 2026 Genius Dynamics
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+# Run by the NS8 backup after Restic, in the state/ directory: remove the
+# database dumps written by module-dump-state (and the file of earlier
+# releases).
+
+exec 1>&2
+rm -rf dumps dumps.tmp
 rm -vf backup_paths.env

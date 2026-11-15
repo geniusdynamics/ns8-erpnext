@@ -47,11 +47,6 @@
             "title": "Frappe version",
             "description": "Frappe version branch to use (e.g., version-15 or version-16)"
         },
-        "hasBackup": {
-            "type": "boolean",
-            "title": "Has backup",
-            "description": "Whether a backup exists for this instance"
-        },
         "builtVersion": {
             "type": "string",
             "title": "Built ERPNext version",
