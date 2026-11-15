@@ -111,9 +111,9 @@
                           <cv-structured-list-heading
                             >Branch</cv-structured-list-heading
                           >
-                          <cv-structured-list-heading
-                            >Labels</cv-structured-list-heading
-                          >
+                          <cv-structured-list-heading>{{
+                            $t("settings.app_title")
+                          }}</cv-structured-list-heading>
                           <cv-structured-list-heading
                             >Actions</cv-structured-list-heading
                           >
@@ -133,7 +133,7 @@
                               app.branch || "main/master"
                             }}</cv-structured-list-data>
                             <cv-structured-list-data>{{
-                              app.labels || "-"
+                              app.title || "-"
                             }}</cv-structured-list-data>
                             <cv-structured-list-data>
                               <cv-button
@@ -167,10 +167,7 @@
                       </cv-button>
                       <button
                         type="button"
-                        class="
-                          bx--btn bx--btn--tertiary bx--btn--sm
-                          copy-json-btn
-                        "
+                        class="bx--btn bx--btn--tertiary bx--btn--sm copy-json-btn"
                         @click.prevent="copyJsonToClipboard"
                       >
                         Copy JSON
@@ -190,6 +187,27 @@
             >
             </cv-multi-select>
 
+            <NsTextInput
+              type="password"
+              v-model.trim="gitToken"
+              :label="$t('settings.git_token')"
+              :helper-text="
+                hasGitToken
+                  ? $t('settings.git_token_stored')
+                  : $t('settings.git_token_helper')
+              "
+              :disabled="loading.getConfiguration || loading.configureModule"
+              autocomplete="new-password"
+              class="mg-bottom"
+            />
+            <NsCheckbox
+              v-if="hasGitToken"
+              :label="$t('settings.git_token_clear')"
+              v-model="clearGitToken"
+              value="clearGitToken"
+              :disabled="loading.getConfiguration || loading.configureModule"
+            />
+
             <cv-modal
               v-model="isAddAppModalOpen"
               :visible="isAddAppModalOpen"
@@ -203,6 +221,24 @@
               }}</template>
               <template slot="content">
                 <cv-form @submit.prevent="addApp">
+                  <NsComboBox
+                    v-if="editingAppIndex === null"
+                    :title="$t('settings.marketplace')"
+                    :label="
+                      loading.marketplace
+                        ? $t('settings.marketplace_loading')
+                        : $t('settings.marketplace_placeholder')
+                    "
+                    :options="marketplaceOptions"
+                    :disabled="loading.marketplace"
+                    :helper-text="
+                      error.marketplace || $t('settings.marketplace_helper')
+                    "
+                    :showItemDescription="true"
+                    :maxDisplayOptions="200"
+                    @change="pickMarketplaceApp"
+                    class="mg-bottom"
+                  />
                   <cv-text-input
                     :label="$t('settings.app_name')"
                     v-model.trim="newApp.app_name"
@@ -226,11 +262,16 @@
                   >
                   </cv-text-input>
                   <cv-text-input
-                    :label="$t('settings.labels')"
-                    v-model.trim="newApp.labels"
-                    placeholder="label1,label2"
+                    :label="$t('settings.app_title')"
+                    v-model.trim="newApp.title"
+                    :placeholder="$t('settings.app_title_placeholder')"
                   >
                   </cv-text-input>
+                  <NsCheckbox
+                    :label="$t('settings.app_private')"
+                    v-model="newApp.private"
+                    value="private"
+                  />
                 </cv-form>
               </template>
               <template slot="primary-button">{{
@@ -405,6 +446,10 @@ export default {
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
       isForceRebuild: false,
+      gitToken: "",
+      hasGitToken: false,
+      clearGitToken: false,
+      marketplaceApps: [],
 
       erpSelectedModules: [],
       podmanImages: [],
@@ -429,6 +474,7 @@ export default {
         configureModule: false,
         buildDockerImage: false,
         getPodmanImages: false,
+        marketplace: false,
       },
       error: {
         getConfiguration: "",
@@ -437,10 +483,19 @@ export default {
         lets_encrypt: "",
         http2https: "",
         getPodmanImages: "",
+        marketplace: "",
       },
     };
   },
   computed: {
+    marketplaceOptions() {
+      return this.marketplaceApps.map((app) => ({
+        name: app.app_name,
+        value: app.app_name,
+        label: `${app.title} (${app.app_name}, ${app.branch})`,
+        description: app.description,
+      }));
+    },
     ...mapState(["instanceName", "core", "appName"]),
     parsedApps() {
       if (!this.app_json) {
@@ -567,13 +622,62 @@ export default {
         app_name: "",
         url: "",
         branch: "",
-        labels: "",
+        title: "",
+        private: false,
       };
       this.newAppErrors = {
         app_name: "",
         url: "",
       };
       this.isAddAppModalOpen = true;
+      this.listMarketplaceApps();
+    },
+    async listMarketplaceApps() {
+      this.loading.marketplace = true;
+      this.error.marketplace = "";
+      const eventId = this.getUuid();
+      this.core.$root.$once(
+        `list-marketplace-apps-completed-${eventId}`,
+        (taskContext, taskResult) => {
+          this.marketplaceApps = taskResult.output.apps;
+          if (taskResult.output.error) {
+            this.error.marketplace = this.$t(
+              "settings.marketplace_unreachable"
+            );
+          }
+          this.loading.marketplace = false;
+        }
+      );
+      this.core.$root.$once(`list-marketplace-apps-aborted-${eventId}`, () => {
+        this.error.marketplace = this.$t("settings.marketplace_unreachable");
+        this.loading.marketplace = false;
+      });
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: "list-marketplace-apps",
+          data: { frappeVersion: this.frappeVersion },
+          extra: {
+            title: this.$t("action.list-marketplace-apps"),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
+      );
+      if (res[0]) {
+        this.error.marketplace = this.getErrorMessage(res[0]);
+        this.loading.marketplace = false;
+      }
+    },
+    pickMarketplaceApp(name) {
+      const app = this.marketplaceApps.find((a) => a.app_name === name);
+      if (!app) return;
+      this.newApp = {
+        app_name: app.app_name,
+        url: app.url,
+        branch: app.branch,
+        title: app.title,
+        private: false,
+      };
     },
     editApp(index) {
       this.editingAppIndex = index;
@@ -582,7 +686,8 @@ export default {
         app_name: app.app_name || app.name || "",
         url: app.url || "",
         branch: app.branch || "",
-        labels: app.labels || "",
+        title: app.title || "",
+        private: app.private === true,
       };
       this.newAppErrors = {
         app_name: "",
@@ -624,9 +729,14 @@ export default {
         const appData = {
           app_name: this.newApp.app_name,
           url: this.newApp.url,
-          branch: this.newApp.branch || "main",
-          labels: this.newApp.labels || "",
+          branch: this.newApp.branch || this.frappeVersion,
         };
+        if (this.newApp.title) {
+          appData.title = this.newApp.title;
+        }
+        if (this.newApp.private) {
+          appData.private = true;
+        }
 
         if (this.editingAppIndex !== null) {
           // Update existing app
@@ -730,6 +840,9 @@ export default {
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
       this.frappeVersion = config.frappeVersion || "version-15";
+      this.hasGitToken = !!config.hasGitToken;
+      this.gitToken = "";
+      this.clearGitToken = false;
       this.app_json = atob(config.appJson);
 
       this.$nextTick(() => {
@@ -808,6 +921,8 @@ export default {
             appJson: btoa(this.app_json),
             frappeVersion: this.frappeVersion,
             forceRebuild: this.isForceRebuild,
+            ...(this.gitToken ? { gitToken: this.gitToken } : {}),
+            ...(this.clearGitToken ? { clearGitToken: true } : {}),
           },
           extra: {
             title: this.$t("settings.instance_configuration", {

@@ -65,7 +65,13 @@ fetch_erpnext_tag() {
 
 # Cache file for app_json hash
 CACHE_FILE=".app_json_cache"
-CURRENT_APPS_JSON="$APPS_JSON"
+# bench reads url, branch and app_name: drop the catalogue metadata (title),
+# so a new title does not rebuild the image
+BUILD_APPS_JSON=$(echo "$APPS_JSON" | base64 -d |
+  jq -c 'map({url, branch} + (if .app_name then {app_name} else {} end))' | base64 -w0)
+CURRENT_APPS_JSON="$BUILD_APPS_JSON"
+# Repositories cloned with the stored GitHub token
+PRIVATE_REPOS=$(echo "$APPS_JSON" | base64 -d | jq -r '.[] | select(.private == true) | .url' | tr '\n' ' ')
 
 # Function to compute hash of the apps JSON
 compute_apps_hash() {
@@ -138,11 +144,26 @@ FRAPPE_BRANCH="${FRAPPE_VERSION}"
 print_info "Using Frappe branch: $FRAPPE_BRANCH"
 print_info "Building custom ERPNext image with Podman..."
 
+# A GitHub token for the private app repositories (configure-module gitToken,
+# apps marked "private") reaches the build as a secret: it is in no image
+# layer, and public repositories are cloned without it. Without a token the
+# secret is "-".
+GIT_TOKEN_SECRET=$(mktemp -p . .git-token-build.XXXXXX)
+trap 'rm -f "$GIT_TOKEN_SECRET"' EXIT
+if [ -s git-token ] && [ -n "${PRIVATE_REPOS// /}" ]; then
+  cat git-token >"$GIT_TOKEN_SECRET"
+  print_info "Using the stored GitHub token for: $PRIVATE_REPOS"
+else
+  echo "-" >"$GIT_TOKEN_SECRET"
+fi
+
 # Build the image with Podman
 podman build --network=host \
   $NO_CACHE \
   --jobs=4 \
-  --build-arg APPS_JSON_BASE64="$APPS_JSON" \
+  --secret id=git_token,src="$GIT_TOKEN_SECRET" \
+  --build-arg APPS_JSON_BASE64="$BUILD_APPS_JSON" \
+  --build-arg PRIVATE_REPOS="$PRIVATE_REPOS" \
   --build-arg FRAPPE_BRANCH="$FRAPPE_BRANCH" \
   -t "$CUSTOM_IMAGE_NAME:$CUSTOM_IMAGE_TAG" \
   -f ../actions/configure-module/Dockerfile \

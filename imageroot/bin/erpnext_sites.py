@@ -298,6 +298,25 @@ def certificate_state(host, timeout=3):
         return "unknown"
 
 
+def site_answers(host, timeout=5):
+    """Health check, as pilot does: /api/method/ping of the site, through
+    the frontend nginx of the pod with the Host header of the site"""
+    import http.client
+
+    port = os.environ.get("TCP_PORT")
+    if not port:
+        return False
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", int(port), timeout=timeout)
+        conn.request("GET", "/api/method/ping", headers={"Host": host})
+        resp = conn.getresponse()
+        body = resp.read(1024)
+        conn.close()
+        return resp.status == 200 and b"pong" in body
+    except (OSError, http.client.HTTPException, ValueError):
+        return False
+
+
 def describe_sites(check_certificates=False):
     """Every site with its route options and installed apps (no secrets)"""
     running = is_running("backend") and is_running("mariadb-app")
@@ -323,4 +342,5 @@ def describe_sites(check_certificates=False):
         row["apps"] = [a for a in (apps or []) if a != "frappe"]
         if check_certificates and row["host"]:
             row["certificate"] = certificate_state(row["host"])
+            row["online"] = row["exists"] and site_answers(row["host"])
     return rows

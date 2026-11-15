@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Reader-safe: the apps of the Frappe marketplace registry
+# (github.com/frappe/marketplace, the registry pilot reads) that have a
+# stable release for the selected Frappe version, as entries of the
+# "apps" list of configure-module. The registry is untrusted data: every
+# field is checked before it is returned.
+#
+
+import concurrent.futures
+import json
+import re
+import sys
+import urllib.request
+
+BASE = "https://raw.githubusercontent.com/frappe/marketplace/main/"
+NAME = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+REPO = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+BRANCH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$")
+VERSION = re.compile(r"(\d+)\.(\d+)\.(\d+)")
+MAX_BYTES = 2 * 1024 * 1024
+
+
+def fetch(path):
+    req = urllib.request.Request(BASE + path, headers={"User-Agent": "ns8-erpnext"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read(MAX_BYTES + 1)[:MAX_BYTES])
+
+
+def version(text):
+    m = VERSION.search(text or "")
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def supports(frappe_core, major):
+    """True if the range, like ">=15.0.0,<16.0.0", admits major.x"""
+    low, high = (0, 0, 0), (10**6, 0, 0)
+    for part in (frappe_core or "").split(","):
+        part = part.strip()
+        v = version(part)
+        if v is None:
+            return False
+        if part.startswith(">="):
+            low = max(low, v)
+        elif part.startswith("<"):
+            high = min(high, v)
+        elif part.startswith(">"):
+            low = max(low, v)
+        else:
+            return False
+    return low < (major + 1, 0, 0) and high > (major, 0, 0) and low < high
+
+
+def text(value, size):
+    return value.strip()[:size] if isinstance(value, str) else ""
+
+
+def release_for(entry, major):
+    try:
+        releases = fetch(f"apps/{entry['name']}.json").get("releases", [])
+    except (OSError, ValueError, AttributeError):
+        return None
+    best = None
+    for rel in releases if isinstance(releases, list) else []:
+        if not isinstance(rel, dict) or rel.get("channel", "stable") != "stable":
+            continue
+        branch = rel.get("branch")
+        if not isinstance(branch, str) or not BRANCH.match(branch) or ".." in branch:
+            continue
+        if not supports(rel.get("frappe_core"), major):
+            continue
+        key = version(rel.get("version")) or (0, 0, 0)
+        if best is None or key > best[0]:
+            best = (key, rel)
+    return best[1] if best else None
+
+
+def main():
+    request = json.load(sys.stdin)
+    frappe_version = request.get("frappeVersion", "version-15")
+    major = int(frappe_version.rsplit("-", 1)[-1])
+    try:
+        index = fetch("apps.json")
+    except (OSError, ValueError) as ex:
+        print(f"Cannot read the marketplace registry: {ex}", file=sys.stderr)
+        json.dump({"apps": [], "error": "marketplace_unreachable"}, fp=sys.stdout)
+        return
+    entries = [e for e in index if isinstance(e, dict) and NAME.match(str(e.get("name", "")))
+               and REPO.match(str(e.get("repo", "")))] if isinstance(index, list) else []
+
+    apps = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
+        for entry, rel in zip(entries, pool.map(lambda e: release_for(e, major), entries)):
+            if rel is None:
+                continue
+            apps.append({
+                "app_name": entry["name"],
+                "url": entry["repo"],
+                "branch": rel["branch"],
+                "version": text(rel.get("version"), 40),
+                "title": text(entry.get("title"), 100) or entry["name"],
+                "description": text(entry.get("description"), 300),
+                "category": text(entry.get("category"), 50),
+                "dependencies": sorted(d for d in (rel.get("dependencies") or {}) if NAME.match(str(d))),
+            })
+    apps.sort(key=lambda a: a["title"].lower())
+    json.dump({"apps": apps}, fp=sys.stdout)
+
+
+if __name__ == "__main__":
+    main()
