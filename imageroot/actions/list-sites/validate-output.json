@@ -16,7 +16,8 @@
                     "apps": [
                         "erpnext"
                     ],
-                    "certificate": "valid"
+                    "certificate": "valid",
+                    "online": true
                 },
                 {
                     "name": "erp2.example.org",
@@ -26,7 +27,8 @@
                     "lets_encrypt": false,
                     "exists": true,
                     "apps": [],
-                    "certificate": "not_valid"
+                    "certificate": "not_valid",
+                    "online": true
                 }
             ],
             "available_apps": [
@@ -104,6 +106,10 @@
                         "unknown"
                     ],
                     "description": "valid: Traefik presents a certificate of a public CA for the host"
+                },
+                "online": {
+                    "type": "boolean",
+                    "description": "The site answers /api/method/ping through the frontend"
                 }
             }
         }

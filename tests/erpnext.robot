@@ -6,7 +6,7 @@ Library    Collections
 ${HOST}       erpnext.example.org
 # App list in the frappe_docker apps.json format: the image is built with
 # ERPNext, and ERPNext is the app installed on the site
-${APPS}       [{"url":"https://github.com/frappe/erpnext","branch":"version-15","app_name":"erpnext"}]
+${APPS}       [{"url":"https://github.com/frappe/erpnext","branch":"version-15","app_name":"erpnext","title":"ERPNext"}]
 # A record of the site that the backup must keep
 ${TODO}       ns8-backup-check
 # A second site, with its own host name and route
@@ -56,6 +56,11 @@ Second site answers on its host
     ${rc} =    Administrator logs in on    ${SITE2}    ${SITE2_PW}
     Should Be Equal As Integers    ${rc}  0
 
+Second site is online
+    ${sites} =    Sites of the instance
+    Should Be True    ${sites}[${SITE2}][online]
+    Should Be Equal    ${sites}[${SITE2}][certificate]    not_valid
+
 Sites of the instance
     ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/list-sites --data '{}'
     ...    return_rc=True
@@ -92,6 +97,37 @@ Check if erpnext configuration reads back
     Should Be Equal    ${config}[frappeVersion]    version-15
     Should Be Equal    ${config}[erpSelectedModules]    ${{["erpnext"]}}
     Should Be Equal    ${config}[apps][0][url]    https://github.com/frappe/erpnext
+    Should Be Equal    ${config}[apps][0][title]    ERPNext
+    Should Not Be True    ${config}[hasGitToken]
+
+Check if the marketplace lists apps for the Frappe version
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/list-marketplace-apps --data '{"frappeVersion":"version-15"}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${apps} =    Evaluate    {a["app_name"]: a for a in json.loads($output)["apps"]}    modules=json
+    Should Be Equal    ${apps}[hrms][branch]    version-15
+    Should Be Equal    ${apps}[hrms][url]    https://github.com/frappe/hrms
+
+Check if the GitHub token is stored as a secret
+    # Same apps: the image build is skipped
+    ${rc} =    Execute Command    api-cli run module/${module_id}/build-docker-image --data '{"frappeVersion":"version-15","apps":${APPS},"erpSelectedModules":["erpnext"],"gitToken":"ghp_ns8testtoken0123456789"}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/get-configuration --data '{}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    Should Not Contain    ${output}    ghp_ns8testtoken
+    ${config} =    Evaluate    json.loads($output)    modules=json
+    Should Be True    ${config}[hasGitToken]
+    ${mode}  ${rc} =    Execute Command    runagent -m ${module_id} stat -c %a git-token
+    ...    return_rc=True
+    Should Be Equal As Strings    ${mode.strip()}    600
+    ${rc} =    Execute Command    api-cli run module/${module_id}/build-docker-image --data '{"frappeVersion":"version-15","apps":${APPS},"erpSelectedModules":["erpnext"],"clearGitToken":true}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${rc} =    Execute Command    runagent -m ${module_id} test -e git-token
+    ...    return_rc=True  return_stdout=False
+    Should Not Be Equal As Integers    ${rc}  0
 
 Check if erpnext works as expected
     # create-site makes the site and installs the selected apps after the
@@ -126,6 +162,7 @@ Check if a site name already in use is refused
 
 Check if each host reaches its own site
     Wait Until Keyword Succeeds    5 minutes    10 seconds    Second site answers on its host
+    Wait Until Keyword Succeeds    2 minutes    10 seconds    Second site is online
     # The password of the second site does not open the default site
     ${rc} =    Administrator logs in on    ${HOST}    ${SITE2_PW}
     Should Not Be Equal As Integers    ${rc}  0

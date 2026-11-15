@@ -88,6 +88,12 @@
                     size="sm"
                     :label="$t('sites.missing')"
                   />
+                  <NsTag
+                    v-else-if="site.online === false"
+                    kind="red"
+                    size="sm"
+                    :label="$t('sites.not_answering')"
+                  />
                 </cv-structured-list-data>
                 <cv-structured-list-data>
                   <span v-if="!site.apps.length">{{

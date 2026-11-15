@@ -75,6 +75,10 @@
             "items": {
                 "type": "object"
             }
+        },
+        "hasGitToken": {
+            "type": "boolean",
+            "description": "A GitHub token for private app repositories is stored"
         }
     }
 }

@@ -13,6 +13,7 @@ A comprehensive ERP (Enterprise Resource Planning) solution for NethServer 8, po
 - [Available ERPNext Modules](#available-erpnext-modules)
 - [Management](#management)
 - [Advanced Usage](#advanced-usage)
+- [App catalogue](#-app-catalogue)
 - [Multiple sites](#-multiple-sites)
 - [Backup & Restore](#backup--restore)
 - [Troubleshooting](#troubleshooting)
@@ -210,6 +211,28 @@ The module uses several environment variables stored in `/home/erpnext1/.config/
 - `TRAEFIK_LETS_ENCRYPT` - Let's Encrypt status
 - `TCP_PORT` - Assigned TCP port
 - `ERP_NEXT_MODULES` - Selected modules
+
+## 📚 App catalogue
+
+The `apps` list of the Settings page is the catalogue of the instance: the
+apps built into the image. Each site then installs or uninstalls any of them
+from the **Sites** page.
+
+- **Frappe marketplace**: the Add App dialog lists the apps of
+  [frappe/marketplace](https://github.com/frappe/marketplace), the registry
+  that pilot reads, that have a stable release for the selected Frappe
+  version. Picking one fills the repository, branch and title. The same list
+  is available with `api-cli run module/erpnext1/list-marketplace-apps --data '{"frappeVersion":"version-15"}'`.
+- **Any GitHub repository**: fill the repository URL, branch, app name and an
+  optional title by hand.
+- **Private repositories**: mark the app as private and store a GitHub token
+  (`gitToken` of `configure-module`). The token is kept in a 0600 state file,
+  saved by the backup, never returned (`hasGitToken` says whether one is
+  stored) and given to the image build as a build secret, only for the private
+  repositories. `clearGitToken` removes it.
+
+The `apps` JSON stays accepted by `configure-module` as before; `title` and
+`private` are optional fields of its entries.
 
 ## 🌐 Multiple sites
 
