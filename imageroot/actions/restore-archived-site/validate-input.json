@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "restore-archived-site input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/restore-archived-site",
+    "description": "Bring a removed site back from sites/.archived_sites: its files, its database from the backup taken at removal, and its route (Let's Encrypt off)",
+    "examples": [
+        {
+            "name": "erp2.example.org"
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]+$",
+            "description": "Archive name, as list-archived-sites returns it"
+        }
+    }
+}

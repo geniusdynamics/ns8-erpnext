@@ -78,7 +78,31 @@ compute_apps_hash() {
   echo -n "$1" | sha256sum | cut -d' ' -f1
 }
 # Fetch latest ERPNext tag from GitHub based on FRAPPE_VERSION
-ERPNEXT_TAG=$(fetch_erpnext_tag) || true
+# Pinned build (state/image-pins.json, written after each build): the same
+# base images by digest, the same image tag and the same app commits. A
+# restore, a clone or a change of the app list reproduces the code of the
+# last build. A forced rebuild (forceRebuild) takes the newest releases and
+# writes new pins. A pin file of another Frappe version does not apply.
+PINS_FILE="image-pins.json"
+FORCE_REBUILD="${FORCE_REBUILD:-false}"
+USE_PINS=""
+if [ "$FORCE_REBUILD" != "true" ] && [ -f "$PINS_FILE" ] &&
+  [ "$(jq -r '.frappe_branch // empty' "$PINS_FILE" 2>/dev/null)" = "$FRAPPE_VERSION" ]; then
+  USE_PINS=1
+  print_info "Building from the pins of the last build ($PINS_FILE)"
+fi
+pin() { [ -n "$USE_PINS" ] && jq -r "$1 // empty" "$PINS_FILE" 2>/dev/null; }
+
+FRAPPE_BUILD_REF=$(pin .build_image) || true
+FRAPPE_BASE_REF=$(pin .base_image) || true
+FRAPPE_BUILD_REF="${FRAPPE_BUILD_REF:-docker.io/frappe/build:${FRAPPE_VERSION}}"
+FRAPPE_BASE_REF="${FRAPPE_BASE_REF:-docker.io/frappe/base:${FRAPPE_VERSION}}"
+APP_PINS=$(pin '.apps | to_entries | map("\(.key)=\(.value)") | join(" ")') || true
+
+ERPNEXT_TAG=$(pin .erpnext_tag) || true
+if [ -z "${ERPNEXT_TAG:-}" ]; then
+  ERPNEXT_TAG=$(fetch_erpnext_tag) || true
+fi
 
 if [ -z "${ERPNEXT_TAG:-}" ]; then
   fallback="FALLBACK_TAG_V${FRAPPE_VERSION##version-}"
@@ -88,6 +112,7 @@ fi
 BUILD_FINGERPRINT=$(printf "%s\n%s" \
   "$CURRENT_APPS_JSON" \
   "$ERPNEXT_TAG")
+# The pins are not part of the fingerprint: they only change with a build
 # Get current apps JSON hash
 CURRENT_HASH=$(compute_apps_hash "$BUILD_FINGERPRINT")
 
@@ -98,7 +123,6 @@ if [ -f "environment" ]; then
 fi
 
 # If force rebuild is requested, skip the cache check
-FORCE_REBUILD="${FORCE_REBUILD:-false}"
 if [ "$FORCE_REBUILD" = "true" ]; then
   print_info "Force rebuild requested. Removing cache and proceeding..."
   NO_CACHE="--no-cache"
@@ -161,6 +185,10 @@ fi
 podman build --network=host \
   $NO_CACHE \
   --jobs=4 \
+  $( [ "$FORCE_REBUILD" = "true" ] && echo "--pull=newer" ) \
+  --build-arg BUILD_IMAGE="$FRAPPE_BUILD_REF" \
+  --build-arg BASE_IMAGE="$FRAPPE_BASE_REF" \
+  --build-arg APP_PINS="$APP_PINS" \
   --secret id=git_token,src="$GIT_TOKEN_SECRET" \
   --build-arg APPS_JSON_BASE64="$BUILD_APPS_JSON" \
   --build-arg PRIVATE_REPOS="$PRIVATE_REPOS" \
@@ -220,6 +248,34 @@ if [ $? -eq 0 ]; then
     '{hash: $hash, version: $version, image: $image, built_at: $built_at}')
   echo "$CACHE_JSON" >"$CACHE_FILE"
   print_info "Cache updated."
+
+  # Record the pins of this build: base image digests, image tag and the
+  # commit of every app (written by the Dockerfile into .ns8-pins)
+  digest_of() {
+    podman image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$1" 2>/dev/null |
+      grep -m 1 "^${1%%[:@]*}@sha256:" || echo "$1"
+  }
+  if commits=$(podman run --rm --entrypoint cat "$CUSTOM_IMAGE_FULL" /home/frappe/frappe-bench/.ns8-pins); then
+    echo "$commits" | jq -R -n \
+      --arg frappe_branch "$FRAPPE_VERSION" \
+      --arg erpnext_tag "$ERPNEXT_TAG" \
+      --arg build_image "$(digest_of "$FRAPPE_BUILD_REF")" \
+      --arg base_image "$(digest_of "$FRAPPE_BASE_REF")" \
+      --arg built_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      '{frappe_branch: $frappe_branch, erpnext_tag: $erpnext_tag, build_image: $build_image,
+        base_image: $base_image, built_at: $built_at,
+        apps: ([inputs | select(test("^[a-z][a-z0-9_]* [0-9a-f]{40}$")) | split(" ") | {(.[0]): .[1]}] | add // {})}' \
+      >"$PINS_FILE.tmp" && mv "$PINS_FILE.tmp" "$PINS_FILE"
+    print_info "Pins recorded in $PINS_FILE"
+  else
+    print_warning "Cannot read the app commits of the image: pins not recorded"
+  fi
+
+  # A new image on an existing install: configure-module dumps every site
+  # before the services restart and migrate (75dump_before_migrate)
+  if [ -n "$OLD_ERPNEXT_IMAGE" ]; then
+    touch .image_changed
+  fi
 
   # Remove old image if it exists and differs from the new one
   if [ -n "$OLD_ERPNEXT_IMAGE" ] && [ "$OLD_ERPNEXT_IMAGE" != "$CUSTOM_IMAGE_FULL" ]; then

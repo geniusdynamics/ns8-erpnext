@@ -94,6 +94,12 @@
                     size="sm"
                     :label="$t('sites.not_answering')"
                   />
+                  <NsTag
+                    v-if="site.maintenance"
+                    kind="magenta"
+                    size="sm"
+                    :label="$t('sites.maintenance')"
+                  />
                 </cv-structured-list-data>
                 <cv-structured-list-data>
                   <span v-if="!site.apps.length">{{
@@ -119,6 +125,28 @@
                     @click="showEditSite(site)"
                   >
                     {{ $t("sites.edit") }}
+                  </NsButton>
+                  <NsButton
+                    kind="ghost"
+                    size="small"
+                    :icon="Activity20"
+                    :disabled="!site.exists"
+                    @click="showSiteStatus(site)"
+                  >
+                    {{ $t("sites.status") }}
+                  </NsButton>
+                  <NsButton
+                    kind="ghost"
+                    size="small"
+                    :icon="Tools20"
+                    :disabled="!site.exists || running"
+                    @click="setMaintenance(site, !site.maintenance)"
+                  >
+                    {{
+                      site.maintenance
+                        ? $t("sites.maintenance_off")
+                        : $t("sites.maintenance_on")
+                    }}
                   </NsButton>
                   <NsButton
                     v-if="!site.default"
@@ -274,6 +302,165 @@
       <template slot="primary-button">{{ $t("sites.save") }}</template>
     </NsModal>
 
+    <!-- Removed sites -->
+    <cv-row>
+      <cv-column>
+        <h4 class="mg-bottom-md archived-title">
+          {{ $t("sites.archived_title") }}
+        </h4>
+        <p class="mg-bottom-md">{{ $t("sites.archived_description") }}</p>
+        <cv-tile light>
+          <cv-skeleton-text
+            v-if="loading.listArchived"
+            :paragraph="true"
+            :line-count="2"
+          ></cv-skeleton-text>
+          <p v-else-if="!archivedSites.length">
+            {{ $t("sites.archived_empty") }}
+          </p>
+          <cv-structured-list v-else>
+            <template slot="headings">
+              <cv-structured-list-heading>{{
+                $t("sites.archived_name")
+              }}</cv-structured-list-heading>
+              <cv-structured-list-heading>{{
+                $t("sites.archived_at")
+              }}</cv-structured-list-heading>
+              <cv-structured-list-heading>{{
+                $t("sites.archived_size")
+              }}</cv-structured-list-heading>
+              <cv-structured-list-heading>{{
+                $t("sites.actions")
+              }}</cv-structured-list-heading>
+            </template>
+            <template slot="items">
+              <cv-structured-list-item
+                v-for="archive in archivedSites"
+                :key="archive.name"
+              >
+                <cv-structured-list-data>{{
+                  archive.name
+                }}</cv-structured-list-data>
+                <cv-structured-list-data>{{
+                  new Date(archive.archived_at).toLocaleString()
+                }}</cv-structured-list-data>
+                <cv-structured-list-data>{{
+                  archive.size | byteFormat
+                }}</cv-structured-list-data>
+                <cv-structured-list-data>
+                  <NsButton
+                    kind="ghost"
+                    size="small"
+                    :icon="Reset20"
+                    :disabled="running"
+                    @click="restoreArchived(archive)"
+                  >
+                    {{ $t("sites.archived_restore") }}
+                  </NsButton>
+                  <NsButton
+                    kind="danger--ghost"
+                    size="small"
+                    :icon="TrashCan20"
+                    :disabled="running"
+                    @click="showDeleteArchived(archive)"
+                  >
+                    {{ $t("sites.archived_delete") }}
+                  </NsButton>
+                </cv-structured-list-data>
+              </cv-structured-list-item>
+            </template>
+          </cv-structured-list>
+        </cv-tile>
+      </cv-column>
+    </cv-row>
+
+    <!-- Status of a site -->
+    <NsModal
+      size="default"
+      :visible="isStatusShown"
+      @modal-hidden="isStatusShown = false"
+    >
+      <template slot="title">{{
+        $t("sites.status_of", { site: statusSite })
+      }}</template>
+      <template slot="content">
+        <cv-skeleton-text
+          v-if="loading.siteStatus"
+          :paragraph="true"
+          :line-count="5"
+        ></cv-skeleton-text>
+        <NsInlineNotification
+          v-else-if="error.siteStatus"
+          kind="error"
+          :title="$t('action.get-site-status')"
+          :description="error.siteStatus"
+          :showCloseButton="false"
+        />
+        <div v-else-if="siteStatus">
+          <p class="mg-bottom-md">
+            <strong>{{ $t("sites.scheduler") }}:</strong>
+            {{ schedulerLabel(siteStatus) }}
+          </p>
+          <p class="mg-bottom-md">
+            <strong>{{ $t("sites.maintenance") }}:</strong>
+            {{
+              siteStatus.maintenance
+                ? $t("settings.enabled")
+                : $t("settings.disabled")
+            }}
+          </p>
+          <p class="mg-bottom-md" v-if="siteStatus.queued">
+            <strong>{{ $t("sites.queued_jobs") }}:</strong>
+            <span v-for="(count, queue) in siteStatus.queued" :key="queue">
+              {{ queue }} {{ count }}&nbsp;
+            </span>
+          </p>
+          <p class="mg-bottom-md" v-if="siteStatus.workers !== undefined">
+            <strong>{{ $t("sites.workers") }}:</strong>
+            {{ siteStatus.workers }} -
+            <strong>{{ $t("sites.running_jobs") }}:</strong>
+            {{ siteStatus.running }} -
+            <strong>{{ $t("sites.failed_jobs") }}:</strong>
+            {{ siteStatus.failed }}
+          </p>
+          <p class="mg-bottom-md" v-if="siteStatus.queue_error">
+            {{ $t("sites.queue_error") }}
+          </p>
+          <template
+            v-if="
+              siteStatus.recent_failures && siteStatus.recent_failures.length
+            "
+          >
+            <h6 class="mg-bottom-md">{{ $t("sites.recent_failures") }}</h6>
+            <ul class="failure-list">
+              <li
+                v-for="(failure, index) in siteStatus.recent_failures"
+                :key="index"
+              >
+                {{ failure.method }} ({{ failure.ended_at || "-" }})
+              </li>
+            </ul>
+          </template>
+        </div>
+      </template>
+      <template slot="secondary-button">{{ $t("common.close") }}</template>
+    </NsModal>
+
+    <NsDangerDeleteModal
+      :isShown="isDeleteArchivedShown"
+      :name="deleteArchivedName"
+      :title="$t('sites.archived_delete_title')"
+      :warning="$t('common.please_read_carefully')"
+      :description="
+        $t('sites.archived_delete_description', { site: deleteArchivedName })
+      "
+      :typeToConfirm="
+        $t('common.type_to_confirm', { name: deleteArchivedName })
+      "
+      @hide="isDeleteArchivedShown = false"
+      @confirmDelete="deleteArchived"
+    />
+
     <NsDangerDeleteModal
       :isShown="isRemoveSiteShown"
       :name="removeSiteName"
@@ -291,6 +478,7 @@
 
 <script>
 import to from "await-to-js";
+import Activity20 from "@carbon/icons-vue/es/activity/20";
 import { mapState } from "vuex";
 import {
   QueryParamService,
@@ -314,6 +502,7 @@ export default {
   },
   data() {
     return {
+      Activity20,
       q: { page: "sites" },
       urlCheckInterval: null,
       sites: [],
@@ -326,10 +515,22 @@ export default {
       newSite: this.emptySite(),
       editSite: { host: "", apps: [], installed: [] },
       running: "",
-      loading: { listSites: false, addSite: false },
+      archivedSites: [],
+      isDeleteArchivedShown: false,
+      deleteArchivedName: "",
+      isStatusShown: false,
+      statusSite: "",
+      siteStatus: null,
+      loading: {
+        listSites: false,
+        addSite: false,
+        listArchived: false,
+        siteStatus: false,
+      },
       error: {
         listSites: "",
         siteTask: "",
+        siteStatus: "",
         host: "",
         admin_password: "",
         apps: "",
@@ -357,6 +558,7 @@ export default {
   },
   created() {
     this.listSites();
+    this.listArchived();
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -547,6 +749,123 @@ export default {
         setApps();
       }
     },
+    schedulerLabel(status) {
+      if (status.scheduler_paused) return this.$t("sites.scheduler_paused");
+      if (!status.scheduler_enabled) return this.$t("settings.disabled");
+      if (status.scheduler_inactive) return this.$t("sites.scheduler_inactive");
+      return this.$t("settings.enabled");
+    },
+    async showSiteStatus(site) {
+      this.statusSite = site.host;
+      this.siteStatus = null;
+      this.error.siteStatus = "";
+      this.isStatusShown = true;
+      this.loading.siteStatus = true;
+      const eventId = this.getUuid();
+      this.core.$root.$once(
+        `get-site-status-completed-${eventId}`,
+        (taskContext, taskResult) => {
+          this.siteStatus = taskResult.output;
+          this.loading.siteStatus = false;
+        }
+      );
+      this.core.$root.$once(`get-site-status-aborted-${eventId}`, () => {
+        this.error.siteStatus = this.$t("error.generic_error");
+        this.loading.siteStatus = false;
+      });
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: "get-site-status",
+          data: { name: site.name },
+          extra: {
+            title: this.$t("action.get-site-status"),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
+      );
+      if (res[0]) {
+        this.error.siteStatus = this.getErrorMessage(res[0]);
+        this.loading.siteStatus = false;
+      }
+    },
+    setMaintenance(site, enabled) {
+      this.running = "maintenance";
+      this.error.siteTask = "";
+      this.runTask(
+        "set-site-maintenance",
+        { name: site.name, enabled },
+        this.$t("sites.setting_maintenance", { site: site.host }),
+        () => {
+          this.running = "";
+          this.listSites();
+        }
+      );
+    },
+    async listArchived() {
+      this.loading.listArchived = true;
+      const eventId = this.getUuid();
+      this.core.$root.$once(
+        `list-archived-sites-completed-${eventId}`,
+        (taskContext, taskResult) => {
+          this.archivedSites = taskResult.output.archived_sites;
+          this.loading.listArchived = false;
+        }
+      );
+      this.core.$root.$once(`list-archived-sites-aborted-${eventId}`, () => {
+        this.loading.listArchived = false;
+      });
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: "list-archived-sites",
+          extra: {
+            title: this.$t("action.list-archived-sites"),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
+      );
+      if (res[0]) {
+        this.loading.listArchived = false;
+      }
+    },
+    restoreArchived(archive) {
+      this.running = "restore";
+      this.error.siteTask = "";
+      this.runTask(
+        "restore-archived-site",
+        { name: archive.name },
+        this.$t("sites.restoring_archived", { site: archive.site }),
+        () => {
+          this.running = "";
+          this.listSites();
+          this.listArchived();
+        },
+        (validationErrors) => {
+          this.running = "";
+          this.error.siteTask = this.$t("sites." + validationErrors[0].error);
+        }
+      );
+    },
+    showDeleteArchived(archive) {
+      this.deleteArchivedName = archive.name;
+      this.isDeleteArchivedShown = true;
+    },
+    deleteArchived() {
+      const name = this.deleteArchivedName;
+      this.isDeleteArchivedShown = false;
+      this.running = "delete_archived";
+      this.error.siteTask = "";
+      this.runTask(
+        "delete-archived-site",
+        { name },
+        this.$t("sites.deleting_archived", { site: name }),
+        () => {
+          this.running = "";
+          this.listArchived();
+        }
+      );
+    },
     showRemoveSite(site) {
       this.removeSiteName = site.name;
       this.isRemoveSiteShown = true;
@@ -563,6 +882,7 @@ export default {
         () => {
           this.running = "";
           this.listSites();
+          this.listArchived();
         }
       );
     },
@@ -575,6 +895,15 @@ export default {
 
 .mg-bottom-md {
   margin-bottom: 1rem;
+}
+
+.archived-title {
+  margin-top: 2rem;
+}
+
+.failure-list {
+  list-style: disc;
+  margin-left: 1.5rem;
 }
 
 .helper {

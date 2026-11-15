@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# The image changed (30build_docker_image): the restart of the next step
+# migrates every site to the new code. Dump every site first, into
+# state/pre-update-dumps (see bin/dump-before-migrate).
+
+exec 1>&2
+[ -f .image_changed ] || exit 0
+rm -f .image_changed
+dump-before-migrate

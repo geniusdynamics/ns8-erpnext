@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "get-site-status input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/get-site-status",
+    "description": "Read the background jobs, workers, scheduler and maintenance state of a site",
+    "examples": [
+        {
+            "name": "frontend"
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]+$"
+        }
+    }
+}

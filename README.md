@@ -261,6 +261,20 @@ api-cli run module/erpnext1/set-site-route --data '{"name":"erp2.example.org","h
 api-cli run module/erpnext1/remove-site --data '{"name":"erp2.example.org"}'
 ```
 
+Each site also has:
+
+- a maintenance mode (`set-site-maintenance`), as pilot sets it: only the
+  Administrator can use the site and the scheduler is paused;
+- a status (`get-site-status`, read-only): jobs queued, running and failed,
+  the latest failed methods, workers and scheduler state;
+- a health check in `list-sites` (`online`).
+
+Removed sites stay under `.archived_sites` in the sites volume:
+`list-archived-sites` (read-only) lists them with date and size,
+`restore-archived-site` brings one back (files, database from the backup taken
+at removal, route with Let's Encrypt off) and `delete-archived-site` deletes it
+for good.
+
 `list-sites` is read-only and returns no secret: the sites, their route
 options, the installed apps and the state of the certificate that Traefik
 presents for each host. `remove-site` keeps a backup of the removed site in
@@ -301,6 +315,40 @@ frappe backups under `sites/<site>/private/backups`) still restore.
 
 Turn Let's Encrypt on again once the DNS points to the node: a restore or a
 clone never requests a certificate.
+
+### Before a migrate
+
+`update-module.d/05dump_sites` dumps every site into `state/pre-update-dumps`
+before the restart of a module update migrates the sites, and configure-module
+does the same when a new image replaces the old one. Only the last dump is kept
+and it is not part of the NS8 backup. Roll a site back with:
+
+```bash
+runagent -m erpnext1
+podman cp pre-update-dumps/<site>/database.sql backend:/tmp/site.sql
+podman exec backend bench --site <site> restore --force /tmp/site.sql --db-root-password <root password of database.env>
+```
+
+### Frappe's own backups
+
+Frappe keeps backups inside each site (`sites/<site>/private/backups`), for
+example the one taken before an app is uninstalled. The module keeps the newest
+3 per site and removes the ones older than 7 days, daily
+(`frappe-backup-retention.timer`) and at every NethServer backup. The newest
+backup of a site always stays. Change the policy on the Backup page or with:
+
+```bash
+api-cli run module/erpnext1/set-backup-retention --data '{"keep":5,"max_age_days":30}'
+```
+
+### Reproducible image
+
+After each build, `state/image-pins.json` records the digests of the frappe
+build and base images, the image tag and the commit of every app. Later builds
+(a restore, a clone, a change of the app list) use these pins, so they rebuild
+the same code. **Force rebuild** in the Settings page (`forceRebuild`) takes the
+newest releases and records new pins. A change of Frappe version ignores the
+pins.
 
 ## 🔍 Troubleshooting
 

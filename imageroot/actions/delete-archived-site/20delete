@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import os
+import subprocess
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+name = json.load(sys.stdin)["name"]
+try:
+    es.podman("exec", "backend", "rm", "-rf", "--", f"{es.ARCHIVE_DIR}/{name}")
+except es.SiteError as ex:
+    print(agent.SD_ERR + f"delete-archived-site {name} failed: {ex}", file=sys.stderr)
+    sys.exit(1)

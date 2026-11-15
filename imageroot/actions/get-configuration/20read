@@ -59,6 +59,19 @@ else:
     config["builtAt"] = ""
 
 
+# Retention of frappe's own backups (set-backup-retention)
+def env_int(name, default):
+    try:
+        return int(os.getenv(name) or default)
+    except ValueError:
+        return default
+
+
+config["backupRetention"] = {
+    "keep": env_int("FRAPPE_BACKUP_KEEP", 3),
+    "max_age_days": env_int("FRAPPE_BACKUP_MAX_AGE_DAYS", 7),
+}
+
 # The token itself is a secret: only say whether there is one
 config["hasGitToken"] = os.path.exists("git-token")
 

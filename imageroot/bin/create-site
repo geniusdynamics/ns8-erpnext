@@ -26,6 +26,20 @@ until [[ -n $(grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empt
 done
 echo "sites/common_site_config.json found"
 
+# Same runner as FRAPPE_CLI of bin/erpnext_sites.py
+export NS8_SECRET_FLAGS
+FRAPPE_CLI='
+import os, sys
+os.chdir("/home/frappe/frappe-bench/sites")
+args = sys.argv[1:]
+for spec in os.environ.get("NS8_SECRET_FLAGS", "").split():
+    flag, var = spec.split("=", 1)
+    args.append(flag + "=" + os.environ[var])
+sys.argv = ["frappe.utils.bench_helper", "frappe"] + args
+from frappe.utils.bench_helper import main
+main()
+'
+
 # The restore (bin/restore-sites) and the site actions take the same lock:
 # never run bench on a site at the same time
 if command -v flock >/dev/null 2>&1; then
@@ -41,7 +55,11 @@ if [[ -f sites/frontend/site_config.json ]]; then
 		exit 0
 	fi
 else
-	bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --set-default || exit 1
+	# frappe new-site in-process, as bench runs it, with the root password
+	# read from the environment: it stays off every command line
+	NS8_SECRET_FLAGS="--db-root-password=MARIADB_ROOT_PASSWORD" \
+		/home/frappe/frappe-bench/env/bin/python -c "$FRAPPE_CLI" \
+		new-site frontend --no-mariadb-socket --admin-password=admin --set-default || exit 1
 	NEW_SITE=1
 fi
 

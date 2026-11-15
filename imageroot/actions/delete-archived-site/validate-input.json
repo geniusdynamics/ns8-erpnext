@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "delete-archived-site input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/delete-archived-site",
+    "description": "Permanently delete a removed site from sites/.archived_sites, with its backup",
+    "examples": [
+        {
+            "name": "erp2.example.org"
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]+$",
+            "description": "Archive name, as list-archived-sites returns it"
+        }
+    }
+}

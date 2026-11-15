@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Daily retention of frappe's own backups, on configured instances
+exec 1>&2
+if systemctl --user -q is-enabled erp-next.service 2>/dev/null; then
+    systemctl --user enable --now frappe-backup-retention.timer
+fi
+exit 0
