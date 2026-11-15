@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import os
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+request = json.load(sys.stdin)
+name = request["name"]
+try:
+    es.set_site_route(name, request["http2https"], request["lets_encrypt"])
+    sites = es.load_sites()
+    sites[name] = {"http2https": request["http2https"], "lets_encrypt": request["lets_encrypt"]}
+    es.save_sites(sites)
+    scheme = "https://" if request["http2https"] else "http://"
+    es.bench("--site", name, "set-config", "host_name", scheme + name, check=False, locked=True)
+except es.SiteError as ex:
+    print(agent.SD_ERR + f"set-site-route {name} failed: {ex}", file=sys.stderr)
+    sys.exit(1)

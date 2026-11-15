@@ -13,6 +13,7 @@ A comprehensive ERP (Enterprise Resource Planning) solution for NethServer 8, po
 - [Available ERPNext Modules](#available-erpnext-modules)
 - [Management](#management)
 - [Advanced Usage](#advanced-usage)
+- [Multiple sites](#-multiple-sites)
 - [Backup & Restore](#backup--restore)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
@@ -209,6 +210,38 @@ The module uses several environment variables stored in `/home/erpnext1/.config/
 - `TRAEFIK_LETS_ENCRYPT` - Let's Encrypt status
 - `TCP_PORT` - Assigned TCP port
 - `ERP_NEXT_MODULES` - Selected modules
+
+## 🌐 Multiple sites
+
+The instance can serve several Frappe sites. Each site has its own host name,
+Traefik route, certificate, database and apps.
+
+- The default site `frontend` answers on the host name of the Settings page,
+  and on any name that no other site claims, as earlier releases did.
+- Each added site is named after its host name, as Frappe Cloud does. It gets
+  its own Traefik route (`<module>-<host>`), with its own HTTPS redirection and
+  Let's Encrypt options. A certificate request that fails, for example because
+  the DNS does not point to the node yet, only affects that site.
+- The frontend nginx picks the site from the `Host` header, through the map in
+  `state/nginx-sites.conf` (generated from `state/sites.json`).
+- A site can install any app built into the image (the `apps` list), and
+  uninstall it. Before an uninstall, the site goes into maintenance mode and
+  bench takes a backup of it.
+
+Use the **Sites** page, or the actions:
+
+```bash
+api-cli run module/erpnext1/list-sites
+api-cli run module/erpnext1/add-site --data '{"host":"erp2.example.org","http2https":true,"lets_encrypt":false,"admin_password":"Secret,1234","apps":["erpnext"]}'
+api-cli run module/erpnext1/set-site-apps --data '{"name":"erp2.example.org","apps":["erpnext","hrms"]}'
+api-cli run module/erpnext1/set-site-route --data '{"name":"erp2.example.org","http2https":true,"lets_encrypt":true}'
+api-cli run module/erpnext1/remove-site --data '{"name":"erp2.example.org"}'
+```
+
+`list-sites` is read-only and returns no secret: the sites, their route
+options, the installed apps and the state of the certificate that Traefik
+presents for each host. `remove-site` keeps a backup of the removed site in
+the sites volume, under `.archived_sites`.
 
 ## 💾 Backup & Restore
 

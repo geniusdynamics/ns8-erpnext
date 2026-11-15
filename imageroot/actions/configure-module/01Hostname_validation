@@ -23,6 +23,14 @@ host = data.get("host")
 # do not test if it is the same host
 oldHost = os.environ.get('TRAEFIK_HOST','')
 
+# An added site already owns this name (see bin/erpnext_sites.py)
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites  # noqa: E402
+if host in erpnext_sites.load_sites():
+    agent.set_status('validation-failed')
+    json.dump([{'field':'host','parameter':'host','value':host,'error':'domain_already_used_in_traefik'}],fp=sys.stdout)
+    sys.exit(2)
+
 if host != oldHost and agent.http_route_in_use(domain=host):
     agent.set_status('validation-failed')
     json.dump([{'field':'host','parameter':'host','value':host,'error':'domain_already_used_in_traefik'}],fp=sys.stdout)

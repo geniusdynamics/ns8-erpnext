@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Uninstall the apps the request leaves out, newest first, then install the
+# missing ones and migrate. Before any uninstall, the site goes into
+# maintenance mode and bench takes a backup of it (sites/<site>/private/
+# backups). For the default site, the selected apps of erpnext-modules.env
+# follow, so create-site does not install an uninstalled app again.
+#
+
+import json
+import os
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+request = json.load(sys.stdin)
+name = request["name"]
+wanted = [a for a in request["apps"] if a != "frappe"]
+
+installed = es.installed_apps(name) or []
+to_uninstall = [a for a in reversed(installed) if a != "frappe" and a not in wanted]
+to_install = [a for a in wanted if a not in installed]
+done = {"installed": [], "uninstalled": []}
+
+try:
+    if name == es.DEFAULT_SITE:
+        saved = agent.read_envfile("erpnext-modules.env")
+        saved["ERP_NEXT_MODULES"] = ",".join(wanted)
+        agent.write_envfile("erpnext-modules.env", saved)
+
+    if to_uninstall:
+        es.bench("--site", name, "backup", locked=True)
+        es.bench("--site", name, "set-maintenance-mode", "on", locked=True)
+        try:
+            for app in to_uninstall:
+                es.bench("--site", name, "uninstall-app", app, "--yes", "--no-backup", locked=True)
+                done["uninstalled"].append(app)
+        finally:
+            es.bench("--site", name, "set-maintenance-mode", "off", check=False, locked=True)
+    agent.set_progress(50)
+    for app in to_install:
+        es.bench("--site", name, "install-app", app, locked=True)
+        done["installed"].append(app)
+    if to_install or to_uninstall:
+        es.bench("--site", name, "migrate", locked=True)
+        es.bench("--site", name, "clear-cache", locked=True)
+except es.SiteError as ex:
+    print(agent.SD_ERR + f"set-site-apps {name} failed: {ex}", file=sys.stderr)
+    sys.exit(1)
+
+json.dump(done, fp=sys.stdout)

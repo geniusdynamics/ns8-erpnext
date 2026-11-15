@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Multi-site support: the frontend nginx now picks the site from the Host
+# header through nginx-sites.conf. Without added sites the map sends every
+# name to the default site "frontend", as before. Safe to run again.
+#
+
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+if not os.path.exists(es.SITES_FILE):
+    es.save_sites({})
+es.write_nginx_map()

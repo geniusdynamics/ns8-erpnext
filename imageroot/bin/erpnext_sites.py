@@ -24,6 +24,7 @@ import time
 BENCH_SITES = "/home/frappe/frappe-bench/sites"
 LOCK_FILE = "sites/.ns8-sites.lock"
 
+
 class SiteError(Exception):
     pass
 
@@ -82,25 +83,29 @@ def site_config(site):
     return json.loads(proc.stdout)
 
 
-def bench(*args, env_file=None, check=True, locked=False, root_password=False):
+def bench(*args, env_files=(), secret_flags=(), check=True, locked=False, root_password=False):
     """Run bench in the backend container. Output goes to the journal.
 
     locked: hold LOCK_FILE while bench runs.
-    root_password: append --db-root-password, expanded inside the container
-    from MARIADB_ROOT_PASSWORD (pass env_file="database.env")."""
-    script = 'exec "$@"'
+    secret_flags: (flag, VAR) pairs appended as flag="$VAR", expanded inside
+    the container from env_files: secrets never reach the podman command.
+    root_password: shorthand for --db-root-password from database.env."""
+    env_files = list(env_files)
+    secret_flags = list(secret_flags)
     if root_password:
-        script = 'exec "$@" --db-root-password="$MARIADB_ROOT_PASSWORD"'
+        env_files.append("database.env")
+        secret_flags.append(("--db-root-password", "MARIADB_ROOT_PASSWORD"))
+    script = "exec \"$@\"" + "".join(f' {flag}="${var}"' for flag, var in secret_flags)
     if locked:
         script = f'if command -v flock >/dev/null 2>&1; then set -- flock {LOCK_FILE} "$@"; fi; ' + script
     cmd = ["exec"]
-    if env_file:
+    for env_file in env_files:
         cmd += ["--env-file", env_file]
     cmd += ["backend", "sh", "-c", script, "sh", "bench", *args]
     log("bench", " ".join(args))
     proc = podman(*cmd, check=False, capture=False)
     if check and proc.returncode != 0:
-        raise SiteError(f"bench {' '.join(args[:3])} failed with exit code {proc.returncode}")
+        raise SiteError(f"bench {' '.join(args[:4])} failed with exit code {proc.returncode}")
     return proc.returncode
 
 
@@ -122,3 +127,200 @@ def wait_ready(timeout=1200):
             raise SiteError(f"services not ready after {timeout} seconds: {problem}")
         log(f"Waiting: {problem}")
         time.sleep(10)
+
+
+#
+# Sites of the module, in state/ (non secret, saved by the backup):
+#
+# - the default site "frontend" answers on the module host (TRAEFIK_HOST)
+#   and on every name no other site claims. Its route is the module route.
+# - each added site is named after its host, as Frappe Cloud and pilot do,
+#   and has its own Traefik route. sites.json keeps its route options:
+#   {"sites": {"erp2.example.org": {"http2https": true, "lets_encrypt": false}}}
+#
+# The frontend nginx picks the site from the Host header through the map of
+# nginx-sites.conf (see write_nginx_map).
+#
+
+import re  # noqa: E402
+
+DEFAULT_SITE = "frontend"
+SITES_FILE = "sites.json"
+NGINX_MAP_FILE = "nginx-sites.conf"
+HOST_RE = re.compile(r"^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$")
+
+
+def load_sites():
+    """Added sites: {name: {"http2https": bool, "lets_encrypt": bool}}"""
+    try:
+        with open(SITES_FILE) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return {}
+    sites = data.get("sites") if isinstance(data, dict) else None
+    if not isinstance(sites, dict):
+        return {}
+    return {name: opts for name, opts in sites.items() if HOST_RE.match(name) and isinstance(opts, dict)}
+
+
+def save_sites(sites):
+    tmp = SITES_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump({"sites": sites}, f, indent=1, sort_keys=True)
+    os.replace(tmp, SITES_FILE)
+
+
+def write_nginx_map(sites=None):
+    """Map the Host header to the site name; any other name is the default
+    site, as before multi-site support. Written in place: the frontend
+    container bind-mounts the file."""
+    if sites is None:
+        sites = load_sites()
+    lines = [
+        "# Generated from sites.json by the erpnext module: do not edit",
+        "map_hash_bucket_size 256;",
+        "map $host $erp_site {",
+        f"    default {DEFAULT_SITE};",
+    ]
+    lines += [f"    {name} {name};" for name in sorted(sites)]
+    lines.append("}")
+    content = "\n".join(lines) + "\n"
+    try:
+        with open(NGINX_MAP_FILE) as f:
+            if f.read() == content:
+                return False
+    except FileNotFoundError:
+        pass
+    with open(NGINX_MAP_FILE, "w") as f:
+        f.write(content)
+    os.chmod(NGINX_MAP_FILE, 0o644)  # read by nginx in the container
+    return True
+
+
+def route_instance(name):
+    """Traefik route name of a site. ns8-traefik removes the routes named
+    after the module when the module is removed."""
+    if name == DEFAULT_SITE:
+        return os.environ["MODULE_ID"]
+    return f"{os.environ['MODULE_ID']}-{name}"
+
+
+def set_site_route(name, http2https, lets_encrypt):
+    import agent
+    import agent.tasks
+
+    traefik = agent.resolve_agent_id("traefik@node")
+    if traefik is None:
+        raise SiteError("cannot find the Traefik instance of the node")
+    # No lets_encrypt_check: the certificate request runs in the background,
+    # and a name whose DNS is not ready only leaves that site without a valid
+    # certificate. The other sites keep theirs.
+    response = agent.tasks.run(
+        agent_id=traefik,
+        action="set-route",
+        data={
+            "instance": route_instance(name),
+            "url": "http://127.0.0.1:" + os.environ["TCP_PORT"],
+            "host": name,
+            "http2https": http2https,
+            "lets_encrypt": lets_encrypt,
+            "lets_encrypt_cleanup": True,
+        },
+    )
+    if response["exit_code"] != 0:
+        raise SiteError(f"set-route of {name} failed: {response.get('error', '')}")
+
+
+def delete_site_route(name):
+    import agent
+    import agent.tasks
+
+    traefik = agent.resolve_agent_id("traefik@node")
+    if traefik is None:
+        return
+    agent.tasks.run(agent_id=traefik, action="delete-route", data={"instance": route_instance(name)})
+
+
+def installed_apps(site):
+    """Apps installed on the site, in install order; None if the database
+    does not answer"""
+    try:
+        db_name = site_config(site).get("db_name")
+    except (SiteError, ValueError):
+        return None
+    if not db_name:
+        return None
+    out = mariadb("SELECT app_name FROM `tabInstalled Application` ORDER BY idx", db_name, check=False)
+    if out is None:
+        return None
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def image_apps():
+    """Apps built into the image (erpnext-modules.env), frappe excluded"""
+    import base64
+
+    sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+    import agent
+    from erpnext_apps import app_name
+
+    try:
+        saved = agent.read_envfile("erpnext-modules.env")
+        apps = json.loads(base64.b64decode(saved.get("APPS_JSON", "")) or b"[]")
+    except (OSError, ValueError):
+        return []
+    return [app_name(a) for a in apps if isinstance(a, dict)]
+
+
+def restart_frontend():
+    """Apply nginx-sites.conf"""
+    import agent
+
+    agent.run_helper("systemctl", "--user", "try-restart", "frontend.service").check_returncode()
+
+
+def certificate_state(host, timeout=3):
+    """State of the certificate Traefik presents for host: "valid" when a
+    public CA signed it for that name, "not_valid" otherwise (self-signed
+    default certificate, Let's Encrypt pending or failed), "unknown" if
+    Traefik does not answer"""
+    import socket
+    import ssl
+
+    context = ssl.create_default_context()
+    try:
+        with socket.create_connection(("127.0.0.1", 443), timeout=timeout) as sock:
+            with context.wrap_socket(sock, server_hostname=host):
+                return "valid"
+    except ssl.SSLCertVerificationError:
+        return "not_valid"
+    except (OSError, ssl.SSLError):
+        return "unknown"
+
+
+def describe_sites(check_certificates=False):
+    """Every site with its route options and installed apps (no secrets)"""
+    running = is_running("backend") and is_running("mariadb-app")
+    existing = list_sites() if running else []
+    rows = [{
+        "name": DEFAULT_SITE,
+        "host": os.environ.get("TRAEFIK_HOST", ""),
+        "default": True,
+        "http2https": os.environ.get("TRAEFIK_HTTP2HTTPS", "True").lower() == "true",
+        "lets_encrypt": os.environ.get("TRAEFIK_LETS_ENCRYPT", "False").lower() == "true",
+    }]
+    for name, opts in sorted(load_sites().items()):
+        rows.append({
+            "name": name,
+            "host": name,
+            "default": False,
+            "http2https": bool(opts.get("http2https", True)),
+            "lets_encrypt": bool(opts.get("lets_encrypt", False)),
+        })
+    for row in rows:
+        row["exists"] = row["name"] in existing
+        apps = installed_apps(row["name"]) if row["exists"] else None
+        row["apps"] = [a for a in (apps or []) if a != "frappe"]
+        if check_certificates and row["host"]:
+            row["certificate"] = certificate_state(row["host"])
+    return rows

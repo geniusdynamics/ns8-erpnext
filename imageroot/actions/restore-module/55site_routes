@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Set the Traefik route of every added site again (the default site has the
+# module route, set by configure-module). Let's Encrypt stays off: the DNS
+# may not point to this node yet.
+#
+
+import os
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+sites = es.load_sites()
+for name, opts in sorted(sites.items()):
+    opts["lets_encrypt"] = False
+    es.set_site_route(name, bool(opts.get("http2https", True)), False)
+es.save_sites(sites)
+if es.write_nginx_map(sites):
+    agent.run_helper("systemctl", "--user", "try-restart", "frontend.service").check_returncode()

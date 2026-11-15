@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "add-site input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/add-site",
+    "description": "Create a Frappe site answering on its own host name, with its own Traefik route",
+    "examples": [
+        {
+            "host": "erp2.example.org",
+            "http2https": true,
+            "lets_encrypt": false,
+            "admin_password": "Nethesis,1234",
+            "apps": [
+                "erpnext"
+            ]
+        }
+    ],
+    "type": "object",
+    "required": [
+        "host",
+        "admin_password"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "host": {
+            "type": "string",
+            "format": "hostname",
+            "pattern": "^[a-z0-9.-]+\\.[a-z][a-z0-9-]*[a-z0-9]$",
+            "maxLength": 253,
+            "description": "Host name of the site, lower case. It is also the site name."
+        },
+        "http2https": {
+            "type": "boolean",
+            "description": "Redirect HTTP to HTTPS. Default true."
+        },
+        "lets_encrypt": {
+            "type": "boolean",
+            "description": "Request a Let's Encrypt certificate. Default false."
+        },
+        "admin_password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "Password of the Administrator user of the new site. It is not stored."
+        },
+        "apps": {
+            "type": "array",
+            "description": "Apps of the image to install on the site. Default: none (Frappe only).",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+            }
+        }
+    }
+}

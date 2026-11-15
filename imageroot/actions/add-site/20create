@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Create the site, install the selected apps, then publish it: Traefik
+# route and nginx Host map. A failure drops the half-made site.
+#
+
+import json
+import os
+import sys
+import tempfile
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+request = json.load(sys.stdin)
+host = request["host"]
+http2https = request.get("http2https", True)
+lets_encrypt = request.get("lets_encrypt", False)
+apps = request.get("apps", [])
+
+# The Administrator password reaches bench through an env file, never
+# through a command line
+fd, pwfile = tempfile.mkstemp(prefix=".add-site-", dir=".")
+created = False
+try:
+    with os.fdopen(fd, "w") as f:
+        f.write("NS8_ADMIN_PASSWORD=" + request["admin_password"].replace("\n", "") + "\n")
+    agent.set_progress(10)
+    es.bench(
+        "new-site", host, "--no-mariadb-socket",
+        env_files=[pwfile], secret_flags=[("--admin-password", "NS8_ADMIN_PASSWORD")],
+        locked=True, root_password=True,
+    )
+    created = True
+    os.remove(pwfile)
+    for i, app in enumerate(apps):
+        agent.set_progress(20 + int(60 * i / max(len(apps), 1)))
+        es.bench("--site", host, "install-app", app, locked=True)
+    es.bench("--site", host, "set-config", "host_name", ("https://" if http2https else "http://") + host, locked=True)
+    es.bench("--site", host, "enable-scheduler", locked=True)
+    agent.set_progress(85)
+
+    sites = es.load_sites()
+    sites[host] = {"http2https": http2https, "lets_encrypt": lets_encrypt}
+    es.save_sites(sites)
+    es.write_nginx_map(sites)
+    es.restart_frontend()
+    es.set_site_route(host, http2https, lets_encrypt)
+except Exception as ex:
+    print(agent.SD_ERR + f"add-site {host} failed: {ex}", file=sys.stderr)
+    if os.path.exists(pwfile):
+        os.remove(pwfile)
+    if created:
+        print(f"Dropping the half-made site {host}", file=sys.stderr)
+        es.bench("drop-site", host, "--no-backup", "--force", check=False, locked=True, root_password=True)
+        sites = es.load_sites()
+        if sites.pop(host, None) is not None:
+            es.save_sites(sites)
+            es.write_nginx_map(sites)
+            es.restart_frontend()
+        es.delete_site_route(host)
+    sys.exit(1)
+
+json.dump({"site": host}, fp=sys.stdout)

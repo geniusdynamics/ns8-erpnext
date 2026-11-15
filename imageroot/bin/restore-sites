@@ -92,7 +92,7 @@ def restore_site(site, dump, where, meta):
         es.log(f"Restoring the database of site {site}")
         es.bench(
             "--site", site, "restore", "--force", path,
-            env_file="database.env", locked=True, root_password=True,
+            locked=True, root_password=True,
         )
     finally:
         if where == "host":

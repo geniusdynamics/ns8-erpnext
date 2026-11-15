@@ -42,12 +42,14 @@ if [[ -f sites/frontend/site_config.json ]]; then
 	fi
 else
 	bench new-site frontend --no-mariadb-socket --admin-password=admin --db-root-password="$MARIADB_ROOT_PASSWORD" --set-default || exit 1
+	NEW_SITE=1
 fi
 
 # Convert the comma separated list to a bash array
 ERPNEXT_MODULES=$(echo "$ERP_NEXT_MODULES" | tr -d "[]'" | tr -d ' ')
 IFS=',' read -r -a ERP_NEXT_MODULES_ARRAY <<<"$ERPNEXT_MODULES"
-if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ]; then
+# An empty list on an existing site means "Frappe only" (set-site-apps)
+if [ ${#ERP_NEXT_MODULES_ARRAY[@]} -eq 0 ] && [ -n "$NEW_SITE" ]; then
 	echo "No modules specified, installing erpnext by default."
 	ERP_NEXT_MODULES_ARRAY=(erpnext)
 fi
