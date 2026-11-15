@@ -140,6 +140,28 @@ Check if a record can be added to the site
     Should Contain    ${output}    ${TODO}
     Site has the test ToDo    ${module_id}
 
+Check if an app with a missing branch is refused before the build
+    ${out}  ${err}  ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false,"frappeVersion":"version-15","apps":[{"url":"https://github.com/frappe/erpnext","branch":"version-15","app_name":"erpnext"},{"url":"https://github.com/frappe/hrms","branch":"no-such-branch","app_name":"hrms"}],"erpSelectedModules":["erpnext"]}'
+    ...    return_stderr=True  return_rc=True
+    Should Not Be Equal As Integers    ${rc}  0
+    Should Contain    ${out}${err}    app_branch_not_found
+
+Check if an app for another Frappe version is refused before the build
+    ${out}  ${err}  ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false,"frappeVersion":"version-15","apps":[{"url":"https://github.com/frappe/erpnext","branch":"version-15","app_name":"erpnext"},{"url":"https://github.com/frappe/hrms","branch":"version-16","app_name":"hrms"}],"erpSelectedModules":["erpnext"]}'
+    ...    return_stderr=True  return_rc=True
+    Should Not Be Equal As Integers    ${rc}  0
+    Should Contain    ${out}${err}    app_branch_not_for_frappe_version
+
+Check if a refused app list leaves the instance untouched
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/get-configuration --data '{}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${config} =    Evaluate    json.loads($output)    modules=json
+    ${names} =    Evaluate    [a.get("app_name") for a in $config["apps"]]
+    Should Be Equal    ${names}    ${{["erpnext"]}}
+    ERPNext site has the app    erpnext
+    ERPNext answers through Traefik
+
 Check if a second site can be added
     # Creates the site and installs ERPNext on it: a few minutes
     ${rc} =    Execute Command    api-cli run module/${module_id}/add-site --data '{"host":"${SITE2}","http2https":true,"lets_encrypt":false,"admin_password":"${SITE2_PW}","apps":["erpnext"]}'

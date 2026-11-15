@@ -59,7 +59,17 @@
     "git_token_helper": "Optional. A token that can read the apps marked as private repositories. It is stored on the node and never shown again.",
     "git_token_stored": "A token is stored. Type a new one to replace it.",
     "git_token_clear": "Remove the stored token",
-    "app_private": "Private repository: clone it with the GitHub token"
+    "app_private": "Private repository: clone it with the GitHub token",
+    "apps_refused": "The app list cannot be built",
+    "app_repository_unreachable": "Cannot read the repository of {value}. Check the URL; for a private repository, mark it private and store a GitHub token.",
+    "app_branch_not_found": "The branch of {value} does not exist in its repository",
+    "app_branch_not_for_frappe_version": "The branch of {value} is for another Frappe version",
+    "app_not_for_frappe_version": "{value}: choose a branch of the app for the selected Frappe version",
+    "app_url_invalid": "Each app needs an https:// repository URL: {value}",
+    "app_name_invalid": "Not a valid app name: {value}",
+    "apps_must_be_a_list": "The app list must be a non-empty list",
+    "app_json_invalid": "The app list is not valid",
+    "module_not_in_apps": "These apps to install are not in the app list: {value}"
   },
   "about": {
     "title": "About"

@@ -17,6 +17,8 @@ USER frappe
 RUN yarn config set registry https://registry.npmjs.org/ && \
   yarn config set network-timeout 600000
 ARG PRIVATE_REPOS=""
+# bench init reads no input (</dev/null): on an error it prints the
+# traceback and stops at its rollback prompt ("Aborted!") at once.
 # The git_token secret ("-" for none) lets git clone the private GitHub
 # repositories of PRIVATE_REPOS. The git configuration that holds it is a
 # temporary file of this step: no layer keeps it.
@@ -33,6 +35,7 @@ RUN --mount=type=secret,id=git_token,uid=1000,mode=0400 \
   git config --global url."$(echo "$repo" | sed "s#^https://#https://x-access-token:${tok}@#")".insteadOf "$repo"; \
   done; \
   fi && \
+  echo "bench init: frappe ${FRAPPE_BRANCH}, apps: $(cat /opt/frappe/apps.json 2>/dev/null)" && \
   bench init ${APP_INSTALL_ARGS}\
   --frappe-branch=${FRAPPE_BRANCH} \
   --frappe-path=${FRAPPE_PATH} \
@@ -40,7 +43,7 @@ RUN --mount=type=secret,id=git_token,uid=1000,mode=0400 \
   --no-backups \
   --skip-redis-config-generation \
   --verbose \
-  /home/frappe/frappe-bench && \
+  /home/frappe/frappe-bench </dev/null && \
   cd /home/frappe/frappe-bench && \
   echo "{}" > sites/common_site_config.json && \
   find apps -mindepth 1 -path "*/.git" | xargs rm -fr && \
