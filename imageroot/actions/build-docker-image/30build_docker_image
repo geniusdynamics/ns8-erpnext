@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# stdout is reserved for the action output: log to the journal (stderr)
+exec 1>&2
+
 echo "Building Docker Image"
 ../configure-module/30build_docker_image
 

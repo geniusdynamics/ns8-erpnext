@@ -1,0 +1,48 @@
+name: Test UI build for Renovate PRs
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Only run if the PR head branch starts with 'renovate-'
+    if: startsWith(github.head_ref, 'renovate-')
+
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
+      # renovate: datasource=npm packageName=corepack
+      COREPACK_VERSION: 0.36.0
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: npm install -g corepack@${COREPACK_VERSION} && corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "26"
+          cache: "yarn"
+          cache-dependency-path: "ui/yarn.lock"
+
+      - name: Check Node Version
+        run: node --version
+        working-directory: ./ui
+
+      - name: Check Yarn Version
+        run: yarn --version
+        working-directory: ./ui
+
+      - name: Install dependencies
+        run: yarn install --immutable
+        working-directory: ./ui
+
+      - name: Build application
+        run: yarn build
+        working-directory: ./ui

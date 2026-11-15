@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# stdout is reserved for the action output: log to the journal (stderr)
+exec 1>&2
+
 #
 # Copyright (C) 2022 Nethesis S.r.l.
 # SPDX-License-Identifier: GPL-3.0-or-later

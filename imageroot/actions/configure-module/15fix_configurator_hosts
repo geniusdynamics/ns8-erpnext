@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Point bench to 127.0.0.1 (see bin/fix-configurator-hosts)
+set -e
+exec 1>&2
+fix-configurator-hosts

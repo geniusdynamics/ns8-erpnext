@@ -24,4 +24,8 @@ jobs:
     with:
       ui_tests_strategy: on_renovate_ui_change
       debug_shell: ${{ github.event.inputs.debug_shell == 'true' }}
+      # configure-module builds the ERPNext image with bench (Node and Python
+      # builds) inside the test VM: give the leg time and memory
+      timeout_minutes: 120
+      vm_mem: 12288
       # Other inputs: https://github.com/NethServer/ns8-github-actions/blob/v1/docs/test-module-qemu.md#inputs

@@ -6,13 +6,7 @@
   <transition name="slide-menu">
     <div
       v-if="isMenuShown"
-      class="
-        mobile-side-menu
-        cv-side-nav
-        bx--side-nav bx--side-nav__navigation
-        bx--side-nav--expanded
-        app-side-nav
-      "
+      class="mobile-side-menu cv-side-nav bx--side-nav bx--side-nav__navigation bx--side-nav--expanded app-side-nav"
     >
       <AppSideMenuContent />
     </div>
