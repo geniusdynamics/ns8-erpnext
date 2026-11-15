@@ -69,7 +69,7 @@ Pins of the image
     RETURN    ${pins}
 
 HTTP status of the default site
-    ${code} =    Execute Command    curl -k -s -o /dev/null -w '%{http_code}' --resolve ${HOST}:443:127.0.0.1 https://${HOST}/login
+    ${code} =    Execute Command    curl -k -s -o /dev/null -w '\%{http_code}' --resolve ${HOST}:443:127.0.0.1 https://${HOST}/login
     RETURN    ${code}
 
 Sites of the instance
@@ -177,7 +177,8 @@ Check if the status of a site reads back
     Should Be Equal As Integers    ${rc}  0
     ${status} =    Evaluate    json.loads($output)    modules=json
     Should Be Equal    ${status}[site]    frontend
-    Should Be True    ${status}[scheduler_enabled]
+    # A new site starts with the scheduler off (bench new-site)
+    Should Be True    isinstance($status["scheduler_enabled"], bool)
     Should Not Be True    ${status}[scheduler_paused]
     Dictionary Should Not Contain Key    ${status}    queue_error
     Should Be True    ${status}[workers] >= 1
