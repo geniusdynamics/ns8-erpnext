@@ -11,11 +11,13 @@ EnvironmentFile=%S/state/environment
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/redis-socketio.pid %t/redis-socketio.ctr-id
+# The pod shares one network namespace: each Redis needs its own port
+# (redis-cache 6379, redis-queue 6380, redis-socketio 6381)
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-socketio.pid \
     --cidfile %t/redis-socketio.ctr-id --cgroups=no-conmon \
      --pod-id-file %t/erp-next.pod-id --replace -d --name redis-socketio \
     --volume redis-socketio-data:/data \
-    ${REDIS_IMAGE}
+    ${REDIS_IMAGE} redis-server --port 6381
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-socketio.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP redis-socketio
 SyslogIdentifier=%u
