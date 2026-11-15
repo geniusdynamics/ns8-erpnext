@@ -13,11 +13,12 @@ request = json.load(sys.stdin)
 
 original_environment = request['environment']
 
-for evar in [
-        "TRAEFIK_HOST",
-        "TRAEFIK_HTTP2HTTPS",
-        "TRAEFIK_LETS_ENCRYPT",
-    ]:
-    agent.set_env(evar, original_environment[evar])
+for evar in ["TRAEFIK_HOST", "TRAEFIK_HTTP2HTTPS"]:
+    if evar in original_environment:
+        agent.set_env(evar, original_environment[evar])
+
+# The DNS may not point to this node yet: the admin turns Let's Encrypt on
+# again once it does
+agent.set_env("TRAEFIK_LETS_ENCRYPT", False)
 
 agent.dump_env()

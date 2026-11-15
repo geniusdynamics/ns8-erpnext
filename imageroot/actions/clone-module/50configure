@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# The core copied state/ and the volumes, databases included. The ERPNext
+# image is built on each node: build it here, set the route and start the
+# services. Let's Encrypt stays off: the DNS may not point to this node yet.
+#
+
+import os
+import sys
+
+import agent
+import agent.tasks
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+from erpnext_apps import saved_request  # noqa: E402
+
+# The build cache of the source node does not apply to this one
+if os.path.exists(".app_json_cache"):
+    os.remove(".app_json_cache")
+
+saved = agent.read_envfile("erpnext-modules.env") if os.path.exists("erpnext-modules.env") else {}
+data = {
+    "host": os.environ["TRAEFIK_HOST"],
+    "http2https": os.environ.get("TRAEFIK_HTTP2HTTPS", "True").lower() == "true",
+    "lets_encrypt": False,
+}
+data.update(saved_request(saved))
+
+ret = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data=data)
+agent.assert_exp(ret['exit_code'] == 0, "The configure-module subtask failed!")

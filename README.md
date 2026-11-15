@@ -43,7 +43,7 @@ The module consists of several interconnected services:
 - 🔧 **Easy Configuration**: Web-based setup through NethServer UI
 - 📱 **Responsive Design**: Mobile-friendly interface
 - 🚀 **High Performance**: Optimized container architecture
-- 💾 **Backup Integration**: Built-in backup and restore functionality
+- 💾 **Backup Integration**: every site is saved by the NethServer backup
 
 ## 🚀 Installation
 
@@ -212,29 +212,39 @@ The module uses several environment variables stored in `/home/erpnext1/.config/
 
 ## 💾 Backup & Restore
 
-### Automatic Backups
+### NethServer backups
 
-The module integrates with NethServer's backup system. Backups include:
-- ERPNext database
-- File attachments
-- Configuration files
-- Custom applications
+The module uses the NethServer backup system: add the instance to a backup
+schedule on the cluster **Backup** page. There is no backup button in the
+module. Before Restic runs, `bin/module-dump-state` dumps the database of
+every site with `mariadb-dump --single-transaction` into
+`state/dumps/<site>/database.sql`, with `site.json` beside it (installed
+apps, scheduler state). A failed dump fails the backup. A backup saves:
 
-### Manual Backup
+- the database dump of every site (`state/dumps`)
+- the `sites` volume: site configuration, public and private files
+- the module settings (host, apps of the image, selected apps)
 
-Create a manual backup:
+After Restic, `bin/module-cleanup-state` removes the dumps.
+
+Run a dump by hand, for example to check it:
 ```bash
-api-cli run app-backup --agent module/erpnext1
+runagent -m erpnext1 module-dump-state
+runagent -m erpnext1 ls -l dumps/frontend
+runagent -m erpnext1 module-cleanup-state
 ```
 
-### Restore from Backup
+### Restore
 
-```bash
-api-cli run restore-backup --agent module/erpnext1 --data '{
-  "repository": "backup-repo-name",
-  "path": "backup-path"
-}'
-```
+Restore the instance from the cluster **Backup** page. The restore builds
+the image with the saved apps, sets the route with Let's Encrypt off,
+starts the services, then `bin/restore-sites` restores the database of
+every site with `bench restore`, puts back the scheduler state and runs
+`bench migrate`. Backups of earlier releases (`backup_paths.env`, or the
+frappe backups under `sites/<site>/private/backups`) still restore.
+
+Turn Let's Encrypt on again once the DNS points to the node: a restore or a
+clone never requests a certificate.
 
 ## 🔍 Troubleshooting
 

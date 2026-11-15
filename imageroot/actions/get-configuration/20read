@@ -41,12 +41,6 @@ else:
     config["apps"] = []
     config["frappeVersion"] = "version-15"
 
-if os.path.exists("backup_paths.env"):
-    data = agent.read_envfile("backup_paths.env")
-    config["hasBackup"] = True
-else:
-    config["hasBackup"] = False
-
 cache_file = ".app_json_cache"
 if os.path.exists(cache_file):
     try:

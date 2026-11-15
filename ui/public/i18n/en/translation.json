@@ -50,7 +50,16 @@
     "title": "About"
   },
   "backup": {
-    "title": "Backup & Restore"
+    "title": "Backup & Restore",
+    "managed_by_nethserver": "Backups are managed by NethServer",
+    "managed_by_nethserver_description": "Add this instance to a backup schedule in the NethServer Backup page. Every backup saves all the sites of this instance: no extra step is needed here.",
+    "what_is_saved": "What a backup saves",
+    "saved_databases": "A consistent dump of the database of every site",
+    "saved_files": "The files of every site: site configuration, public and private files",
+    "saved_settings": "The instance settings: host name, apps of the image, selected apps",
+    "how_to_restore": "Restore",
+    "how_to_restore_description": "Restore the instance from the NethServer Backup page. The restore builds the image with the saved apps, then restores the database of every site. Let's Encrypt stays off after a restore: turn it on again in the Settings once the DNS points to the node.",
+    "go_to_backup_page": "Go to the Backup page"
   },
   "task": {
     "cannot_create_task": "Cannot create task {action}"

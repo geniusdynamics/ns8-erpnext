@@ -13,5 +13,5 @@ exec 1>&2
 
 touch smarthost.env
 
+# configure-module started the services: just make sure they are enabled
 systemctl --user enable --now erp-next.service
-systemctl --user try-restart erp-next.service

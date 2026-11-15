@@ -405,7 +405,6 @@ export default {
       isLetsEncryptEnabled: false,
       isHttpToHttpsEnabled: true,
       isForceRebuild: false,
-      hasBackup: false,
 
       erpSelectedModules: [],
       podmanImages: [],
@@ -730,7 +729,6 @@ export default {
       this.host = config.host;
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
-      this.hasBackup = config.hasBackup;
       this.frappeVersion = config.frappeVersion || "version-15";
       this.app_json = atob(config.appJson);
 
@@ -770,101 +768,6 @@ export default {
         }
       }
     },
-    async restoreBackup() {
-      const taskAction = "restore-backup";
-      const eventId = this.getUuid();
-      // register to task error
-      this.core.$root.$once(
-        `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted
-      );
-
-      // register to task validation
-      this.core.$root.$once(
-        `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed
-      );
-
-      // register to task completion
-      this.core.$root.$once(
-        `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted
-      );
-      const res = await to(
-        this.createModuleTaskForApp(this.instanceName, {
-          action: taskAction,
-          data: {
-            host: this.host,
-            lets_encrypt: this.isLetsEncryptEnabled,
-            http2https: this.isHttpToHttpsEnabled,
-            erpSelectedModules: this.erpSelectedModules,
-          },
-          extra: {
-            title: this.$t("settings.instance_configuration", {
-              instance: this.instanceName,
-            }),
-            description: this.$t("settings.configuring"),
-            eventId,
-          },
-        })
-      );
-      const err = res[0];
-
-      if (err) {
-        console.error(`error creating task ${taskAction}`, err);
-        this.error.configureModule = this.getErrorMessage(err);
-        this.loading.configureModule = false;
-        return;
-      }
-    },
-    async backupApplication() {
-      const taskAction = "app-backup";
-      const eventId = this.getUuid();
-      // register to task error
-      this.core.$root.$once(
-        `${taskAction}-aborted-${eventId}`,
-        this.configureModuleAborted
-      );
-
-      // register to task validation
-      this.core.$root.$once(
-        `${taskAction}-validation-failed-${eventId}`,
-        this.configureModuleValidationFailed
-      );
-
-      // register to task completion
-      this.core.$root.$once(
-        `${taskAction}-completed-${eventId}`,
-        this.configureModuleCompleted
-      );
-      const res = await to(
-        this.createModuleTaskForApp(this.instanceName, {
-          action: taskAction,
-          data: {
-            host: this.host,
-            lets_encrypt: this.isLetsEncryptEnabled,
-            http2https: this.isHttpToHttpsEnabled,
-            erpSelectedModules: this.erpSelectedModules,
-          },
-          extra: {
-            title: this.$t("settings.instance_configuration", {
-              instance: this.instanceName,
-            }),
-            description: this.$t("settings.configuring"),
-            eventId,
-          },
-        })
-      );
-      const err = res[0];
-
-      if (err) {
-        console.error(`error creating task ${taskAction}`, err);
-        this.error.configureModule = this.getErrorMessage(err);
-        this.loading.configureModule = false;
-        return;
-      }
-    },
-
     async configureModule() {
       this.error.test_imap = false;
       this.error.test_smtp = false;
