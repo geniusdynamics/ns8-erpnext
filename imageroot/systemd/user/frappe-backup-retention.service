@@ -1,0 +1,12 @@
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+[Unit]
+Description=Retention of the frappe backups of the ERPNext sites
+
+[Service]
+Type=oneshot
+ExecStart=runagent prune-frappe-backups
+SyslogIdentifier=%u

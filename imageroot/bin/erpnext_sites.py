@@ -83,30 +83,72 @@ def site_config(site):
     return json.loads(proc.stdout)
 
 
-def bench(*args, env_files=(), secret_flags=(), check=True, locked=False, root_password=False):
-    """Run bench in the backend container. Output goes to the journal.
+# Runs a frappe command in-process, as bench does (python -m
+# frappe.utils.bench_helper frappe ...), with the secret flags appended to
+# sys.argv from the container environment: a secret never appears on a
+# command line, neither of podman nor of a process in the container.
+FRAPPE_CLI = """
+import os, sys
+os.chdir("/home/frappe/frappe-bench/sites")
+args = sys.argv[1:]
+for spec in os.environ.get("NS8_SECRET_FLAGS", "").split():
+    flag, var = spec.split("=", 1)
+    args.append(flag + "=" + os.environ[var])
+sys.argv = ["frappe.utils.bench_helper", "frappe"] + args
+from frappe.utils.bench_helper import main
+main()
+"""
 
-    locked: hold LOCK_FILE while bench runs.
-    secret_flags: (flag, VAR) pairs appended as flag="$VAR", expanded inside
-    the container from env_files: secrets never reach the podman command.
+
+def bench(*args, env_files=(), secret_flags=(), check=True, locked=False, root_password=False):
+    """Run a bench (frappe) command in the backend container. Output goes
+    to the journal.
+
+    locked: hold LOCK_FILE while the command runs.
+    secret_flags: (flag, VAR) pairs: the command gets flag=<value of VAR>,
+    read from env_files inside the container.
     root_password: shorthand for --db-root-password from database.env."""
     env_files = list(env_files)
     secret_flags = list(secret_flags)
     if root_password:
         env_files.append("database.env")
         secret_flags.append(("--db-root-password", "MARIADB_ROOT_PASSWORD"))
-    script = "exec \"$@\"" + "".join(f' {flag}="${var}"' for flag, var in secret_flags)
-    if locked:
-        script = f'if command -v flock >/dev/null 2>&1; then set -- flock {LOCK_FILE} "$@"; fi; ' + script
     cmd = ["exec"]
     for env_file in env_files:
         cmd += ["--env-file", env_file]
-    cmd += ["backend", "sh", "-c", script, "sh", "bench", *args]
+    if secret_flags:
+        cmd += ["--env", "NS8_SECRET_FLAGS=" + " ".join(f"{flag}={var}" for flag, var in secret_flags)]
+        argv = ["/home/frappe/frappe-bench/env/bin/python", "-c", FRAPPE_CLI, *args]
+    else:
+        argv = ["bench", *args]
+    if locked:
+        argv = ["sh", "-c", f'if command -v flock >/dev/null 2>&1; then exec flock {LOCK_FILE} "$@"; fi; exec "$@"',
+                "sh", *argv]
+    cmd += ["backend", *argv]
     log("bench", " ".join(args))
     proc = podman(*cmd, check=False, capture=False)
     if check and proc.returncode != 0:
         raise SiteError(f"bench {' '.join(args[:4])} failed with exit code {proc.returncode}")
     return proc.returncode
+
+
+def frappe_python(script, site, *args, check=True):
+    """Run a Python script with frappe initialised and connected to site, in
+    the backend container. Return its stdout (the script prints JSON)."""
+    wrapper = (
+        "import os, sys\n"
+        "os.chdir('/home/frappe/frappe-bench/sites')\n"
+        "import frappe\n"
+        "frappe.init(site=sys.argv[1])\n"
+        "frappe.connect()\n"
+        "try:\n"
+        "    exec(compile(sys.argv[2], 'ns8', 'exec'), {'frappe': frappe, 'args': sys.argv[3:]})\n"
+        "finally:\n"
+        "    frappe.destroy()\n"
+    )
+    proc = podman("exec", "backend", "/home/frappe/frappe-bench/env/bin/python", "-c", wrapper, site, script, *args,
+                  check=check)
+    return proc.stdout
 
 
 def wait_ready(timeout=1200):
@@ -340,7 +382,98 @@ def describe_sites(check_certificates=False):
         row["exists"] = row["name"] in existing
         apps = installed_apps(row["name"]) if row["exists"] else None
         row["apps"] = [a for a in (apps or []) if a != "frappe"]
+        row["maintenance"] = maintenance_state(row["name"])["maintenance"] if row["exists"] else False
         if check_certificates and row["host"]:
             row["certificate"] = certificate_state(row["host"])
             row["online"] = row["exists"] and site_answers(row["host"])
     return rows
+
+
+def maintenance_state(site):
+    """maintenance_mode and pause_scheduler of the site configuration"""
+    try:
+        conf = site_config(site)
+    except (SiteError, ValueError):
+        return {"maintenance": False, "scheduler_paused": False}
+    return {"maintenance": bool(conf.get("maintenance_mode")), "scheduler_paused": bool(conf.get("pause_scheduler"))}
+
+
+# Queue, failed jobs and scheduler of one site, read through frappe and RQ.
+# Returns no job arguments or errors: only counts, method names and times.
+SITE_STATUS = r"""
+import json
+site = frappe.local.site
+out = {"site": site}
+from frappe.utils import scheduler
+out["scheduler_enabled"] = not scheduler.is_scheduler_disabled()
+try:
+    out["scheduler_inactive"] = bool(scheduler.is_scheduler_inactive())
+except Exception:
+    pass
+try:
+    from rq import Worker
+    from rq.registry import FailedJobRegistry, StartedJobRegistry
+    from frappe.utils.background_jobs import get_queues, get_redis_conn
+    queues, running, failed, recent = {}, 0, 0, []
+    for q in get_queues():
+        mine = lambda job: job is not None and (job.kwargs or {}).get("site") == site
+        queues[q.name.rsplit(":", 1)[-1]] = sum(1 for job in q.get_jobs() if mine(job))
+        running += sum(1 for jid in StartedJobRegistry(queue=q).get_job_ids() if mine(q.fetch_job(jid)))
+        for jid in FailedJobRegistry(queue=q).get_job_ids():
+            job = q.fetch_job(jid)
+            if mine(job):
+                failed += 1
+                recent.append({"method": str((job.kwargs or {}).get("method") or job.func_name)[:200],
+                               "ended_at": job.ended_at.isoformat() if job.ended_at else ""})
+    recent.sort(key=lambda j: j["ended_at"], reverse=True)
+    out.update({"queued": queues, "running": running, "failed": failed, "recent_failures": recent[:10],
+                "workers": Worker.count(connection=get_redis_conn())})
+except Exception as ex:
+    out["queue_error"] = type(ex).__name__
+print("NS8-STATUS " + json.dumps(out))
+"""
+
+
+def site_status(site):
+    out = frappe_python(SITE_STATUS, site)
+    for line in reversed(out.splitlines()):
+        if line.startswith("NS8-STATUS "):
+            status = json.loads(line[len("NS8-STATUS "):])
+            status.update(maintenance_state(site))
+            return status
+    raise SiteError(f"no status for site {site}")
+
+
+#
+# Removed sites: bench drop-site moves them to sites/.archived_sites/<site>,
+# or <site>1, <site>2... when the name is taken, with the backup taken
+# before the drop under private/backups.
+#
+
+ARCHIVE_DIR = "sites/.archived_sites"
+ARCHIVE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9.-]{2,252}$")
+
+
+def list_archived_sites():
+    script = (
+        f'cd {ARCHIVE_DIR} 2>/dev/null || exit 0; for d in */; do d="${{d%/}}"; [ -d "$d" ] || continue; '
+        'printf "%s\\t%s\\t%s\\n" "$d" "$(stat -c %Y "$d")" "$(du -sb "$d" | cut -f1)"; done'
+    )
+    out = podman("exec", "backend", "sh", "-c", script).stdout
+    rows = []
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 3 and ARCHIVE_NAME_RE.match(parts[0]):
+            rows.append({
+                "name": parts[0],
+                "site": archived_site_name(parts[0]),
+                "archived_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(int(parts[1]))),
+                "size": int(parts[2]),
+            })
+    return sorted(rows, key=lambda r: r["archived_at"], reverse=True)
+
+
+def archived_site_name(name):
+    """The site name of an archive: drop the counter that drop-site adds"""
+    m = re.match(r"^(.*\.[a-z][a-z-]*[a-z])\d*$", name)
+    return m.group(1) if m else name

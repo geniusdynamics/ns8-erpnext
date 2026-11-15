@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "list-archived-sites output",
+    "$id": "http://nethserver.org/json-schema/task/output/erpnext/list-archived-sites",
+    "description": "Removed sites kept in sites/.archived_sites, newest first",
+    "examples": [
+        {
+            "archived_sites": [
+                {
+                    "name": "erp2.example.org",
+                    "site": "erp2.example.org",
+                    "archived_at": "2026-11-15T10:00:00Z",
+                    "size": 12345678
+                }
+            ]
+        }
+    ],
+    "type": "object",
+    "required": ["archived_sites"],
+    "properties": {
+        "archived_sites": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["name", "site", "archived_at", "size"],
+                "properties": {
+                    "name": {"type": "string", "description": "Archive name, for delete-archived-site and restore-archived-site"},
+                    "site": {"type": "string", "description": "Name of the removed site"},
+                    "archived_at": {"type": "string"},
+                    "size": {"type": "integer", "description": "Bytes"}
+                }
+            }
+        }
+    }
+}

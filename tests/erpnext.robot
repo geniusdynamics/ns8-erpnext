@@ -61,6 +61,17 @@ Second site is online
     Should Be True    ${sites}[${SITE2}][online]
     Should Be Equal    ${sites}[${SITE2}][certificate]    not_valid
 
+Pins of the image
+    ${output}  ${rc} =    Execute Command    runagent -m ${module_id} cat image-pins.json
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${pins} =    Evaluate    json.loads($output)    modules=json
+    RETURN    ${pins}
+
+HTTP status of the default site
+    ${code} =    Execute Command    curl -k -s -o /dev/null -w '\%{http_code}' --resolve ${HOST}:443:127.0.0.1 https://${HOST}/login
+    RETURN    ${code}
+
 Sites of the instance
     ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/list-sites --data '{}'
     ...    return_rc=True
@@ -134,6 +145,75 @@ Check if erpnext works as expected
     # services start: wait for the site, then for the web page
     Wait Until Keyword Succeeds    30 minutes    20 seconds    ERPNext site has the app    erpnext
     Wait Until Keyword Succeeds    10 minutes    10 seconds    ERPNext answers through Traefik
+
+Check if the image build is pinned
+    ${pins} =    Pins of the image
+    Should Be Equal    ${pins}[frappe_branch]    version-15
+    Should Match Regexp    ${pins}[apps][frappe]    ^[0-9a-f]{40}$
+    Should Match Regexp    ${pins}[apps][erpnext]    ^[0-9a-f]{40}$
+    Should Contain    ${pins}[base_image]    @sha256:
+    Should Contain    ${pins}[build_image]    @sha256:
+    Set Suite Variable    ${erpnext_commit}    ${pins}[apps][erpnext]
+
+Check if a site goes into maintenance mode
+    ${rc} =    Execute Command    api-cli run module/${module_id}/set-site-maintenance --data '{"name":"frontend","enabled":true}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${sites} =    Sites of the instance
+    Should Be True    ${sites}[frontend][maintenance]
+    ${code} =    HTTP status of the default site
+    Should Be Equal As Strings    ${code}    503
+    ${rc} =    Execute Command    api-cli run module/${module_id}/set-site-maintenance --data '{"name":"frontend","enabled":false}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${sites} =    Sites of the instance
+    Should Not Be True    ${sites}[frontend][maintenance]
+    ${code} =    HTTP status of the default site
+    Should Be Equal As Strings    ${code}    200
+
+Check if the status of a site reads back
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/get-site-status --data '{"name":"frontend"}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${status} =    Evaluate    json.loads($output)    modules=json
+    Should Be Equal    ${status}[site]    frontend
+    # A new site starts with the scheduler off (bench new-site)
+    Should Be True    isinstance($status["scheduler_enabled"], bool)
+    Should Not Be True    ${status}[scheduler_paused]
+    Dictionary Should Not Contain Key    ${status}    queue_error
+    Should Be True    ${status}[workers] >= 1
+    Should Be True    isinstance($status["failed"], int)
+    Dictionary Should Contain Key    ${status}[queued]    long
+
+Check if the retention removes old frappe backups
+    ${rc} =    Execute Command    runagent -m ${module_id} podman exec backend sh -c 'mkdir -p sites/frontend/private/backups && for i in 1 2 3 4 5; do touch sites/frontend/private/backups/2020010\${i}_000000-frontend-database.sql.gz; done'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/set-backup-retention --data '{"keep":2,"max_age_days":0}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${result} =    Evaluate    json.loads($output)    modules=json
+    Should Be Equal As Integers    ${result}[deleted]    3
+    ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec backend sh -c 'ls sites/frontend/private/backups/'
+    ...    return_rc=True
+    Should Contain    ${output}    20200105_000000
+    Should Contain    ${output}    20200104_000000
+    Should Not Contain    ${output}    20200103_000000
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/get-configuration --data '{}'
+    ...    return_rc=True
+    ${config} =    Evaluate    json.loads($output)    modules=json
+    Should Be Equal As Integers    ${config}[backupRetention][keep]    2
+    ${rc} =    Execute Command    api-cli run module/${module_id}/set-backup-retention --data '{"keep":3,"max_age_days":7}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+
+Check if the sites are dumped before an update migrates them
+    ${rc} =    Execute Command    runagent -m ${module_id} ../update-module.d/05dump_sites
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${rc} =    Execute Command    runagent -m ${module_id} grep -q tabToDo pre-update-dumps/frontend/database.sql
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
 
 Check if a record can be added to the site
     ${output} =    Run bench    ${module_id}    --site frontend execute frappe.client.insert --kwargs '{"doc":{"doctype":"ToDo","description":"${TODO}"}}'
@@ -268,6 +348,10 @@ Check if the restored site has the data of the backup
     Should Be Equal    ${config}[erpSelectedModules]    ${{["erpnext"]}}
     Wait Until Keyword Succeeds    10 minutes    10 seconds    ERPNext answers through Traefik
 
+Check if the restored instance is built from the same pins
+    ${pins} =    Pins of the image
+    Should Be Equal    ${pins}[apps][erpnext]    ${erpnext_commit}
+
 Check if the restored second site has its route and data
     ${sites} =    Sites of the instance
     Should Contain    ${sites}[${SITE2}][apps]    erpnext
@@ -302,6 +386,38 @@ Check if a site can be removed
     ...    return_rc=True  return_stdout=False
     Should Not Be Equal As Integers    ${rc}  0
     Wait Until Keyword Succeeds    2 minutes    10 seconds    ERPNext answers through Traefik
+
+Check if the removed site is archived
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/list-archived-sites --data '{}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    ${archives} =    Evaluate    {a["name"]: a for a in json.loads($output)["archived_sites"]}    modules=json
+    Should Be Equal    ${archives}[${SITE2}][site]    ${SITE2}
+    Should Be True    ${archives}[${SITE2}][size] > 0
+
+Check if a removed site can be restored
+    ${rc} =    Execute Command    api-cli run module/${module_id}/restore-archived-site --data '{"name":"${SITE2}"}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${sites} =    Sites of the instance
+    Dictionary Should Contain Key    ${sites}    ${SITE2}
+    Should Not Be True    ${sites}[${SITE2}][lets_encrypt]
+    Wait Until Keyword Succeeds    5 minutes    10 seconds    Second site answers on its host
+
+Check if a removed site can be deleted
+    ${rc} =    Execute Command    api-cli run module/${module_id}/remove-site --data '{"name":"${SITE2}"}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${rc} =    Execute Command    api-cli run module/${module_id}/delete-archived-site --data '{"name":"${SITE2}"}'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/list-archived-sites --data '{}'
+    ...    return_rc=True
+    ${archives} =    Evaluate    [a["name"] for a in json.loads($output)["archived_sites"]]    modules=json
+    Should Not Contain    ${archives}    ${SITE2}
+    ${rc} =    Execute Command    api-cli run module/${module_id}/delete-archived-site --data '{"name":"${SITE2}"}'
+    ...    return_rc=True  return_stdout=False
+    Should Not Be Equal As Integers    ${rc}  0
 
 Check if erpnext is removed correctly
     ${rc} =    Execute Command    remove-module --no-preserve ${module_id}

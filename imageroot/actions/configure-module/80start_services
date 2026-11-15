@@ -15,3 +15,6 @@ touch smarthost.env
 
 systemctl --user enable --now erp-next.service
 systemctl --user try-restart erp-next.service
+
+# Daily retention of frappe's own backups (bin/prune-frappe-backups)
+systemctl --user enable --now frappe-backup-retention.timer

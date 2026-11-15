@@ -28,6 +28,9 @@ import agent  # noqa: E402
 import erpnext_sites as es  # noqa: E402
 
 DUMPS = "dumps"
+# module-backup passes the backup id; dump-before-migrate passes --target
+if "--target" in sys.argv[1:-1]:
+    DUMPS = sys.argv[sys.argv.index("--target") + 1]
 DUMP_FLAGS = [
     "--single-transaction",
     "--quick",
@@ -70,6 +73,14 @@ def site_metadata(site, db_name):
     return meta
 
 
+def prune_frappe_backups():
+    """Apply the retention policy to frappe's own backups (every NS8 backup
+    runs this). A failure does not fail the backup."""
+    proc = subprocess.run(["prune-frappe-backups"], stdout=subprocess.DEVNULL)
+    if proc.returncode != 0:
+        es.log(agent.SD_WARNING + "prune-frappe-backups failed")
+
+
 def main():
     env = agent.read_envfile("environment") if os.path.exists("environment") else {}
     if not (os.environ.get("ERPNEXT_IMAGE") or env.get("ERPNEXT_IMAGE")):
@@ -99,8 +110,10 @@ def main():
     shutil.rmtree(DUMPS, ignore_errors=True)
     os.rename(tmp, DUMPS)
     # Left by earlier releases: the dumps directory replaces it
-    if os.path.exists("backup_paths.env"):
+    if DUMPS == "dumps" and os.path.exists("backup_paths.env"):
         os.remove("backup_paths.env")
+    if DUMPS == "dumps":
+        prune_frappe_backups()
     es.log(f"Dumped {len(sites)} site(s) into state/{DUMPS}")
 
 

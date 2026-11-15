@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "set-site-maintenance input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/set-site-maintenance",
+    "description": "Turn the maintenance mode of a site on or off. In maintenance mode only the Administrator can use the site and the scheduler is paused.",
+    "examples": [
+        {
+            "name": "frontend",
+            "enabled": true
+        }
+    ],
+    "type": "object",
+    "required": [
+        "name",
+        "enabled"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]+$",
+            "description": "Site name, as list-sites returns it"
+        },
+        "enabled": {
+            "type": "boolean"
+        }
+    }
+}

@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Retention of frappe's own backups, sites/<site>/private/backups of every
+# live site: a backup is the set of files of one timestamp. Keep the newest
+# FRAPPE_BACKUP_KEEP backups (default 3), and remove the ones older than
+# FRAPPE_BACKUP_MAX_AGE_DAYS (default 7, 0: no age limit). The newest backup
+# of a site always stays. Removed sites (.archived_sites) are left alone.
+# Prints {"deleted": <files>}. Set the policy with set-backup-retention.
+#
+
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+import agent  # noqa: E402
+import erpnext_sites as es  # noqa: E402
+
+DEFAULT_KEEP = 3
+DEFAULT_MAX_AGE_DAYS = 7
+
+PRUNE = r"""
+import json, os, re, sys, time
+keep, max_age = int(sys.argv[1]), int(sys.argv[2])
+stamp = re.compile(r"^(\d{8}_\d{6})-")
+deleted = 0
+for site in sys.argv[3:]:
+    bdir = os.path.join("sites", site, "private", "backups")
+    if not os.path.isdir(bdir):
+        continue
+    sets = {}
+    for name in os.listdir(bdir):
+        m = stamp.match(name)
+        path = os.path.join(bdir, name)
+        if m and os.path.isfile(path):
+            sets.setdefault(m.group(1), []).append(path)
+    for i, key in enumerate(sorted(sets, reverse=True)):
+        newest = max(os.path.getmtime(p) for p in sets[key])
+        too_old = max_age > 0 and time.time() - newest > max_age * 86400
+        if i == 0 or (i < keep and not too_old):
+            continue
+        for path in sets[key]:
+            os.remove(path)
+            deleted += 1
+print(json.dumps({"deleted": deleted}))
+"""
+
+
+def policy():
+    env = agent.read_envfile("environment") if os.path.exists("environment") else {}
+
+    def value(name, default):
+        try:
+            return max(0, int(os.environ.get(name) or env.get(name) or default))
+        except ValueError:
+            return default
+    return max(1, value("FRAPPE_BACKUP_KEEP", DEFAULT_KEEP)), value("FRAPPE_BACKUP_MAX_AGE_DAYS", DEFAULT_MAX_AGE_DAYS)
+
+
+def main():
+    if not es.is_running("backend"):
+        json.dump({"deleted": 0}, fp=sys.stdout)
+        return
+    keep, max_age = policy()
+    sites = es.list_sites()
+    proc = es.podman("exec", "backend", "/home/frappe/frappe-bench/env/bin/python", "-c", PRUNE, str(keep), str(max_age), *sites)
+    result = json.loads(proc.stdout.strip().splitlines()[-1])
+    es.log(f"Frappe backups: keep {keep}, max age {max_age} days: removed {result['deleted']} file(s)")
+    json.dump(result, fp=sys.stdout)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (es.SiteError, ValueError, IndexError) as ex:
+        print(agent.SD_ERR + f"prune-frappe-backups failed: {ex}", file=sys.stderr)
+        sys.exit(1)

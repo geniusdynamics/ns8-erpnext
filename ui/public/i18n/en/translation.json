@@ -5,7 +5,8 @@
     "processing": "Processing...",
     "cancel": "Cancel",
     "please_read_carefully": "Please read carefully",
-    "type_to_confirm": "Type '{name}' to confirm"
+    "type_to_confirm": "Type '{name}' to confirm",
+    "close": "Close"
   },
   "status": {
     "title": "Status",
@@ -43,7 +44,7 @@
     "app_json_must_be_array": "App JSON must be an array of objects",
     "invalid_json_format": "Invalid JSON format",
     "frappe_version": "Frappe version",
-    "force_rebuild": "Force rebuild (no cache)",
+    "force_rebuild": "Rebuild from the newest releases (no cache)",
     "app_name": "App Name",
     "repository_url": "Repository URL",
     "branch": "Branch",
@@ -84,7 +85,14 @@
     "saved_settings": "The instance settings: host name, apps of the image, selected apps",
     "how_to_restore": "Restore",
     "how_to_restore_description": "Restore the instance from the NethServer Backup page. The restore builds the image with the saved apps, then restores the database of every site. Let's Encrypt stays off after a restore: turn it on again in the Settings once the DNS points to the node.",
-    "go_to_backup_page": "Go to the Backup page"
+    "go_to_backup_page": "Go to the Backup page",
+    "retention_title": "Retention of the Frappe backups",
+    "retention_description": "Frappe keeps its own backups in each site (for example the one taken before an app is uninstalled). The module removes the old ones daily and at every NethServer backup. The newest backup of a site always stays.",
+    "retention_keep": "Backups to keep per site",
+    "retention_max_age": "Maximum age in days (0: no limit)",
+    "retention_save": "Save",
+    "retention_saved": "Retention saved: {deleted} old file(s) removed",
+    "retention_invalid": "Enter a whole number in range"
   },
   "task": {
     "cannot_create_task": "Cannot create task {action}"
@@ -119,7 +127,13 @@
     "remove-site": "Remove site",
     "set-site-apps": "Set site apps",
     "set-site-route": "Set site route",
-    "list-marketplace-apps": "List marketplace apps"
+    "list-marketplace-apps": "List marketplace apps",
+    "get-site-status": "Get site status",
+    "set-site-maintenance": "Set maintenance mode",
+    "list-archived-sites": "List removed sites",
+    "delete-archived-site": "Delete removed site",
+    "restore-archived-site": "Restore removed site",
+    "set-backup-retention": "Set backup retention"
   },
   "error": {
     "error": "Error",
@@ -186,6 +200,38 @@
     "domain_already_used_in_traefik": "Host name already used by another route",
     "app_not_in_image": "This app is not part of the image",
     "module_not_running": "Configure and start the instance first",
-    "not_answering": "Not answering"
+    "not_answering": "Not answering",
+    "maintenance": "Maintenance",
+    "maintenance_on": "Maintenance on",
+    "maintenance_off": "Maintenance off",
+    "setting_maintenance": "Set the maintenance mode of {site}",
+    "running_maintenance": "Changing the maintenance mode.",
+    "status": "Status",
+    "status_of": "Status of {site}",
+    "scheduler": "Scheduler",
+    "scheduler_paused": "Paused",
+    "scheduler_inactive": "Enabled, but no scheduled job ran recently",
+    "queued_jobs": "Queued jobs",
+    "workers": "Workers",
+    "running_jobs": "Running jobs",
+    "failed_jobs": "Failed jobs",
+    "recent_failures": "Recent failed jobs",
+    "queue_error": "The job queues cannot be read",
+    "archived_title": "Removed sites",
+    "archived_description": "A removed site is kept in the sites volume, with the backup taken at removal, until you delete it. Restoring it brings back its files and database, with a route without Let's Encrypt.",
+    "archived_empty": "No removed site",
+    "archived_name": "Name",
+    "archived_at": "Removed on",
+    "archived_size": "Size",
+    "archived_restore": "Restore",
+    "archived_delete": "Delete",
+    "archived_delete_title": "Delete removed site",
+    "archived_delete_description": "The files and the backup of the removed site {site} are deleted permanently.",
+    "restoring_archived": "Restore the removed site {site}",
+    "deleting_archived": "Delete the removed site {site}",
+    "running_restore": "Restoring the removed site: this takes a few minutes.",
+    "running_delete_archived": "Deleting the removed site.",
+    "archived_site_not_found": "The removed site does not exist",
+    "site_not_running": "The site does not run"
   }
 }

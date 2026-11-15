@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "get-site-status output",
+    "$id": "http://nethserver.org/json-schema/task/output/erpnext/get-site-status",
+    "description": "Background jobs and scheduler of a site. No job arguments, no error text.",
+    "examples": [
+        {
+            "site": "frontend",
+            "scheduler_enabled": true,
+            "scheduler_inactive": false,
+            "queued": {
+                "default": 0,
+                "short": 0,
+                "long": 1
+            },
+            "running": 0,
+            "failed": 1,
+            "recent_failures": [
+                {
+                    "method": "frappe.email.queue.flush",
+                    "ended_at": "2026-11-15T10:00:00"
+                }
+            ],
+            "workers": 2,
+            "maintenance": false,
+            "scheduler_paused": false
+        }
+    ],
+    "type": "object",
+    "required": [
+        "site",
+        "scheduler_enabled",
+        "maintenance",
+        "scheduler_paused"
+    ],
+    "properties": {
+        "site": {"type": "string"},
+        "scheduler_enabled": {"type": "boolean", "description": "System Settings: enable scheduler"},
+        "scheduler_inactive": {"type": "boolean", "description": "No scheduled job ran recently"},
+        "queued": {"type": "object", "description": "Jobs of the site waiting in each queue"},
+        "running": {"type": "integer"},
+        "failed": {"type": "integer", "description": "Jobs of the site in the RQ failed registries"},
+        "recent_failures": {"type": "array", "items": {"type": "object"}},
+        "workers": {"type": "integer", "description": "RQ workers of the bench"},
+        "queue_error": {"type": "string", "description": "The queues could not be read"},
+        "maintenance": {"type": "boolean"},
+        "scheduler_paused": {"type": "boolean"}
+    }
+}

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Dump the database of every site into state/pre-update-dumps before a
+# migrate (module update, new image), with module-dump-state. Only the last
+# dump is kept; it is not part of the NS8 backup. To roll a site back:
+#   bench --site <site> restore --force <dump>   (see README)
+# A stopped module has nothing to migrate: skip.
+
+exec 1>&2
+running() { [ "$(podman container inspect --format '{{.State.Running}}' "$1" 2>/dev/null)" = true ]; }
+if ! running backend || ! running mariadb-app; then
+    echo "The services do not run: no dump before migrate"
+    exit 0
+fi
+if module-dump-state --target pre-update-dumps; then
+    echo "Sites dumped into state/pre-update-dumps"
+else
+    echo "<3>The dump before migrate failed: the sites migrate without it"
+    exit 1
+fi
