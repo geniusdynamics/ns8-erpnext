@@ -30,5 +30,7 @@ except AppsError as ex:
     sys.exit(3)
 
 envfile = {"ERP_NEXT_MODULES": ",".join(modules), "APPS_JSON": apps_b64, "FRAPPE_VERSION": FRAPPE_VERSION}
+# forceRebuild: build from the newest releases instead of the pins
+envfile["FORCE_REBUILD"] = str(data.get("forceRebuild", False)).lower()
 agent.write_envfile("erpnext-modules.env", envfile)
 save_git_token(data)

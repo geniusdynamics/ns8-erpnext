@@ -79,6 +79,18 @@
         "hasGitToken": {
             "type": "boolean",
             "description": "A GitHub token for private app repositories is stored"
+        },
+        "backupRetention": {
+            "type": "object",
+            "description": "Retention of frappe's own backups",
+            "properties": {
+                "keep": {
+                    "type": "integer"
+                },
+                "max_age_days": {
+                    "type": "integer"
+                }
+            }
         }
     }
 }

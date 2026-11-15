@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import json
+import os
+import subprocess
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+request = json.load(sys.stdin)
+agent.set_env("FRAPPE_BACKUP_KEEP", request["keep"])
+agent.set_env("FRAPPE_BACKUP_MAX_AGE_DAYS", request["max_age_days"])
+agent.dump_env()
+os.environ["FRAPPE_BACKUP_KEEP"] = str(request["keep"])
+os.environ["FRAPPE_BACKUP_MAX_AGE_DAYS"] = str(request["max_age_days"])
+proc = subprocess.run(["prune-frappe-backups"], stdout=subprocess.PIPE, text=True)
+try:
+    result = json.loads(proc.stdout)
+except ValueError:
+    result = {"deleted": 0}
+json.dump(result, fp=sys.stdout)
+sys.exit(proc.returncode)

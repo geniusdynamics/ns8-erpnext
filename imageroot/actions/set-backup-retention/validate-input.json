@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "set-backup-retention input",
+    "$id": "http://nethserver.org/json-schema/task/input/erpnext/set-backup-retention",
+    "description": "Retention of frappe's own backups (sites/<site>/private/backups), applied now, daily and at every NethServer backup. The newest backup of a site always stays.",
+    "examples": [
+        {
+            "keep": 3,
+            "max_age_days": 7
+        }
+    ],
+    "type": "object",
+    "required": [
+        "keep",
+        "max_age_days"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "keep": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Backups to keep per site"
+        },
+        "max_age_days": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3650,
+            "description": "Remove the backups older than this. 0: no age limit."
+        }
+    }
+}

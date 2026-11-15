@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Move the archive back into sites/, restore the database from the newest
+# backup it holds (bench drop-site took it), then publish the site as
+# add-site does, with Let's Encrypt off.
+#
+import json
+import os
+import subprocess
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+name = json.load(sys.stdin)["name"]
+site = es.archived_site_name(name)
+published = False
+try:
+    es.podman("exec", "backend", "mv", "--", f"{es.ARCHIVE_DIR}/{name}", f"sites/{site}")
+    script = 'ls -1t "sites/$1/private/backups/"*-database.sql.gz 2>/dev/null | head -n 1'
+    dump = es.podman("exec", "backend", "sh", "-c", script, "sh", site).stdout.strip()
+    if not dump:
+        raise es.SiteError(f"no database backup in the archive of {site}")
+    agent.set_progress(20)
+    es.bench("--site", site, "restore", "--force", f"{es.BENCH_SITES}/{dump[len('sites/'):]}",
+             locked=True, root_password=True)
+    es.bench("--site", site, "enable-scheduler", locked=True)
+    es.bench("--site", site, "migrate", locked=True)
+    agent.set_progress(85)
+    published = True
+    sites = es.load_sites()
+    sites[site] = {"http2https": True, "lets_encrypt": False}
+    es.save_sites(sites)
+    es.write_nginx_map(sites)
+    es.restart_frontend()
+    es.set_site_route(site, True, False)
+except es.SiteError as ex:
+    print(agent.SD_ERR + f"restore-archived-site {name} failed: {ex}", file=sys.stderr)
+    if not published:
+        # Put the archive back as it was: the restore can be tried again
+        es.podman("exec", "backend", "mv", "--", f"sites/{site}", f"{es.ARCHIVE_DIR}/{name}", check=False)
+    sys.exit(1)
+json.dump({"site": site}, fp=sys.stdout)

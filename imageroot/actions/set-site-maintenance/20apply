@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Maintenance mode as pilot sets it: maintenance_mode and pause_scheduler
+# together.
+#
+import json
+import os
+import sys
+
+import agent
+
+sys.path.insert(0, os.path.join(os.environ["AGENT_INSTALL_DIR"], "bin"))
+import erpnext_sites as es  # noqa: E402
+
+request = json.load(sys.stdin)
+name, flag = request["name"], "1" if request["enabled"] else "0"
+try:
+    es.bench("--site", name, "set-maintenance-mode", "on" if request["enabled"] else "off", locked=True)
+    es.bench("--site", name, "set-config", "--parse", "pause_scheduler", flag, locked=True)
+except es.SiteError as ex:
+    print(agent.SD_ERR + f"set-site-maintenance {name} failed: {ex}", file=sys.stderr)
+    sys.exit(1)
+json.dump(es.maintenance_state(name), fp=sys.stdout)

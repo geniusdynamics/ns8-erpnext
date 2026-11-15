@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Genius Dynamics
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Runs first, while the services of the previous release still run: dump
+# every site before 20restart, which migrates them (create-site).
+
+exec 1>&2
+dump-before-migrate

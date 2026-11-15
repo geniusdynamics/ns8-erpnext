@@ -389,6 +389,16 @@
                 </template>
               </cv-accordion-item>
             </cv-accordion>
+            <cv-row v-if="error.apps || error.erpSelectedModules">
+              <cv-column>
+                <NsInlineNotification
+                  kind="error"
+                  :title="$t('settings.apps_refused')"
+                  :description="error.apps || error.erpSelectedModules"
+                  :showCloseButton="false"
+                />
+              </cv-column>
+            </cv-row>
             <cv-row v-if="error.configureModule">
               <cv-column>
                 <NsInlineNotification
@@ -482,6 +492,8 @@ export default {
         host: "",
         lets_encrypt: "",
         http2https: "",
+        apps: "",
+        erpSelectedModules: "",
         getPodmanImages: "",
         marketplace: "",
       },
@@ -873,7 +885,9 @@ export default {
       for (const validationError of validationErrors) {
         const param = validationError.parameter;
         // set i18n error message
-        this.error[param] = this.$t("settings." + validationError.error);
+        this.error[param] = this.$t("settings." + validationError.error, {
+          value: validationError.value,
+        });
 
         if (!focusAlreadySet) {
           this.focusElement(param);

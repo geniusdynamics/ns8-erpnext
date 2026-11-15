@@ -1,6 +1,10 @@
 ARG FRAPPE_BRANCH=version-15
+# Base images: the build script passes them, by digest when the image is
+# pinned (state/image-pins.json)
+ARG BUILD_IMAGE=docker.io/frappe/build:version-15
+ARG BASE_IMAGE=docker.io/frappe/base:version-15
 
-FROM docker.io/frappe/build:${FRAPPE_BRANCH} AS builder
+FROM ${BUILD_IMAGE} AS builder
 
 ARG FRAPPE_BRANCH=version-15
 ARG FRAPPE_PATH=https://github.com/frappe/frappe
@@ -17,6 +21,10 @@ USER frappe
 RUN yarn config set registry https://registry.npmjs.org/ && \
   yarn config set network-timeout 600000
 ARG PRIVATE_REPOS=""
+# "app=commit ...": check these commits out instead of the branch heads
+ARG APP_PINS=""
+# bench init reads no input (</dev/null): on an error it prints the
+# traceback and stops at its rollback prompt ("Aborted!") at once.
 # The git_token secret ("-" for none) lets git clone the private GitHub
 # repositories of PRIVATE_REPOS. The git configuration that holds it is a
 # temporary file of this step: no layer keeps it.
@@ -33,6 +41,7 @@ RUN --mount=type=secret,id=git_token,uid=1000,mode=0400 \
   git config --global url."$(echo "$repo" | sed "s#^https://#https://x-access-token:${tok}@#")".insteadOf "$repo"; \
   done; \
   fi && \
+  echo "bench init: frappe ${FRAPPE_BRANCH}, apps: $(cat /opt/frappe/apps.json 2>/dev/null)" && \
   bench init ${APP_INSTALL_ARGS}\
   --frappe-branch=${FRAPPE_BRANCH} \
   --frappe-path=${FRAPPE_PATH} \
@@ -40,13 +49,27 @@ RUN --mount=type=secret,id=git_token,uid=1000,mode=0400 \
   --no-backups \
   --skip-redis-config-generation \
   --verbose \
-  /home/frappe/frappe-bench && \
+  /home/frappe/frappe-bench </dev/null && \
   cd /home/frappe/frappe-bench && \
   echo "{}" > sites/common_site_config.json && \
+  changed="" && \
+  for pin in ${APP_PINS}; do \
+  app="${pin%%=*}"; sha="${pin#*=}"; \
+  if [ -d "apps/$app/.git" ] && [ "$(git -C "apps/$app" rev-parse HEAD)" != "$sha" ]; then \
+  remote=$(git -C "apps/$app" remote | head -n 1) && \
+  git -C "apps/$app" fetch --depth 1 "$remote" "$sha" && \
+  git -C "apps/$app" checkout -q "$sha" || exit 1; \
+  changed=1; \
+  fi; \
+  done && \
+  if [ -n "$changed" ]; then bench setup requirements && bench build; fi && \
+  for d in apps/*; do \
+  if [ -d "$d/.git" ]; then echo "$(basename "$d") $(git -C "$d" rev-parse HEAD)"; fi; \
+  done > .ns8-pins && \
   find apps -mindepth 1 -path "*/.git" | xargs rm -fr && \
   rm -f /tmp/ns8-gitconfig
 
-FROM docker.io/frappe/base:${FRAPPE_BRANCH} AS backend
+FROM ${BASE_IMAGE} AS backend
 
 USER frappe
 
